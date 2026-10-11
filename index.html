@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manideep Grandhi | Cloud &amp; Data Architect</title>
+<meta name="description" content="Manideep Grandhi: Cloud & Data Architect with 14+ years across AWS, Aurora PostgreSQL and SQL Server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;color:var(--ink);letter-spacing:-.02em}
+.logo span{color:var(--accent)}
+.links{display:flex;gap:22px;font-size:.92rem}
+.links a{color:var(--muted);font-weight:500}
+.links a:hover{color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:10px;font-weight:600;font-size:.97rem;transition:.2s}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(15,111,222,.28)}
+.btn-primary:hover{background:#0b5bb8;transform:translateY(-1px)}
+.btn-ghost{border:1.5px solid var(--line);color:var(--ink);background:#fff}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn svg{width:18px;height:18px}
+header.hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);padding:80px 0 64px}
+.eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:.82rem;padding:6px 12px;border-radius:999px;margin-bottom:18px}
+h1{font-size:clamp(2.3rem,5.5vw,3.6rem);line-height:1.1;letter-spacing:-.03em;font-weight:800}
+.title{font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--accent);font-weight:600;margin:12px 0 18px}
+.summary{max-width:720px;color:var(--muted);font-size:1.05rem}
+.meta{display:flex;flex-wrap:wrap;gap:10px 22px;margin:22px 0 30px;color:var(--muted);font-size:.95rem}
+.meta span,.meta a{display:inline-flex;align-items:center;gap:7px}
+.meta svg{width:17px;height:17px;color:var(--accent)}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.stat b{display:block;font-size:1.6rem;font-weight:800;color:var(--accent);letter-spacing:-.02em}
+.stat small{color:var(--muted);font-size:.86rem}
+section{padding:64px 0}
+section+section{border-top:1px solid var(--line)}
+h2{font-size:1.75rem;letter-spacing:-.02em;font-weight:800;margin-bottom:8px}
+.lead{color:var(--muted);margin-bottom:32px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:12px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{background:var(--accent-soft);color:#0b4f9e;font-size:.85rem;font-weight:500;padding:5px 11px;border-radius:8px}
+.comp{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.comp li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:12px 14px;font-size:.93rem;font-weight:500}
+.timeline{position:relative;padding-left:28px}
+.timeline:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.job{position:relative;margin-bottom:22px}
+.job:before{content:"";position:absolute;left:-28px;top:24px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--accent)}
+.job .card{padding:22px 24px}
+.job-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;margin-bottom:10px}
+.job-head h3{margin:0;font-size:1.1rem}
+.job-head .co{color:var(--accent);font-weight:600}
+.when{color:var(--muted);font-size:.88rem;font-weight:500;white-space:nowrap}
+.job ul{padding-left:18px;color:#3a4356;font-size:.95rem}
+.job li{margin:5px 0}
+.job li::marker{color:var(--accent)}
+.edu .card p{color:var(--muted);font-size:.95rem}
+.badge{display:inline-block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+.download{background:var(--ink);color:#fff;border-radius:18px;padding:40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+.download h2{color:#fff;margin:0}
+.download p{color:#c3cad8;margin-top:6px}
+footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
+@media (max-width:820px){.comp{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){
+ .links{display:none}
+ header.hero{padding:48px 0 40px}
+ section{padding:48px 0}
+ .grid,.comp{grid-template-columns:1fr}
+ .stats{gap:10px;margin-top:32px}
+ .stat{padding:14px}
+ .cta .btn{flex:1 1 100%;justify-content:center}
+ .download{padding:28px 22px}
+ .download .btn{width:100%;justify-content:center}
+ .timeline{padding-left:22px}
+ .job:before{left:-22px;width:14px;height:14px}
+ .timeline:before{left:5px}
+ .job .card{padding:18px}
+}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+ <a href="#top" class="logo">Manideep<span>.</span></a>
+ <div class="links"><a href="#skills">Skills</a><a href="#experience">Experience</a><a href="#education">Education</a><a href="#resume">Resume</a></div>
+ <a class="btn btn-primary" style="padding:8px 16px;font-size:.88rem" href="Manideep_Grandhi_Resume.pdf" download>Resume</a>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+ <span class="eyebrow">AWS · Aurora PostgreSQL · SQL Server</span>
+ <h1>Manideep Grandhi</h1>
+ <p class="title">Cloud &amp; Data Architect | AWS Certified | PostgreSQL &amp; MS SQL Expert</p>
+ <p class="summary">Cloud-savvy Database Architect with 14+ years of progressive experience across AWS Cloud, Aurora PostgreSQL, SQL Server, and automation technologies. Adept at designing and optimizing distributed data systems, leading high-performing teams, and driving large-scale cloud migrations (homogeneous and heterogeneous). Strong advocate of automation, observability, and performance tuning.</p>
+ <div class="meta">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.3-7-12a7 7 0 0 1 14 0c0 5.7-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Hyderabad, India</span>
+  <a href="mailto:manideepgrandhi@hotmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>manideepgrandhi@hotmail.com</a>
+ </div>
+ <div class="cta">
+  <a class="btn btn-primary" href="Manideep_Grandhi_Resume.pdf" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>Download Resume</a>
+  <a class="btn btn-ghost" href="mailto:manideepgrandhi@hotmail.com">Get in touch</a>
+ </div>
+ <div class="stats">
+  <div class="stat"><b>14+</b><small>Years of experience</small></div>
+  <div class="stat"><b>2,000+</b><small>AWS-hosted DB servers managed</small></div>
+  <div class="stat"><b>40%</b><small>Licensing cost cut via Oracle ➔ Aurora</small></div>
+  <div class="stat"><b>50%</b><small>Faster query response times</small></div>
+ </div>
+</div></header>
+
+<section id="skills"><div class="wrap">
+ <h2>Skills</h2>
+ <p class="lead">Core competencies and the tools I work with day to day.</p>
+ <ul class="comp">
+  <li>Cloud Architecture (AWS, Azure)</li>
+  <li>Aurora PostgreSQL &amp; MS SQL Server (2005–2019)</li>
+  <li>Performance Tuning &amp; Query Optimization</li>
+  <li>HA/DR: Always-On, Log Shipping, Mirroring, Clustering</li>
+  <li>Database Migration &amp; Modernization (on-prem ➔ cloud)</li>
+  <li>Cross-functional Team Leadership &amp; DevOps Collaboration</li>
+ </ul>
+ <div class="grid">
+  <div class="card"><h3>Databases</h3><div class="tags"><span class="tag">Aurora PostgreSQL</span><span class="tag">SQL Server (2005–2019)</span><span class="tag">AWS RDS</span></div></div>
+  <div class="card"><h3>Cloud Platforms</h3><div class="tags"><span class="tag">AWS EC2</span><span class="tag">RDS</span><span class="tag">DMS</span><span class="tag">IAM</span><span class="tag">CloudWatch</span><span class="tag">Systems Manager</span><span class="tag">Azure</span></div></div>
+  <div class="card"><h3>Automation &amp; IaC</h3><div class="tags"><span class="tag">Terraform</span><span class="tag">PowerShell</span></div></div>
+  <div class="card"><h3>Monitoring</h3><div class="tags"><span class="tag">Grafana</span><span class="tag">Telegraf</span><span class="tag">Datadog</span><span class="tag">Splunk</span><span class="tag">SQL Diagnostic Manager</span><span class="tag">SentryOne</span><span class="tag">SolarWinds DPA</span></div></div>
+ </div>
+</div></section>
+
+<section id="experience"><div class="wrap">
+ <h2>Experience</h2>
+ <p class="lead">From Junior DBA to Lead Database Engineer.</p>
+ <div class="timeline">
+  <div class="job"><div class="card">
+   <div class="job-head"><h3>Lead Database Engineer · <span class="co">S&amp;P Global</span></h3><span class="when">Nov 2022 – Present · Hyderabad</span></div>
+   <ul>
+    <li>Architected multi-region Aurora PostgreSQL clusters, implementing cross-region snapshot replication and DR-ready global databases.</li>
+    <li>Tuned PostgreSQL internals for high-throughput workloads; optimized autovacuum, shared_buffers, and connection pooling.</li>
+    <li>Led Oracle ➔ Aurora migration for mission-critical workloads using AWS DMS and SCT, reducing licensing costs by 40%.</li>
+    <li>Built real-time alerting and insights using CloudWatch, Performance Insights, and custom dashboards in Grafana.</li>
+    <li>Collaborated with product teams to remediate performance issues, resulting in 50% faster query response times.</li>
+   </ul></div></div>
+  <div class="job"><div class="card">
+   <div class="job-head"><h3>Team Lead &amp; Senior DBA · <span class="co">Infor India Pvt Ltd</span></h3><span class="when">Jul 2020 – Oct 2022 · Hyderabad</span></div>
+   <ul>
+    <li>Managed 2,000+ AWS-hosted database servers across PostgreSQL and SQL Server.</li>
+    <li>Led a global DBA team; designed monitoring infra using Telegraf + Grafana, improving observability and reducing MTTR.</li>
+    <li>Oversaw 100+ transactional replication servers and Always-On clusters; drove preventive maintenance and failover readiness.</li>
+    <li>Led database modernization initiatives, coordinated upgrades, decommissions, and operational automation.</li>
+   </ul></div></div>
+  <div class="job"><div class="card">
+   <div class="job-head"><h3>Senior Database Administrator · <span class="co">TCS</span></h3><span class="when">Mar 2014 – Jul 2020 · Hyderabad</span></div>
+   <ul>
+    <li>Supported 700+ production SQL Servers for Comcast &amp; other clients; managed cloud &amp; on-prem hybrid infra.</li>
+    <li>Implemented and monitored Always-On Availability Groups and HA/DR strategies.</li>
+    <li>Designed and executed DB patching, performance tuning, and proactive health checks.</li>
+    <li>Deployed Ola Hallengren maintenance plans across prod/test environments for consistent upkeep.</li>
+   </ul></div></div>
+  <div class="job"><div class="card">
+   <div class="job-head"><h3>L2 DBA · <span class="co">Cognizant</span></h3><span class="when">Mar 2013 – Mar 2014 · Bangalore</span></div>
+   <ul>
+    <li>Provided 24x7 support for clustered environments (SQL 2005–2008).</li>
+    <li>Built DR and backup strategies; optimized stored procedures and indexes.</li>
+    <li>Used DMVs and performance dashboards for bottleneck analysis.</li>
+   </ul></div></div>
+  <div class="job"><div class="card">
+   <div class="job-head"><h3>Junior DBA · <span class="co">HCL Technologies</span></h3><span class="when">Sep 2010 – Mar 2013 · Chennai</span></div>
+   <ul>
+    <li>Administered SQL Server environments for USAA; performed environment refreshes and release deployments.</li>
+    <li>Configured and maintained replication (snapshot, transactional, peer-to-peer).</li>
+    <li>Ensured compliance and server hardening across production nodes.</li>
+   </ul></div></div>
+ </div>
+</div></section>
+
+<section id="education" class="edu"><div class="wrap">
+ <h2>Education &amp; Certifications</h2>
+ <p class="lead">Academic background and professional certification.</p>
+ <div class="grid">
+  <div class="card"><span class="badge">Education</span><h3>B.Tech in Information Technology</h3><p>Jawaharlal Nehru Technological University Affiliated College, Kakinada</p></div>
+  <div class="card"><span class="badge">Certification</span><h3>Microsoft Certified Professional</h3><p>Administering SQL Server 2012/2014 (Exam 70-462)</p></div>
+ </div>
+</div></section>
+
+<section id="resume"><div class="wrap">
+ <div class="download">
+  <div><h2>Want the full picture?</h2><p>Download my resume as a PDF.</p></div>
+  <a class="btn btn-primary" href="Manideep_Grandhi_Resume.pdf" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>Download Resume (PDF)</a>
+ </div>
+</div></section>
+
+<footer><div class="wrap">© 2026 Manideep Grandhi · <a href="mailto:manideepgrandhi@hotmail.com">manideepgrandhi@hotmail.com</a></div></footer>
+</body>
+</html>
