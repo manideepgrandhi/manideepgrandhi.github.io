@@ -65,12 +65,13 @@ h2{font-size:1.75rem;letter-spacing:-.02em;font-weight:800;margin-bottom:8px}
 .job li{margin:5px 0}
 .job li::marker{color:var(--accent)}
 .edu .card p{color:var(--muted);font-size:.95rem}
+.edu .grid{grid-template-columns:repeat(3,1fr)}
 .badge{display:inline-block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
 .download{background:var(--ink);color:#fff;border-radius:18px;padding:40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
 .download h2{color:#fff;margin:0}
 .download p{color:#c3cad8;margin-top:6px}
 footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
-@media (max-width:820px){.comp{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:820px){.comp{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.edu .grid{grid-template-columns:1fr}}
 @media (max-width:640px){
  .links{display:none}
  header.hero{padding:48px 0 40px}
@@ -183,9 +184,10 @@ footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
 
 <section id="education" class="edu"><div class="wrap">
  <h2>Education &amp; Certifications</h2>
- <p class="lead">Academic background and professional certification.</p>
+ <p class="lead">Academic background and professional certifications.</p>
  <div class="grid">
   <div class="card"><span class="badge">Education</span><h3>B.Tech in Information Technology</h3><p>Jawaharlal Nehru Technological University Affiliated College, Kakinada</p></div>
+  <div class="card"><span class="badge">Certification</span><h3>AWS Certified Solutions Architect – Associate</h3><p>Amazon Web Services</p></div>
   <div class="card"><span class="badge">Certification</span><h3>Microsoft Certified Professional</h3><p>Administering SQL Server 2012/2014 (Exam 70-462)</p></div>
  </div>
 </div></section>
