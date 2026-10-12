@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fw: CPU Utilization from last N minutes !!! · Sqlservv.com</title><meta name="description" content="SQLServer_CPU_Utilization: % CPU utilized from SQL Server Process System_Idle_Process: % CPU Idle - Not serving to any process Other_Process_CPU_Utilization: % CPU utilized by proc…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 December 2018</time></div>
+<h1>Fw: CPU Utilization from last N minutes !!!</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  /***** Script: SQL Server CPU Utilization report from last N minutes *****/
+/***** Support: SQL Server 2008 and Above *****/
+/***** Tested On: SQL Server 2008 R2 and 2014 *****/
+/***** Output:</code></pre></div>
+<p>SQLServer_CPU_Utilization: % CPU utilized from SQL Server Process</p>
+<p>System_Idle_Process: % CPU Idle - Not serving to any process</p>
+<p>Other_Process_CPU_Utilization: % CPU utilized by processes otherthan SQL Server</p>
+<p>Event_Time: Time when these values captured</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">*****/
+DECLARE @ts BIGINT;
+DECLARE @lastNmin TINYINT;
+SET @lastNmin = 10;
+SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info);
+SELECT TOP(@lastNmin)</code></pre></div>
+<p>&nbsp;SQLProcessUtilization AS [SQLServer_CPU_Utilization],</p>
+<p>&nbsp;SystemIdle AS [System_Idle_Process],</p>
+<p>&nbsp;100 - SystemIdle - SQLProcessUtilization AS [Other_Process_CPU_Utilization],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql"> DATEADD(ms,-1 *(@ts - [timestamp]),GETDATE())AS [Event_Time]
+FROM (SELECT record.value(&#x27;(./Record/@id)[1]&#x27;,&#x27;int&#x27;)AS record_id,</code></pre></div>
+<p>record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle],</p>
+<p>record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">[timestamp]
+FROM (SELECT[timestamp], convert(xml, record) AS [record]
+FROM sys.dm_os_ring_buffers
+WHERE ring_buffer_type =N&#x27;RING_BUFFER_SCHEDULER_MONITOR&#x27;AND record LIKE&#x27;%%&#x27;)AS x )AS y
+  ORDER BY record_id DESC;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/12/fw-cpu-utilization-from-last-n-minutes.html">View original post on Blogger</a></p><nav class="pn"><a href="tempdb-contention.html">← Tempdb contention</a><a href="last-database-backup-information-fdl.html">Last Database backup information(FDL) →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

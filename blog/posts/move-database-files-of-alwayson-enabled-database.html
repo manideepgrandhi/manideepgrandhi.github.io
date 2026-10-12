@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Move  database files of Alwayson  enabled database · Sqlservv.com</title><meta name="description" content="Determine the logical file names of the ABC database and their current location on the disk. Suspend data movement of database. Resume data movement for of database. Complete AG he…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>18 October 2020</time></div>
+<h1>Move  database files of Alwayson  enabled database</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p>Determine the logical file names of the ABC database and their current location on the disk.</p>
+<p>Suspend data movement of database.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Update system catalog(alter database modify file) for the database.
+
+Stop SQL Services and move physical files to new locations.
+Start SQL Server.
+Verify the file changes(ABC log file)</code></pre></div>
+<p>Resume data movement for of database.</p>
+<p>Complete AG health check.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/10/move-database-files-of-alwayson-enabled.html">View original post on Blogger</a></p><nav class="pn"><a href="listing-the-disks-using-windows-powershell-windows-server-2012-and-lat.html">← Listing the disks using Windows PowerShell (Windows Server 2012 and later)</a><a href="high-cpu-queries-active.html">High CPU queries - Active →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>script to kill connections to a specific database when the number  of connections to that database are greater than @max_conn. · Sqlservv.com</title><meta name="description" content="DECLARE @Database_name_var varchar(255) DECLARE @loginame_var varchar(255) DECLARE @CMDKILL varchar(255) DECLARE @SPID smallint declare @counter int declare @max_conn int declare @…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>25 April 2017</time></div>
+<h1>script to kill connections to a specific database when the number  of connections to that database are greater than @max_conn.</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">DECLARE @Database_name_var varchar(255)
+DECLARE @loginame_var varchar(255)
+DECLARE @CMDKILL varchar(255)
+DECLARE @SPID smallint
+declare @counter int
+declare @max_conn int
+declare @seconds_to_run int
+-- CHANGE THESE VALUES BEFORE RUNNING
+SELECT @Database_name_var = &#x27;Infra&#x27;
+SELECT @loginame_var =&#x27;EAGLE\INFRADBPROD&#x27;
+select @max_conn = 275
+select @seconds_to_run = 1200
+
+select @counter=0
+while @counter &lt; @seconds_to_run
+begin
+--Two loops exist.  The inner loop will kill current connections.
+--  The outer loop will detect if new connections have been established which
+--  then need to be killed by the inner loop.
+IF (SELECT COUNT(spid) FROM master..sysprocesses WHERE loginame = @loginame_var and db_name(dbid) = @Database_name_var) &gt; @max_conn
+BEGIN
+  WHILE (SELECT COUNT(spid) FROM master..sysprocesses WHERE loginame = @loginame_var and db_name(dbid) = @Database_name_var) &gt; @max_conn
+   BEGIN
+      SELECT @spid = (SELECT top 1 spid FROM master..sysprocesses WHERE loginame = @loginame_var and  db_name(dbid) = @Database_name_var)
+      SELECT @cmdkill = &#x27;KILL &#x27; + CONVERT(VARCHAR(5),@spid)
+      EXEC (@cmdkill)
+      --This Delay exists to allow SQL Server time to clean up the connection.
+      WAITFOR DELAY &#x27;00:00:01&#x27;
+   END
+END
+WAITFOR DELAY &#x27;00:00:01&#x27;
+select @counter=@counter+1
+end</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/script-to-kill-connections-to-specific_24.html">View original post on Blogger</a></p><nav class="pn"><a href="script-to-kill-all-connections-by-given-login-name-and-db-name.html">← Script to kill all connections by given login name and db name</a><a href="script-to-find-free-space-for-all-the-data-and-log-files-of-all-databa.html">Script to find free space for all the data and log files of all databases on the server →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

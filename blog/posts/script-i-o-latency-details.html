@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script : I/O latency details · Sqlservv.com</title><meta name="description" content="SELECT DB_NAME(fs.database_id) AS [database name], CAST(fs.io_stall_read_ms/(1.0 + fs.num_of_reads) AS NUMERIC(10,1)) AS [avg_read_stall_ms], CAST(fs.io_stall_write_ms/(1.0 + fs.nu…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>27 June 2017</time></div>
+<h1>Script : I/O latency details</h1><div class="chips"><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT
+DB_NAME(fs.database_id) AS [database name],
+CAST(fs.io_stall_read_ms/(1.0 + fs.num_of_reads) AS NUMERIC(10,1)) AS [avg_read_stall_ms],
+CAST(fs.io_stall_write_ms/(1.0 + fs.num_of_writes) AS NUMERIC(10,1)) AS [avg_write_stall_ms],
+CAST((fs.io_stall_read_ms + fs.io_stall_write_ms)
+/(1.0 + fs.num_of_reads + fs.num_of_writes)
+AS NUMERIC(10,1)) AS [avg_io_stall_ms],
+CONVERT(DECIMAL(18,2), mf.size/128.0) AS [File Size (MB)],
+mf.physical_name,
+mf.type_desc,
+fs.io_stall_read_ms,
+fs.num_of_reads,
+fs.io_stall_write_ms,
+fs.num_of_writes,
+fs.io_stall_read_ms + fs.io_stall_write_ms AS [io_stalls],
+fs.num_of_reads + fs.num_of_writes AS [total_io]
+FROM sys.dm_io_virtual_file_stats(null,null) AS fs
+INNER JOIN sys.master_files AS mf WITH (NOLOCK) ON fs.database_id = mf.database_id
+AND fs.[file_id] = mf.[file_id]
+ORDER BY avg_io_stall_ms DESC OPTION (RECOMPILE);</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/script-io-latency-details_27.html">View original post on Blogger</a></p><nav class="pn"><a href="alwayson-monitor.html">← Alwayson monitor</a><a href="sql-job-history.html">Sql job history →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

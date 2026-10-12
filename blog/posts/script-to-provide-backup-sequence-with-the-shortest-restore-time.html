@@ -1,0 +1,133 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script to provide backup sequence with the shortest restore time · Sqlservv.com</title><meta name="description" content="/******************************************* Script: Provides backup sequence with the shortest restore time. *******************************************/ DECLARE @DatabaseName Var…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>08 September 2019</time></div>
+<h1>Script to provide backup sequence with the shortest restore time</h1><div class="chips"><a class="chip" href="../tags/backup.html">backup</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/*******************************************
+Script: Provides backup sequence with the shortest restore time.
+*******************************************/
+DECLARE @DatabaseName Varchar(MAX)
+DECLARE @BackupSequence TABLE
+                  (
+                        Server_Name SYSNAME,
+                        [Database_Name] SYSNAME,
+                        Backup_Finish_Date DateTime,
+                        Backup_Type Varchar(30),
+                        Backup_Size Decimal(10,2),
+                        Recovery_Model Varchar(20),
+                        Physical_Device_Name Varchar(500),
+                        [User_Name] SYSNAME
+                  )
+--Here, we can filter the database as per the requirement. In this script we will be listing result for all the databases except temp database.
+DECLARE cur CURSOR FOR
+      Select [Name] From sys.databases WHERE name &lt;&gt; &#x27;tempdb&#x27;
+OPEN cur
+FETCH NEXT FROM cur INTO @DatabaseName
+WHILE(@@FETCH_STATUS = 0)
+BEGIN
+;with FullBkp AS
+--listing full database backup
+(
+      SELECT bkp.Server_Name,
+       bkp.[Database_Name],
+       bkp.Backup_Finish_Date,
+       &#x27;FULL&#x27; AS Backup_Type,
+       bkp.Backup_Size/1024/1024 AS Backup_Size,
+       bkp.Recovery_Model,
+       bmf.Physical_Device_Name,
+       bkp.[User_Name]
+      FROM msdb.dbo.BackupMediaFamily bmf
+      INNER JOIN msdb.dbo.BackupSet bkp
+      ON bkp.Media_Set_ID = bmf.media_set_id
+      WHERE bkp.[Database_Name] = @DatabaseName
+      AND bkp.Backup_Finish_Date =
+            (
+                  SELECT MAX(Backup_Finish_Date)
+                        FROM msdb.dbo.BackupSet
+            WHERE Database_Name = @DatabaseName
+                        AND type = &#x27;D&#x27; AND is_copy_only = 0
+            )
+      AND bkp.type = &#x27;D&#x27;
+)
+,DiffBkp AS
+--listing differential database backup
+(
+      SELECT bkp.Server_Name,
+           bkp.[Database_Name],
+           bkp.Backup_Finish_Date,
+           &#x27;Differential&#x27; AS Backup_Type,
+           bkp.Backup_Size/1024/1024 AS Backup_Size,
+           bkp.Recovery_Model,
+           bmf.Physical_Device_Name,
+           bkp.[User_Name]
+      FROM msdb.dbo.BackupMediaFamily bmf
+      INNER JOIN msdb.dbo.BackupSet bkp
+      ON bkp.Media_Set_ID = bmf.media_set_id
+      WHERE bkp.Database_Name = @DatabaseName
+      AND bkp.type = &#x27;I&#x27; AND bkp.Backup_Finish_Date =
+      (
+            SELECT MAX(Backup_Finish_Date)
+        FROM msdb.dbo.BackupSet
+        WHERE Database_Name = @DatabaseName
+            AND type = &#x27;I&#x27; AND is_copy_only = 0 AND Backup_Finish_Date &gt;
+            (
+                  SELECT Backup_Finish_Date FROM FullBkp
+            )
+      )
+)
+,LogBkp AS
+--listing log database backup
+(
+      SELECT bkp.Server_Name,
+               bkp.[Database_Name],
+           bkp.Backup_Finish_Date,
+           &#x27;Log&#x27; AS Backup_Type,
+           bkp.Backup_Size/1024/1024 AS Backup_Size,
+           bkp.Recovery_Model,
+           bmf.Physical_Device_Name,
+           bkp.[User_Name]
+      FROM msdb.dbo.BackupMediaFamily bmf
+      INNER JOIN msdb.dbo.BackupSet bkp
+      ON bkp.Media_Set_ID = bmf.media_set_id
+      WHERE bkp.[Database_Name] = @DatabaseName
+      AND bkp.type = &#x27;L&#x27; AND bkp.Backup_Finish_Date &gt;
+      (
+            CASE
+                  WHEN (SELECT COUNT(*) FROM DiffBkp) &lt;&gt; 0
+                        THEN (SELECT Backup_Finish_Date FROM DiffBkp)
+                  ELSE (SELECT Backup_Finish_Date FROM FullBkp)
+            END
+      )
+)
+INSERT @BackupSequence
+SELECT * FROM LogBkp
+      UNION ALL
+SELECT * FROM DiffBkp
+      UNION ALL
+SELECT * FROM FullBkp
+ORDER BY Backup_Finish_Date
+FETCH NEXT FROM cur
+INTO @DatabaseName
+END
+CLOSE cur
+DEALLOCATE cur
+SELECT Server_Name AS InstanceName,
+                [Database_Name] AS DatabaseName,
+                Backup_Type AS BackupType,
+                Physical_Device_Name AS BackupLocation,
+                Backup_Finish_Date AS BackupTime,
+                Backup_Size AS &#x27;BkpSize [MB]&#x27;,
+                Recovery_Model AS RecoveryModel,
+               [User_Name] AS BackupUser
+FROM @BackupSequence</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2019/09/script-to-provide-backup-sequence-with.html">View original post on Blogger</a></p><nav class="pn"><a href="resolving-alwayson-sync-issues.html">← Resolving Alwayson Sync issues</a><a href="always-on-sync-script.html">Always on sync script →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

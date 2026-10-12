@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SQL Agent:Job schedules · Sqlservv.com</title><meta name="description" content="Author: Dominic Wirth Date created: 2019-10-04 Date last change: 2019-12-21 Script-Version: 1.1 Tested with: SQL Server 2012 and above Description: This script shows important info…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>01 February 2020</time></div>
+<h1>SQL Agent:Job schedules</h1><div class="chips"><a class="chip" href="../tags/sql-agent.html">Sql agent</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/*
+
+====================================================================</code></pre></div>
+<p><code>Author:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dominic Wirth</code></p>
+<p><code>Date created:&nbsp;&nbsp;&nbsp;&nbsp; 2019-10-04</code></p>
+<p><code>Date last change: 2019-12-21</code></p>
+<p><code>Script-Version:&nbsp;&nbsp; 1.1</code></p>
+<p><code>Tested with:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2012 and above</code></p>
+<p><code>Description: This script shows important information regarding</code></p>
+<p><code>SQL Jobs and Job Schedules. Please feel free to change the</code></p>
+<p><code>translated values from English to your desired language.</code></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">====================================================================
+*/
+WITH JobSchedules AS (
+  SELECT
+    schedule_id, [name], [enabled]
+    ,CASE freq_type
+WHEN 1 THEN &#x27;One time only&#x27;
+WHEN 4 THEN &#x27;Daily&#x27;
+WHEN 8 THEN &#x27;Weekly&#x27;
+WHEN 16 THEN &#x27;Monthly&#x27;
+WHEN 32 THEN &#x27;Monthly&#x27;
+WHEN 64 THEN &#x27;When SQL Server Agent starts&#x27;
+WHEN 128 THEN &#x27;When computer is idle&#x27;
+      END AS Frequency
+    ,IIF(freq_type = 32 AND freq_relative_interval &lt;&gt; 0
+          ,CASE freq_relative_interval WHEN 1 THEN &#x27;First &#x27; WHEN 2 THEN &#x27;Second &#x27; WHEN 4 THEN &#x27;Third &#x27; WHEN 8 THEN &#x27;Fourth &#x27; WHEN 16 THEN &#x27;Last &#x27; END
+          ,&#x27;&#x27;)
+      + CASE freq_type
+        WHEN 1 THEN &#x27;&#x27;
+        WHEN 4 THEN IIF(freq_interval = 1, &#x27;Every day&#x27;, &#x27;Every &#x27; + CAST(freq_interval AS VARCHAR(3)) + &#x27; day(s)&#x27;)
+        WHEN 8 THEN
+            IIF(freq_interval &amp;  2 =  2, &#x27;Mon &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp;  4 =  4, &#x27;Tue &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp;  8 =  8, &#x27;Wed &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp; 16 = 16, &#x27;Thu &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp; 32 = 32, &#x27;Fri &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp; 64 = 64, &#x27;Sat &#x27;, &#x27;&#x27;)
+          + IIF(freq_interval &amp;  1 =  1, &#x27;Sun &#x27;, &#x27;&#x27;)
+        WHEN 16 THEN &#x27;On the &#x27; + CAST(freq_interval AS VARCHAR(3)) + &#x27; day of the month.&#x27;
+        WHEN 32 THEN
+          CASE freq_interval
+            WHEN 1 THEN &#x27;Sunday&#x27; WHEN 2 THEN &#x27;Monday&#x27; WHEN 3 THEN &#x27;Tuesday&#x27; WHEN 4 THEN &#x27;Wednesday&#x27; WHEN 5 THEN &#x27;Thursday&#x27; WHEN 6 THEN &#x27;Friday&#x27;
+            WHEN 7 THEN &#x27;Saturday&#x27; WHEN 8 THEN &#x27;Day&#x27; WHEN 9 THEN &#x27;Weekday&#x27; WHEN 10 THEN &#x27;Weekend day&#x27;
+          END
+        WHEN 64 THEN &#x27;&#x27;
+        WHEN 128 THEN &#x27;&#x27;
+      END AS DayInterval
+    ,IIF(freq_subday_interval &lt;&gt; 0
+          ,CASE freq_subday_type
+            WHEN 1 THEN &#x27;At &#x27; + STUFF(STUFF(RIGHT(&#x27;00000&#x27; + CAST(active_start_time AS VARCHAR(6)), 6), 3,0,&#x27;:&#x27;), 6,0,&#x27;:&#x27;)
+            WHEN 2 THEN &#x27;Repeat every &#x27; + CAST(freq_subday_interval  AS VARCHAR(3)) + &#x27; seconds&#x27;
+            WHEN 4 THEN &#x27;Repeat every &#x27; + CAST(freq_subday_interval  AS VARCHAR(3)) + &#x27; minutes&#x27;
+            WHEN 8 THEN &#x27;Repeat every &#x27; + CAST(freq_subday_interval  AS VARCHAR(3)) + &#x27; hours&#x27;
+          END
+          ,&#x27;&#x27;) AS DailyFrequency
+    ,CASE
+        WHEN freq_type = 8 THEN &#x27;Repeat every &#x27; + CAST(freq_recurrence_factor AS VARCHAR(3)) + &#x27; week(s).&#x27;
+        WHEN freq_type IN (16, 32) THEN &#x27;Repeat every &#x27; + CAST(freq_recurrence_factor AS VARCHAR(3)) + &#x27; month(s).&#x27;
+        ELSE &#x27;&#x27;
+      END AS Recurrence
+    ,STUFF(STUFF(RIGHT(&#x27;00000&#x27; + CAST(active_start_time AS VARCHAR(6)), 6), 3,0,&#x27;:&#x27;), 6,0,&#x27;:&#x27;) AS StartTime
+    ,STUFF(STUFF(RIGHT(&#x27;00000&#x27; + CAST(active_end_time AS VARCHAR(6)), 6), 3,0,&#x27;:&#x27;), 6,0,&#x27;:&#x27;) AS EndTime
+  FROM msdb.dbo.sysschedules
+)
+SELECT</code></pre></div>
+<p><code>&nbsp;&nbsp;</code><code>J.[</code><code>name</code><code>] </code><code>AS</code> <code>JobName, J.[enabled] </code><code>AS</code> <code>JobIsEnabled, </code><code>ISNULL</code><code>(SP.[</code><code>name</code><code>], </code><code>'Unknown'</code><code>) </code><code>AS</code> <code>JobOwner, </code><code>ISNULL</code><code>(JS.[enabled], 0) </code><code>AS</code> <code>ScheduleIsEnabled</code></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  ,ISNULL(JS.[Frequency], &#x27;&#x27;) AS Frequency, ISNULL(JS.[DayInterval], &#x27;&#x27;) AS DayInterval
+  ,ISNULL(JS.[DailyFrequency], &#x27;&#x27;) AS [DailyFrequency], ISNULL(JS.[Recurrence], &#x27;&#x27;) AS [Recurrence]
+  ,ISNULL(JS.[StartTime], &#x27;&#x27;) AS [StartTime], ISNULL(JS.[EndTime], &#x27;&#x27;) AS [EndTime]
+FROM msdb.dbo.sysjobs AS J
+  LEFT JOIN sys.server_principals AS SP ON J.owner_sid = SP.[sid]
+  LEFT JOIN msdb.dbo.sysjobschedules AS JJS ON J.job_id = JJS.job_id
+  LEFT JOIN JobSchedules AS JS ON JJS.schedule_id = JS.schedule_id
+ORDER BY
+  J.[name] ASC;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/02/sql-agentjob-schedules.html">View original post on Blogger</a></p><nav class="pn"><a href="monitor-backup-restore-dbcc-status.html">← monitor backup restore dbcc status</a><a href="log-reuse-wait-desc-showing-as-availability-replica.html">Log_reuse_wait_desc showing as Availability_Replica →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

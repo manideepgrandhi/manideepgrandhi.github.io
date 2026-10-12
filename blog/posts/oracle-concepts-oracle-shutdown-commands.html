@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oracle Concepts - Oracle shutdown commands · Sqlservv.com</title><meta name="description" content="You might take the database down to make configuration changes, for a backup or to upgrade Oracle software. When it?s time to bring your database down, we use the shutdown command.…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 January 2018</time></div>
+<h1>Oracle Concepts - Oracle shutdown commands</h1><div class="chips"><a class="chip" href="../tags/oracle-tech.html">Oracle-Tech</a></div><div class="content"><p>You might take the database down to make configuration changes, for a backup or to upgrade Oracle software. When it?s time to bring your database down, we use the shutdown command.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">As you might guess, the shutdown command comes in many forms.  Oracle has three shutdown modes:
+* Normal (default) - waits for in-flight work to complete
+* Immediate - terminates all sessions and does a rollback on all
+uncommitted transactions
+* Abort - aborts all sessions, leaving current DML in need of rollback, de-allocates the SGA and terminates the background processes.</code></pre></div>
+<p>The "normal" and "immediate" modes can take a long time in you have in-flight transactions, and many Oracle DBA's ensure a swift clean shutdown this way, aborting the sessions, re-starting to allow warmstart rollback of the aborted transactions, and a shutdown immediate to close cleanly:</p>
+<p>SQL&gt; shutdown abort</p>
+<p>SQL&gt; startup</p>
+<p>SQL&gt; shutdown immediate</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Oracle Normal Shutdown</code></pre></div>
+<p>A normal shutdown of an Oracle database is actually rarely used. This is because the normal shutdown waits for everyone to complete their work and then logoff in an orderly fashion. When a normal shutdown occurs, the database is closed in a normal manner, and all changes made in the database are flushed to the database datafiles.&nbsp; This is known as a ?clean shutdown?.</p>
+<p>Most of the time this is not practical? there always seems to be someone who has left for vacation and who forgot to log out, or there are times that Oracle processes become ?zombied? (this is where Oracle thinks someone is connected to the database but they really are not). In these cases, the database will never come down.</p>
+<p>It will simply wait forever until you manually kill those sessions. Because of this, we often recommend the shutdown immediate or shutdown abort commands, which we will discuss in the next sections. Here is an example of the use of the normal shutdown command.</p>
+<p>SQL&gt; shutdown</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">When you execute a shutdown, Oracle will flush all the changes in memory out to the database datafiles. This makes database startup quicker because the database is in a consistent state.</code></pre></div>
+<p>Think of it this way: if you jump into the air and land on your feet, you have landed in a way that prepares you to make another jump.&nbsp; If, instead, you jump and land on your back, you are in no position to make another jump; instead, you must perform a recovery by taking the actions required to stand again.&nbsp; A clean shutdown is one that is prepared to come back up without delay.&nbsp; A dirty shutdown is one that lands on its back; it can not come back up without first recovering itself.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Oracle Shutdown Immediate</code></pre></div>
+<p>Perhaps the best way to initially shutdown the database is the shutdown immediate command. This command will prevent any new logins, then rollback any uncommitted transactions, and then bring down the database. In the process of bringing down the database, Oracle will flush all the changes in memory out to the database datafiles too, just like a regular shutdown does. This makes database startup quicker. Here is an example of shutting down a database with the shutdown immediate command:</p>
+<p>SQL&gt; shutdown immediate</p>
+<p>The shutdown immediate command will work most of the time, but there are times when it can hang and fail to shutdown the database. In these cases, the shutdown abort command is called for.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Oracle Shutdown Abort Command</code></pre></div>
+<p>The shutdown abort command is pretty much a guaranteed way to get your database to shutdown. It?s a ?hard crash? of the database, and this can result in a longer time to start the database back up. Still, you can?t really hurt the database using the shutdown abort command, and during your DBA years you will find more than a few occasions to use the shutdown abort command.</p>
+<p>A shutdown abort should not be your first shutdown method of choice, there may be times when you must force the database down. Here is an example using the shutdown abort command:</p>
+<p>SQL&gt; shutdown abort</p>
+<p>ABORT</p>
+<p>Proceeds with the fastest possible shutdown of the database without waiting for calls</p>
+<p>to complete or users to disconnect.</p>
+<p>Uncommitted transactions are not rolled back. Client SQL statements currently being</p>
+<p>processed are terminated. All users currently connected to the database are implicitly</p>
+<p>disconnected and the next database startup will require instance recovery.</p>
+<p>You must use this option if a background process terminates abnormally.</p>
+<p>IMMEDIATE</p>
+<p>Does not wait for current calls to complete or users to disconnect from the database.</p>
+<p>Further connects are prohibited. The database is closed and dismounted. The instance</p>
+<p>is shutdown and no instance recovery is required on the next database startup.</p>
+<p>NORMAL</p>
+<p>NORMAL is the default option which waits for users to disconnect from the database.</p>
+<p>Further connects are prohibited. The database is closed and dismounted. The instance</p>
+<p>is shutdown and no instance recovery is required on the next database startup.&nbsp;</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/01/oracle-concepts-oracle-shutdown-commands.html">View original post on Blogger</a></p><nav class="pn"><a href="technical-replication-agents-and-jobs.html">← Technical - Replication agents and jobs</a><a href="capture-sp-whoisactive-results-to-a-logging-table.html">Capture Sp_whoisactive results to a Logging Table →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

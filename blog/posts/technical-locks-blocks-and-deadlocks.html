@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technical - locks, blocks and deadlocks · Sqlservv.com</title><meta name="description" content="Locks In order to insure that these dirty reads never occur, we have two primary types of locks, Read Locks and Exclusive Locks. Read Lock You can have several different connection…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>15 November 2017</time></div>
+<h1>Technical - locks, blocks and deadlocks</h1><div class="chips"><a class="chip" href="../tags/technical.html">technical</a></div><div class="content"><p><b>Locks</b></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">If we move over to the database world, we see that there are different ways to use resources (just like our two examples above). We can perform &quot;reads&quot; or we can perform &quot;writes&quot;.
+
+When we want to read the data, there&#x27;s no reason that other&#x27;s can&#x27;t read the data as well--just like two people watching TV. However, if we want to write the data, then we need to make sure that no one else is looking at it. If they are reading it while we&#x27;re writing it, they will get &quot;dirty&quot; reads. (Meaning, they&#x27;ll see the data partially written out, which will be invalid.)</code></pre></div>
+<p>In order to insure that these dirty reads never occur, we have two primary types of locks, Read Locks and Exclusive Locks.</p>
+<p><b>Read Lock</b></p>
+<p>You can have several different connections reading from the same datasource at any given time. But to insure that no one changes that data while they're reading it, they take out a Read Lock.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Once a connection has a read lock on a piece of data, all other connections must wait until the Read Lock is released before they can write the data. Others can, however, take out Read Locks of their own on that same piece of data.
+
+Exclusive Lock
+If a connection wants to update/insert/delete a piece of data, they have to take out an exclusive lock. This prevents any other connection from also taking out a lock on the data (making the lock exclusive to that connection).
+
+When a connection has an exclusive lock on the data, no other connections may read from the data. This helps prevent dirty reads by insuring that no one can read the data while its being written.</code></pre></div>
+<p><b>Blocking</b></p>
+<p>"Blocking" is simply a term that means that one connection is holding a lock on a resource when another connection wants to read or write to it. It doesn't necessarily mean that the owner connection won't release it, just that it's currently holding it.</p>
+<p>Compare this to the case with a child holding the ball. The child holding the ball is blocking all other children from holding the ball.</p>
+<p><b>Deadlock</b></p>
+<p>I know you didn't ask this, but it's only one more step to get to deadlocks (and it's related very directly to blocking).</p>
+<p>Deadlocks can happen when you have two connections that each have a lock, but they want each others resource. In this scenario, it's like two children that each has a ball, but wants the other's ball.</p>
+<p>Like children, these connections are not willing to share at all. Each connection needs access to both of the resources in order to continue. However, they are in a state of permanent blocking. In this state, the parent (DBMS) has to come in and choose a loser so that one of the children (connections) can have access to both of the resources.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Once that &quot;winning&quot; connection is done, it releases the resources and then the other (&quot;losing&quot;) connection can try again to get to both resources.</code></pre></div>
+<p>So, the concept of a deadlock is where you have two resources that are blocking each other.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/technical-locks-blocks-and-deadlocks_15.html">View original post on Blogger</a></p><nav class="pn"><a href="script-alwayson-events.html">← Script - Alwayson events</a><a href="script-active-sessions.html">Script :Active sessions →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

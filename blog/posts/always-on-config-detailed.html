@@ -1,0 +1,183 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>always on config - detailed · Sqlservv.com</title><meta name="description" content="+ &#x27; | PrimaryRecoveryHealth: &#x27; + (CASE WHEN ags.primary_recovery_health_desc IS NULL + &#x27; | SecondaryRecoveryHealth: &#x27; + (CASE WHEN ags.secondary_recovery_health_desc IS NULL + &#x27; | …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 April 2020</time></div>
+<h1>always on config - detailed</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SET NOCOUNT ON;
+SET ANSI_WARNINGS OFF;	-- to ignore null value message of sys.dm_hadr_availability_group_states (when it has data)
+DECLARE @ConsoleMsg VARCHAR(1000);
+USE master;	-- to ensure script runs in context of database that is online.
+SET @ConsoleMsg = &#x27;Starting AlwaysOn script. DateTime is &#x27; + CONVERT(VARCHAR(24), GETDATE(), 121)
+	+ &#x27; (&#x27; + CONVERT(VARCHAR(24), GETUTCDATE(), 121) + &#x27; UTC).&#x27;;
+RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+SET @ConsoleMsg = &#x27;Script running on SQL Server with MajorVersion &#x27;;
+DECLARE @MajorVersion int;
+SET @MajorVersion = CONVERT(int, SUBSTRING(
+	CONVERT(VARCHAR(128), SERVERPROPERTY(&#x27;ProductVersion&#x27;))
+	, 0
+	, CHARINDEX(&#x27;.&#x27;, CONVERT(VARCHAR(128), SERVERPROPERTY(&#x27;ProductVersion&#x27;))) ));
+SET @ConsoleMsg = @ConsoleMsg + CONVERT(VARCHAR(2), @MajorVersion) + &#x27;. &#x27;;
+IF CONVERT(INT, @MajorVersion) &lt; 11
+BEGIN
+	SET @ConsoleMsg= @ConsoleMsg + &#x27;SQL Server connected to is not SQL Server 2012. Exiting.&#x27;;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+	SET NOEXEC ON;	-- do not execute TSQL further below (avoiding complex-looking IF...ELSE code)
+END;
+RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+SET @ConsoleMsg = &#x27;Script running on SQL instance &#x27;
+	+ CONVERT(nvarchar(256), SERVERPROPERTY(&#x27;ServerName&#x27;)) + &#x27; (&#x27; + CONVERT(nvarchar(128), SERVERPROPERTY(&#x27;ProductVersion&#x27;))
+	+ &#x27; &#x27; + SUBSTRING(@@VERSION, CHARINDEX(&#x27;X&#x27;, @@VERSION), 3) + &#x27; &#x27;;
+-- IIF not in earlier SQL versions so using IF.
+ IF(SERVERPROPERTY(&#x27;IsClustered&#x27;) = 1)
+	SET @ConsoleMsg = @ConsoleMsg + &#x27;SQLIsClustered&#x27;
+ELSE
+	SET @ConsoleMsg = @ConsoleMsg + &#x27;SQLNotClustered&#x27;;
+SET @ConsoleMsg = @ConsoleMsg + &#x27;).&#x27;;
+RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+SET @ConsoleMsg = &#x27;SQL instance running on computer &#x27;
+	+ CONVERT(nvarchar(128), SERVERPROPERTY(&#x27;ComputerNamePhysicalNetBIOS&#x27;)) + &#x27;.&#x27;;
+RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+IF NOT EXISTS (SELECT 1 FROM sys.availability_groups)
+BEGIN
+	SET @ConsoleMsg = &#x27;No configured Availability Groups in this SQL instance.&#x27;;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+END
+DECLARE @AGName sysname;
+DECLARE CurAGs CURSOR
+	FOR SELECT name FROM sys.availability_groups;
+OPEN CurAGs;
+FETCH NEXT FROM CurAGs INTO @AGName;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	DECLARE @AGListener nvarchar(63);
+	SET @AGListener = &#x27;&#x27;;	-- for next loop if any
+	SELECT TOP 1 @AGListener = dns_name FROM sys.availability_group_listeners agl
+		JOIN sys.availability_groups ag ON agl.group_id = ag.group_id WHERE ag.name = @AGName;
+	SELECT @AGListener = (CASE WHEN @AGListener IS NULL OR @AGListener = &#x27;&#x27; THEN &#x27;NoListener&#x27; ELSE @AGListener END);
+	SET @ConsoleMsg = &#x27;|- AvailabilityGroupName: &#x27;;
+	SELECT @ConsoleMsg = @ConsoleMsg + ag.name
+		+ &#x27; | FailureConditionLevel: &#x27; + CONVERT(char(1), ag.failure_condition_level)
+		+ &#x27; | HealthCheckTimeoutMilliSecs: &#x27; + CONVERT(varchar(10), ag.health_check_timeout)
+		+ &#x27; | AutomatedBackupPreference: &#x27; + ag.automated_backup_preference_desc
+		+ &#x27; | AvailabilityGroupListener: &#x27; + @AGListener
+		FROM sys.availability_groups ag WHERE ag.name = @AGName;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+	SELECT @ConsoleMsg = &#x27;   &#x27;
+		+ &#x27; |- CurrentPrimaryReplica: &#x27; +  (CASE WHEN ags.primary_replica IS NULL
+			THEN &#x27;IsNull_NotPrimaryReplicaOrNoCommunicationWithWindowsCluster&#x27; ELSE ags.primary_replica END)</code></pre></div>
+<p>+ ' | PrimaryRecoveryHealth: ' + (CASE WHEN ags.primary_recovery_health_desc IS NULL&nbsp;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">			THEN &#x27;IsNull&#x27; ELSE ags.primary_recovery_health_desc END)</code></pre></div>
+<p>+ ' | SecondaryRecoveryHealth: ' + (CASE WHEN ags.secondary_recovery_health_desc IS NULL&nbsp;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">			THEN &#x27;IsNull&#x27; ELSE ags.secondary_recovery_health_desc END)</code></pre></div>
+<p>+ ' | OverallSynchronizationHealth: ' + (CASE WHEN ags.synchronization_health_desc IS NULL&nbsp;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">			THEN &#x27;IsNull&#x27; ELSE ags.synchronization_health_desc END)
+		FROM sys.availability_groups ag JOIN sys.dm_hadr_availability_group_states ags
+		ON ag.group_id=ags.group_id WHERE ag.name = @AGName;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+	DECLARE @DatabaseId int;
+	DECLARE CurDatabases CURSOR
+		FOR SELECT drs.database_id FROM sys.availability_groups ag JOIN sys.dm_hadr_database_replica_states drs
+		ON ag.group_id = drs.group_id WHERE ag.name = @AGName
+		GROUP BY ag.name, drs.database_id;
+	OPEN CurDatabases;
+	FETCH NEXT FROM CurDatabases INTO @DatabaseId;
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		SELECT @ConsoleMsg = &#x27;    |- DatabaseName: &#x27; + DB_NAME(drs.database_id)
+			+ &#x27; | DatabaseIdentifierInAvailabilityGroup: &#x27; + CONVERT(varchar(36), drs.group_database_id)
+			FROM sys.availability_groups ag JOIN sys.dm_hadr_database_replica_states drs ON ag.group_id = drs.group_id
+			WHERE ag.name = @AGName AND drs.database_id = @DatabaseId
+			GROUP BY ag.name, drs.database_id, drs.group_database_id;
+		RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+		FETCH NEXT FROM CurDatabases INTO @DatabaseId;
+	END;
+	CLOSE CurDatabases;
+	DEALLOCATE CurDatabases;
+	DECLARE @ReplicaName nvarchar(256);
+	DECLARE CurReplicas CURSOR
+		FOR SELECT ar.replica_server_name FROM sys.availability_groups ag
+			JOIN sys.availability_replicas ar ON ag.group_id = ar.group_id WHERE ag.name = @AGName;
+	OPEN CurReplicas;
+	FETCH NEXT FROM CurReplicas INTO @ReplicaName;
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		SELECT @ConsoleMsg = &#x27;    |- ReplicaName: &#x27; + ar.replica_server_name</code></pre></div>
+<p>+ ' | AvailabilityMode: ' + ar.availability_mode_desc + ' | FailoverMode: ' + ar.failover_mode_desc&nbsp;</p>
+<p>+ ' | PrimaryRole: ' + ar.primary_role_allow_connections_desc + ' | SecondaryRole: ' + ar.secondary_role_allow_connections_desc</p>
+<p>+ ' | JoinState: ' + rcs.join_state_desc</p>
+<p>+ ' | ClusterNodeName: ' + rcn.node_name</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">			FROM sys.availability_groups ag JOIN sys.availability_replicas ar ON ag.group_id = ar.group_id
+			JOIN sys.dm_hadr_availability_replica_cluster_states rcs ON (rcs.group_id = ag.group_id AND rcs.replica_id = ar.replica_id)
+			JOIN sys.dm_hadr_availability_replica_cluster_nodes rcn ON (rcn.group_name=ag.name AND rcn.replica_server_name=ar.replica_server_name)
+			WHERE ag.name = @AGName AND ar.replica_server_name = @ReplicaName;
+		RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+		FETCH NEXT FROM CurReplicas INTO @ReplicaName;
+	END;
+	CLOSE CurReplicas;
+	DEALLOCATE CurReplicas;
+	FETCH NEXT FROM CurAGs INTO @AGName;
+END;
+CLOSE CurAGs;
+DEALLOCATE CurAGs;
+IF NOT EXISTS (SELECT 1 FROM sys.dm_hadr_cluster)
+BEGIN
+	SET @ConsoleMsg = &#x27;SQL instance on standalone Windows server (not on cluster nodes) OR the Windows Cluster node has no quorum.&#x27;;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+END
+ELSE
+BEGIN
+	SELECT @ConsoleMsg = &#x27;|- WindowsCluster: &#x27; + cluster_name + &#x27; | QuorumType: &#x27; + quorum_type_desc + &#x27; | QuorumState: &#x27; + quorum_state_desc
+		FROM sys.dm_hadr_cluster;
+	RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+	DECLARE @MemberName nvarchar(128);
+	DECLARE CurMemberNames CURSOR
+		FOR SELECT member_name FROM sys.dm_hadr_cluster_members;
+	OPEN CurMemberNames;
+	FETCH NEXT FROM CurMemberNames INTO @MemberName;
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		SELECT @ConsoleMsg = &#x27;    |- MemberName: &#x27; + cm.member_name + &#x27; | MemberType: &#x27; + cm.member_type_desc + &#x27; | MemberState: &#x27; + cm.member_state_desc
+			+ &#x27; | QuorumVotes: &#x27; + CONVERT(char(1), cm.number_of_quorum_votes)
+			FROM sys.dm_hadr_cluster_members cm
+			WHERE cm.member_name = @MemberName;
+		RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+		DECLARE @NetworkIP nvarchar(48);
+		DECLARE CurNetworkIPs CURSOR
+			FOR SELECT network_subnet_ip FROM sys.dm_hadr_cluster_networks WHERE member_name = @MemberName;
+		OPEN CurNetworkIPs;
+		FETCH NEXT FROM CurNetworkIPs INTO @NetworkIP;
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+			SELECT @ConsoleMsg = &#x27;        |- NetworkIP: &#x27; + network_subnet_ip</code></pre></div>
+<p>+ ' | NetworkSubnetMaskIfIPv4: ' + (CASE WHEN network_subnet_ipv4_mask IS NULL&nbsp;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">					THEN &#x27;IsNull_SinceIPv6Subnet&#x27; ELSE network_subnet_ipv4_mask END)
+				+ &#x27; | NetworkType: &#x27; + (CASE WHEN is_public = 0 THEN &#x27;Private&#x27; ELSE &#x27;Public&#x27; END)
+				FROM sys.dm_hadr_cluster_networks
+				WHERE network_subnet_ip = @NetworkIP;
+			RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;
+			FETCH NEXT FROM CurNetworkIPs INTO @NetworkIP;
+		END;
+		CLOSE CurNetworkIPs;
+		DEALLOCATE CurNetworkIPs;
+		FETCH NEXT FROM CurMemberNames INTO @MemberName;
+	END;
+	CLOSE CurMemberNames;
+	DEALLOCATE CurMemberNames;
+END;
+IF CONVERT(INT, @MajorVersion) &lt; 11
+BEGIN
+	SET NOEXEC OFF;	-- turn on execution for earlier SQL versions to print script complete
+END;
+SET @ConsoleMsg = &#x27;Script complete.&#x27;;
+RAISERROR (@ConsoleMsg,10,1) WITH NOWAIT;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/always-on-config-detailed.html">View original post on Blogger</a></p><nav class="pn"><a href="script-to-capture-topology-of-alwayson-configuration.html">← Script to capture topology of Alwayson configuration</a><a href="sys-dm-os-waiting-task-script.html">sys.dm_os_waiting_task script →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

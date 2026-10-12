@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sql job history · Sqlservv.com</title><meta name="description" content="SELECT j.name JobName , h.step_name StepName , CAST(STR(h.run_date, 8, 0) AS DATETIME) + CAST(STUFF(STUFF(RIGHT(&#x27;000000&#x27; + CAST (h.run_time AS VARCHAR(6)), 6), 5, 0, &#x27;:&#x27;), 3, 0, &#x27;:…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>05 July 2017</time></div>
+<h1>Sql job history</h1><div class="chips"><a class="chip" href="../tags/job-history.html">job history</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT  j.name JobName       , h.step_name StepName       , CAST(STR(h.run_date, 8, 0) AS DATETIME)         + CAST(STUFF(STUFF(RIGHT(&#x27;000000&#x27; + CAST (h.run_time AS VARCHAR(6)), 6),                            5, 0, &#x27;:&#x27;), 3, 0, &#x27;:&#x27;) AS DATETIME) AS StartDatetime       , DATEADD(SECOND,                 ( ( h.run_duration / 1000000 ) * 86400 )                 + ( ( ( h.run_duration - ( ( h.run_duration / 1000000 )                                            * 1000000 ) ) / 10000 ) * 3600 )                 + ( ( ( h.run_duration - ( ( h.run_duration / 10000 ) * 10000 ) )                       / 100 ) * 60 ) + ( h.run_duration - ( h.run_duration                                                             / 100 ) * 100 ),                 CAST(STR(h.run_date, 8, 0) AS DATETIME)                 + CAST(STUFF(STUFF(RIGHT(&#x27;000000&#x27;                                          + CAST (h.run_time AS VARCHAR(6)), 6),                                    5, 0, &#x27;:&#x27;), 3, 0, &#x27;:&#x27;) AS DATETIME)) AS EndDatetime       , STUFF(STUFF(REPLACE(STR(run_duration, 6, 0), &#x27; &#x27;, &#x27;0&#x27;), 3, 0, &#x27;:&#x27;), 6,               0, &#x27;:&#x27;) AS run_duration_formatted       , ( ( h.run_duration / 1000000 ) * 86400 ) + ( ( ( h.run_duration                                                          - ( ( h.run_duration                                                               / 1000000 )                                                              * 1000000 ) )                                                        / 10000 ) * 3600 )         + ( ( ( h.run_duration - ( ( h.run_duration / 10000 ) * 10000 ) )               / 100 ) * 60 ) + ( h.run_duration - ( h.run_duration / 100 )                                  * 100 ) AS RunDurationInSeconds       ,
+CASE h.run_status
+WHEN 0 THEN &#x27;failed&#x27;
+WHEN 1 THEN &#x27;Succeded&#x27;
+WHEN 2 THEN &#x27;Retry&#x27;
+WHEN 3 THEN &#x27;Cancelled&#x27;
+WHEN 4 THEN &#x27;In Progress&#x27;
+END AS ExecutionStatus       , h.message MessageGenerated
+FROM    sysjobhistory h
+INNER JOIN sysjobs j             ON j.job_id = h.job_id
+ORDER BY h.run_date DESC       , h.run_time desc</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/07/sql-job-history_4.html">View original post on Blogger</a></p><nav class="pn"><a href="script-i-o-latency-details.html">← Script : I/O latency details</a><a href="replication-configuration.html">Replication configuration →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script to get recent database restore history. · Sqlservv.com</title><meta name="description" content="SELECT rsh.destination_database_name AS [Database] , bs.recovery_model , rsh.user_name AS [Restored By] , CASE WHEN rsh.restore_type = &#x27;D&#x27; THEN &#x27;Database&#x27; WHEN rsh.restore_type = &#x27;…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>22 April 2017</time></div>
+<h1>Script to get recent database restore history.</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT
+rsh.destination_database_name AS [Database]
+, bs.recovery_model
+, rsh.user_name AS [Restored By]
+, CASE
+WHEN rsh.restore_type = &#x27;D&#x27; THEN &#x27;Database&#x27;
+WHEN rsh.restore_type = &#x27;F&#x27; THEN &#x27;File&#x27;
+WHEN rsh.restore_type = &#x27;G&#x27; THEN &#x27;Filegroup&#x27;
+WHEN rsh.restore_type = &#x27;I&#x27; THEN &#x27;Differential&#x27;
+WHEN rsh.restore_type = &#x27;L&#x27; THEN &#x27;Log&#x27;
+ELSE rsh.restore_type END AS [Restore Type]
+, CASE
+WHEN rsh.replace = 1 THEN &#x27;WITH REPLACE&#x27;
+WHEN rsh.replace = 0 THEN &#x27;NOT SPECIFIED&#x27;
+END AS [Restore Option]
+, CASE
+WHEN rsh.recovery = 1 THEN &#x27;WITH RECOVERY&#x27;
+WHEN rsh.recovery = 0 THEN &#x27;WITH NORECOVERY&#x27;
+WHEN rsh.recovery IS NULL THEN &#x27;WITH RECOVERY&#x27;
+END AS [Recovery Option]
+, rsh.restore_date AS [Restore Started]
+, bmf.physical_device_name AS [Restored From]
+, rf.destination_phys_name AS [Restored To]
+FROM msdb.dbo.restorehistory rsh
+INNER JOIN msdb.dbo.backupset bs ON rsh.backup_set_id = bs.backup_set_id
+INNER JOIN msdb.dbo.restorefile rf ON rsh.restore_history_id = rf.restore_history_id
+INNER JOIN msdb.dbo.backupmediafamily bmf ON bmf.media_set_id = bs.media_set_id
+WHERE rsh.restore_date &gt;= DATEADD(dd, -1, GETDATE()) -- Search the past day restore history
+AND rsh.destination_database_name IN(&#x27;xyz&#x27;)</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/script-to-get-recent-database-restore_22.html">View original post on Blogger</a></p><nav class="pn"><a href="uptime-of-remote-windows-server-using-powershell.html">← Uptime of remote windows server using powershell</a><a href="query-to-pull-sql-instance-and-os-details.html">Query to pull sql instance and OS details →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

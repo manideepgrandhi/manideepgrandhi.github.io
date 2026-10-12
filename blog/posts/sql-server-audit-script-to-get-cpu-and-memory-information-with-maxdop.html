@@ -1,0 +1,148 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SQL SERVER – Audit Script to Get CPU and Memory Information with MAXDOP Guidelines · Sqlservv.com</title><meta name="description" content="SQL_UsedMemory_MB BIGINT, SQL_MaxMemory_MB BIGINT, Server_Physical_MB BIGINT, NUMA_Config NVARCHAR(60), NUMA_Nodes INT, Physical_CPUs INT">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>16 April 2020</time></div>
+<h1>SQL SERVER – Audit Script to Get CPU and Memory Information with MAXDOP Guidelines</h1><div class="chips"><a class="chip" href="../tags/performance.html">performance</a><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/script.html">script</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">--https://blog.sqlauthority.com/2019/04/19/sql-server-audit-script-to-get-cpu-and-memory-information-with-maxdop-guidelines/
+DECLARE
+@sqlMajor INT
+,@sqlMinor INT
+,@cpuLogicals INT
+,@cpuCores INT
+,@numaConfig NVARCHAR(60)
+,@allocType NVARCHAR(120)
+,@stmt NVARCHAR(MAX)
+,@paramDef NVARCHAR(500);
+DECLARE @serverMemory TABLE
+(SQL_MinMemory_MB BIGINT,</code></pre></div>
+<p>SQL_UsedMemory_MB BIGINT,</p>
+<p>SQL_MaxMemory_MB BIGINT,</p>
+<p>Server_Physical_MB BIGINT,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  SQL_AllocationType NVARCHAR(60));
+DECLARE @cpuInfo TABLE
+(VirtualMachineType NVARCHAR(60),</code></pre></div>
+<p>NUMA_Config NVARCHAR(60),</p>
+<p>NUMA_Nodes INT,</p>
+<p>Physical_CPUs INT</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">,CPU_Cores INT,
+Logical_CPUs INT,
+Logical_CPUs_per_NUMA INT,
+ CPU_AffinityType VARCHAR(60)
+,ParallelCostThreshold_Current INT,
+ MAXDOP_Current INT,
+ MAXDOP_Optimal_Value NVARCHAR(60),
+ MAXDOP_Optimal_Reason NVARCHAR(1024));
+-- ========================================================================================================================================================================
+-- Load SQL information
+SELECT @sqlMajor = CAST((@@MicrosoftVersion / 0x01000000) AS INT), @sqlMinor = CAST((@@MicrosoftVersion / 0x010000 &amp; 0xFF) AS INT);
+
+-- ========================================================================================================================================================================
+-- Load CPU configuration
+--
+IF @sqlMajor &gt; 12
+BEGIN
+SELECT @stmt = &#x27;SELECT @numaConfig = softnuma_configuration_desc, @allocType = sql_memory_model_desc FROM sys.dm_os_sys_info;&#x27;
+,@paramDef = &#x27;@numaConfig NVARCHAR(60) OUTPUT, @allocType NVARCHAR(120) OUTPUT&#x27;;
+EXEC sp_executesql @stmt, @paramDef, @numaConfig = @numaConfig OUTPUT, @allocType = @allocType OUTPUT;
+END
+ELSE
+SELECT @numaConfig = &#x27;UNKNOWN&#x27;, @allocType = &#x27;UNKNOWN&#x27;;
+--
+INSERT INTO @cpuInfo (VirtualMachineType, NUMA_Config, NUMA_Nodes, Logical_CPUs, CPU_AffinityType, MAXDOP_Current, ParallelCostThreshold_Current)
+VALUES (
+(SELECT virtual_machine_type_desc AS VirtualMachineType FROM sys.dm_os_sys_info)
+,@numaConfig
+,(SELECT COUNT(memory_node_id) FROM sys.dm_os_nodes WHERE memory_node_id &lt; 64)
+,(SELECT COUNT(scheduler_id) FROM sys.dm_os_schedulers WHERE scheduler_id &lt; 255)
+,(SELECT affinity_type_desc AS AffinityType FROM sys.dm_os_sys_info)
+,CAST((SELECT [value] FROM sys.configurations WHERE [name] = &#x27;max degree of parallelism&#x27;) AS INT)
+,CAST((SELECT [value] FROM sys.configurations WHERE [name] = &#x27;cost threshold for parallelism&#x27;) AS INT)
+);
+--
+-- Get CPU Information
+IF OBJECT_ID(&#x27;tempdb..#cpu_output&#x27;) IS NOT NULL
+DROP TABLE #cpu_output;
+CREATE TABLE #cpu_output ([output] VARCHAR(255));
+
+INSERT INTO #cpu_output ([output]) EXEC xp_cmdshell &#x27;wmic cpu get DeviceId,NumberOfCores,NumberOfLogicalProcessors /format:csv&#x27;;
+-- Example [output]: CLVDODWI01,CPU0,4,8
+--
+-- Remove empty lines, header line and CrLf
+DELETE FROM #cpu_output WHERE REPLACE(REPLACE(RTRIM(ISNULL([output],&#x27;&#x27;)), CHAR(10), &#x27;&#x27;), CHAR(13), &#x27;&#x27;) = &#x27;&#x27;;
+DELETE FROM #cpu_output WHERE [output] LIKE &#x27;%NumberOfCores,NumberOfLogicalProcessors%&#x27;;
+UPDATE #cpu_output SET [output] = REPLACE(REPLACE([output], CHAR(10), &#x27;&#x27;), CHAR(13), &#x27;&#x27;);
+--
+--SELECT * FROM #cpu_output;
+--
+-- Load information of CPU cores and logical processors
+SELECT @cpuCores = 0, @cpuLogicals = 0;
+SELECT @cpuCores += PARSENAME(REPLACE([output], &#x27;,&#x27;, &#x27;.&#x27;), 2)
+,@cpuLogicals += PARSENAME(REPLACE([output], &#x27;,&#x27;, &#x27;.&#x27;), 1)
+FROM #cpu_output;
+--
+UPDATE @cpuInfo SET Physical_CPUs = (SELECT COUNT(*) FROM #cpu_output), CPU_Cores = @cpuCores, Logical_CPUs = @cpuLogicals;
+--
+IF OBJECT_ID(&#x27;tempdb..#cpu_output&#x27;) IS NOT NULL
+DROP TABLE #cpu_output;
+--
+UPDATE @cpuInfo SET Logical_CPUs_per_NUMA = Logical_CPUs / NUMA_Nodes;
+--
+-- Calculate best MAXDOP setting according guidelines of a Microsoft Premier Filed Engineer
+-- &gt; Hyper-threading enabled: Should not be 0 and should not be greater than half the number of logical processors
+-- &gt; Processor Affinity set: Should not be more than the number of cores available to the SQL Server instance
+-- &gt; NUMA: Should be no more than the number of cores per NUMA node to avoid expensive foreign memory access that occurs,
+-- when a task needs to use memory that does not belong to its NUMA node.
+-- &gt; Generic: If you are unsure of the above values then a generic setting should not be more than 8.
+-- So if you have more than 8 logical processors you should set this value to a maximum of 8.
+UPDATE @cpuInfo
+SET
+MAXDOP_Optimal_Value = &#x27;0 - &#x27; + CAST((CASE WHEN Logical_CPUs &gt; 8 THEN 8 ELSE Logical_CPUs END) AS NVARCHAR)
+,MAXDOP_Optimal_Reason = &#x27;GENERIC: Not more than the amount of logical CPUs and not more than 8&#x27;;
+--
+UPDATE @cpuInfo
+SET
+MAXDOP_Optimal_Value = &#x27;0 - assigned cores to the SQL Server instance&#x27;
+,MAXDOP_Optimal_Reason = &#x27;CPU AFFINITY: Not more than the amount of assigned CPUs to the SQL Server instance&#x27;
+WHERE CPU_AffinityType = &#x27;MANUAL&#x27;;
+--
+UPDATE @cpuInfo
+SET
+MAXDOP_Optimal_Value = &#x27;1 - &#x27; + CAST(Logical_CPUs_per_NUMA AS NVARCHAR)
+,MAXDOP_Optimal_Reason = &#x27;NUMA NODES: Not 0 and not more than the number of cores per NUMA node&#x27;
+WHERE NUMA_Nodes &gt; 1;
+--
+UPDATE @cpuInfo
+SET
+MAXDOP_Optimal_Value = &#x27;1 - &#x27; + CAST((Logical_CPUs / 2) AS NVARCHAR)
+,MAXDOP_Optimal_Reason = &#x27;HYPER-THREADING: Not 0 and not be greater than half the number of logical processors&#x27;
+WHERE Logical_CPUs / 2 = CPU_Cores;
+--
+-- ========================================================================================================================================================================
+-- Load Memory configuration
+
+INSERT INTO @serverMemory (SQL_MinMemory_MB, SQL_UsedMemory_MB, SQL_MaxMemory_MB, Server_Physical_MB, SQL_AllocationType)
+VALUES (
+CAST((SELECT [value] FROM sys.configurations WHERE [name] = &#x27;min server memory (MB)&#x27;) AS BIGINT)
+,(SELECT cntr_value / 1024 FROM sys.dm_os_performance_counters WHERE counter_name = &#x27;Total Server Memory (KB)&#x27;)
+,CAST((SELECT [value] FROM sys.configurations WHERE [name] = &#x27;max server memory (MB)&#x27;) AS BIGINT)
+,(SELECT (total_physical_memory_kb / 1024) AS total_physical_memory_mb FROM sys.dm_os_sys_memory)
+,@allocType
+);
+--
+-- ========================================================================================================================================================================
+-- Show informations
+--
+SELECT VirtualMachineType, NUMA_Config, NUMA_Nodes, Physical_CPUs, CPU_Cores, Logical_CPUs, Logical_CPUs_per_NUMA, CPU_AffinityType FROM @cpuInfo;
+SELECT ParallelCostThreshold_Current, MAXDOP_Current, MAXDOP_Optimal_Value, MAXDOP_Optimal_Reason FROM @cpuInfo;
+SELECT * FROM @serverMemory;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/sql-server-audit-script-to-get-cpu-and.html">View original post on Blogger</a></p><nav class="pn"><a href="sys-dm-os-waiting-task-script.html">← sys.dm_os_waiting_task script</a><a href="tasks-count.html">Tasks Count →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

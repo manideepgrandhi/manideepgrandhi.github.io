@@ -1,0 +1,179 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation -Track Database level changes · Sqlservv.com</title><meta name="description" content="USE [DBA] GO /****** Object: Table [dbo].[DBA_DB_DDL_Trigger_Event_Information] Script Date: 5/1/2015 4:44:40 AM ******/ SET ANSI_NULLS ON GO SET QUOTED_IDENTIFIER ON GO SET ANSI_P…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 May 2017</time></div>
+<h1>Automation -Track Database level changes</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [DBA]
+GO
+
+/****** Object:  Table [dbo].[DBA_DB_DDL_Trigger_Event_Information]    Script Date: 5/1/2015 4:44:40 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[DBA_DB_DDL_Trigger_Event_Information](
+    [LogId] [int] IDENTITY(1,1) NOT NULL,
+    [EventType] [varchar](100) NOT NULL,
+    [DatabaseName] [varchar](256) NOT NULL,
+    [ServerName] [varchar](256) NOT NULL,
+    [LoginName] [varchar](1000) NOT NULL,
+    [UserName] [varchar](1000) NOT NULL,
+    [SchemaName] [varchar](256) NOT NULL,
+    [ObjectName] [varchar](256) NOT NULL,
+    [ObjectType] [varchar](256) NOT NULL,
+    [TSQLCommand] [varchar](8000) NOT NULL,
+    [HostName] [varchar](256) NOT NULL,
+    [AppName] [varchar](128) NOT NULL,
+    [EventDate] [datetime] NOT NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+ALTER TABLE [dbo].[DBA_DB_DDL_Trigger_Event_Information] ADD  DEFAULT (getdate()) FOR [EventDate]
+GO
+
+USE [DBA]
+GO
+
+/****** Object:  DdlTrigger [dba_trigger_log_db_events]    Script Date: 5/1/2015 4:38:49 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+--2012-2014 db ddl trigger
+
+--CREATE trigger with the following items to log
+CREATE TRIGGER [dba_trigger_log_db_events]
+   ON  DATABASE
+
+   FOR GRANT_DATABASE,  --GRANT DB rights
+  DENY_DATABASE,   --DENY db rights
+  REVOKE_DATABASE, --revoke DB rights
+  CREATE_FUNCTION, --create functions
+  ALTER_FUNCTION,  --alter functions
+  DROP_FUNCTION,   --drop functions
+  CREATE_INDEX,    --create indexes
+  ALTER_INDEX,  --alter indexes
+  DROP_INDEX,   --drop indexes
+  CREATE_PARTITION_FUNCTION, --file partitions?
+  ALTER_PARTITION_FUNCTION, --file partitions?
+  DROP_PARTITION_FUNCTION, --file partitions?
+  CREATE_PROCEDURE, --create SPs
+  ALTER_PROCEDURE,  --alter SPs
+  DROP_PROCEDURE,  --DROP SPs
+  CREATE_ROLE, --create DB role
+  ALTER_ROLE, --modify DB role
+  DROP_ROLE, --drop DB role
+  CREATE_SCHEMA, --create DB schema
+  ALTER_SCHEMA, --alter DB schema
+  DROP_SCHEMA, --drop DB schema
+  CREATE_STATISTICS, --stats
+  DROP_STATISTICS, --stats
+  UPDATE_STATISTICS, --stats
+  CREATE_TABLE, --new table
+  ALTER_TABLE, --alter table
+  DROP_TABLE, --drop table
+  CREATE_TRIGGER, --new trigger
+  ALTER_TRIGGER,  --alter trigger
+  DROP_TRIGGER,  --drop trigger
+  CREATE_USER, --new db user
+  ALTER_USER, --alter db user
+  DROP_USER, --drop db user
+  CREATE_VIEW, --new view
+  ALTER_VIEW, --alter view
+  DROP_VIEW, --drop view
+  CREATE_XML_SCHEMA_COLLECTION, --XML objects
+  ALTER_XML_SCHEMA_COLLECTION,
+  DROP_XML_SCHEMA_COLLECTION
+AS
+
+--GET event data through system function
+declare @data xml
+ set @data = EVENTDATA()
+
+set arithabort on
+set ansi_padding on
+set ansi_warnings on
+set CONCAT_NULL_YIELDS_NULL on
+
+--pull free space from DBA DB
+declare @dba_db_available_space_mb decimal(18,2)
+
+EXEC sp_executesql N&#x27;USE DBA;
+SELECT    @dba_db_available_space_mb_output = CONVERT(DECIMAL(18,2),SUM(size/128.0 - CAST(FILEPROPERTY(name, &#x27;&#x27;SpaceUsed&#x27;&#x27;) AS int)/128.0))
+FROM sys.database_files
+WHERE type_desc = &#x27;&#x27;ROWS&#x27;&#x27;&#x27;,
+N&#x27;@dba_db_available_space_mb_output decimal(18,2) OUTPUT&#x27;,
+@dba_db_available_space_mb_output = @dba_db_available_space_mb OUTPUT
+
+/*
+SELECT @dba_db_available_space_mb,
+    @dba_db_available_space_mb*1024.0 [dba_db_available_space_kb]
+*/
+
+IF EXISTS (select [name] from DBA.sys.tables where name = &#x27;DBA_DB_DDL_Trigger_Event_Information&#x27;)
+BEGIN
+    IF @dba_db_available_space_mb &gt; 0.02
+    BEGIN
+
+        --pull values from the event data
+        INSERT INTO [DBA].[dbo].[DBA_DB_DDL_Trigger_Event_Information]
+         (
+          [EventType],
+          [DatabaseName],
+          [ServerName],
+          [LoginName],
+          [UserName],
+          [SchemaName],
+          [ObjectName],
+          [ObjectType],
+          [TSQLCommand],
+          [HostName],
+          [AppName]
+         )
+        SELECT
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/EventType)[1]&#x27;, &#x27;varchar(100)&#x27;), &#x27;N/A&#x27;) [EventType] ,
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/DatabaseName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;) [DatabaseName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/ServerName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;) [ServerName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/LoginName)[1]&#x27;, &#x27;varchar(1000)&#x27;), &#x27;N/A&#x27;) [LoginName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/UserName)[1]&#x27;, &#x27;varchar(1000)&#x27;), &#x27;N/A&#x27;) [UserName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/SchemaName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;) [SchemaName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/ObjectName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;) [ObjectName],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/ObjectType)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;) [ObjectType],
+          ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/TSQLCommand)[1]&#x27;, &#x27;varchar(8000)&#x27;), &#x27;N/A&#x27;) [TSQLCommand],
+          ISNULL(Host_Name(), &#x27;N/A&#x27;) [HostName],
+          ISNULL(App_Name(), &#x27;N/A&#x27;) [AppName]
+    END
+END
+
+GO
+
+SET ANSI_NULLS OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+ENABLE TRIGGER [dba_trigger_log_db_events] ON DATABASE
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/automation-track-database-level-changes_9.html">View original post on Blogger</a></p><nav class="pn"><a href="automation-tracking-server-level-changes.html">← Automation -- Tracking Server Level Changes</a><a href="sp-who-is-active-usage.html">Sp_who is active usage →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

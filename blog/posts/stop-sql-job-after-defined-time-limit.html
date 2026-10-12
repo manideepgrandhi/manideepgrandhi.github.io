@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stop Sql job after defined time limit · Sqlservv.com</title><meta name="description" content="session_id int NULL, job_id uniqueidentifier NULL, job_name sysname NULL, run_requested_date datetime NULL, run_requested_source sysname NULL, --1=via schedule; 2=via alert; 3=via …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>05 June 2020</time></div>
+<h1>Stop Sql job after defined time limit</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a><a class="chip" href="../tags/jobs.html">jobs</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">--if elapsed time is actually needed, uncomment
+--DECLARE @elapsed_minutes_max int
+--SET @elapsed_minutes_max = 480 --8 hours, adjust as needed
+
+IF OBJECT_ID(&#x27;tempdb.dbo.#jobactivity&#x27;) IS NOT NULL
+	DROP TABLE #jobactivity
+CREATE TABLE #jobactivity (</code></pre></div>
+<p>session_id int NULL,</p>
+<p>job_id uniqueidentifier NULL,</p>
+<p>job_name sysname NULL,</p>
+<p>run_requested_date datetime NULL,</p>
+<p>run_requested_source sysname NULL, --1=via schedule; 2=via alert; 3=via startup; 4=via user; 6=via CPU idle.</p>
+<p>queued_date datetime NULL,</p>
+<p>start_execution_date datetime NULL,</p>
+<p>last_executed_step_id int NULL,</p>
+<p>last_executed_step_date datetime NULL,</p>
+<p>stop_execution_date datetime NULL,</p>
+<p>next_scheduled_run_date datetime NULL,</p>
+<p>job_history_id int NULL,</p>
+<p>message nvarchar(1024) NULL,</p>
+<p>run_status int NULL,</p>
+<p>operator_id_emailed int NULL,</p>
+<p>operator_id_netsent int NULL,</p>
+<p>operator_id_paged int NULL</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">	)
+
+INSERT INTO #jobactivity
+EXEC msdb.dbo.sp_help_jobactivity
+
+--if the backup job is running ...
+IF EXISTS(
+SELECT *
+FROM #jobactivity ja
+WHERE
+    ja.start_execution_date IS NOT NULL AND
+    ja.stop_execution_date IS NULL AND
+--  DATEDIFF(MINUTE, ja.start_execution_date, GETDATE()) &gt;= @elapsed_mins_max AND
+    ja.job_name = N&#x27;&lt;backup_job_name&gt;&#x27;)
+BEGIN
+    --... stop it
+    EXEC msdb.dbo.sp_stop_job N&#x27;&lt;backup_job_name&gt;&#x27;
+END --IF</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/06/stop-sql-job-after-defined-time-limit.html">View original post on Blogger</a></p><nav class="pn"><a href="check-background-stats.html">← Check background Stats</a><a href="rseolving-single-user-mode-issue.html">Rseolving &quot;single_user&quot; mode issue →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

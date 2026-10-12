@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tempdb space · Sqlservv.com</title><meta name="description" content="select t1.session_id , t1.request_id , task_alloc_GB = cast((t1.task_alloc_pages * 8./1024./1024.) as numeric(10,1)) , task_dealloc_GB = cast((t1.task_dealloc_pages * 8./1024./1024…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>16 June 2017</time></div>
+<h1>Tempdb space</h1><div class="chips"><a class="chip" href="../tags/tempdb.html">tempdb</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">select t1.session_id , t1.request_id , task_alloc_GB = cast((t1.task_alloc_pages * 8./1024./1024.) as numeric(10,1)) , task_dealloc_GB = cast((t1.task_dealloc_pages * 8./1024./1024.) as numeric(10,1)) , host=
+case
+when t1.session_id &lt;= 50 then &#x27;SYS&#x27;
+else s1.host_name
+end , s1.login_name , s1.status , s1.last_request_start_time , s1.last_request_end_time , s1.row_count , s1.transaction_isolation_level , query_text= coalesce((
+SELECT SUBSTRING(text, t2.statement_start_offset/2 + 1, (
+CASE
+WHEN statement_end_offset = -1 THEN LEN(CONVERT(nvarchar(max),text)) * 2
+ELSE statement_end_offset
+END - t2.statement_start_offset)/2)
+FROM sys.dm_exec_sql_text(t2.sql_handle)) , &#x27;Not currently executing&#x27;) , query_plan=(
+SELECT query_plan
+from sys.dm_exec_query_plan(t2.plan_handle))
+from (
+Select session_id, request_id , task_alloc_pages=sum(internal_objects_alloc_page_count + user_objects_alloc_page_count) , task_dealloc_pages = sum (internal_objects_dealloc_page_count + user_objects_dealloc_page_count)
+from sys.dm_db_task_space_usage
+group by session_id, request_id) as t1
+left join sys.dm_exec_requests as t2 on t1.session_id = t2.session_id and t1.request_id = t2.request_id
+left join sys.dm_exec_sessions as s1 on t1.session_id=s1.session_id
+where t1.session_id &gt; 50
+-- ignore system unless you suspect there&#x27;s a problem there and t1.session_id &lt;&gt; @@SPID -- ignore this request itself order by t1.task_alloc_pages DESC;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/tempdb-space_16.html">View original post on Blogger</a></p><nav class="pn"><a href="stop-multiple-running-sql-jobs-at-once.html">← -- Stop Multiple running SQL Jobs at once:</a><a href="sessions-which-are-using-tempdb.html">Sessions which are using tempdb →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

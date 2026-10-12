@@ -1,0 +1,172 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Powershell script to find disk space · Sqlservv.com</title><meta name="description" content="function Get-Driveinfo { [cmdletbinding()] # Opens Commandlets param( # Sets up Parameters for Functions [parameter(Mandatory = $True)][string]$ComputerName, # Computer name to run…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>21 July 2017</time><span class="badge">★ Top script</span></div>
+<h1>Powershell script to find disk space</h1><div class="chips"><a class="chip star" href="../tags/5star.html">5star</a><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">function Get-Driveinfo
+{
+
+[cmdletbinding()] # Opens Commandlets
+param( # Sets up Parameters for Functions
+[parameter(Mandatory = $True)][string]$ComputerName, # Computer name to run report against
+[parameter()][Switch]$Notepad # Output to Text File or not
+)
+$erroractionpreference = “SilentlyContinue”
+$ComputerName = $ComputerName.toUpper() # Converts Server name to all Caps
+[bool]$OID = $false
+if (!(Test-Connection -computername $ComputerName -count 1 -quiet)) # Test Connections to Server
+{
+Write-host &quot;`r`n`r`n`tUnable to reach Server $ComputerName&quot; # Display message if unable to communicate
+}
+$Date = Get-Date
+Write-Output &quot;Reboot Report for Server $Computername run on $Date&quot; &gt; $LocalOut # Header for Output file
+# Identifies all local hard drives on remote server
+$OSInfo = (Get-WmiObject -computername $ComputerName -class win32_operatingsystem)
+if ($OSInfo -eq $null)
+{
+[bool]$OID = $True
+$Creds = Get-Credential -message &quot;Enter Domain\ID that has Administrator Permissions on $ComputerName&quot;
+$OSInfo = (Get-WmiObject -Credential $Creds -computername $ComputerName -class win32_operatingsystem)
+if ($OSInfo -eq $null)
+{
+Write-host &quot;`tID/Password has no rights on server`r`n`tPlease try again &quot;
+Break
+}
+}
+
+if ($OSInfo.caption |select-string -pattern &quot;2000&quot; -simplematch)
+{
+if ($OID -eq $false)
+{$AllDrives = Get-WmiObject -computer $ComputerName Win32_Logicaldisk | Where-Object -FilterScript {$_.DriveType -eq &quot;3&quot;} |select DeviceID, FreeSpace, Size }
+Else
+{$AllDrives = Get-WmiObject -Credential $Creds -computer $ComputerName Win32_Logicaldisk | Where-Object -FilterScript {$_.DriveType -eq &quot;3&quot;} |select DeviceID, FreeSpace, Size}
+$DateStamp = Get-Date
+$Output = &quot;`r`n`r`nServer = $ComputerName`r`nChecked on $DateStamp`r`n`r`nDrive`t Size`t Used`t Free`t% Free`r`n&quot; # Displays header
+foreach ($Drive in $AllDrives) # Starts Loop thru each Drive
+{
+[int]$PercentFree = ($Drive.FreeSpace / $Drive.size)*100 # Calculates % Free on Drive
+$Size = ([int](($Drive.size /1gb))) # Calculates Total Size in Gig
+$FreeSpace = ([int](($Drive.FreeSpace /1gb)*10))/10 # Calculates Free Space in Gig
+[string]$DriveLetter = $Drive.DeviceID # Isolates Drive Letter
+if ([int]$FreeSpace -eq $Freespace) {[string]$FreeS = &quot;$FreeSpace.0 GB&quot;} # Free Size OutPut information
+Else {[string]$FreeS = &quot;$FreeSpace GB&quot; } # Free Size OutPut information
+[string]$SizeS = &quot;$Size GB&quot; # Total Size OutPut information
+[string]$Percent = &quot;$PercentFree%&quot; # Total Percent output Information
+$Used = (([int](($drive.capacity - $drive.freespace)/1gb)*10))/10
+[string]$UsedS = &quot;$Used GB&quot;
+$SP1 = &quot; &quot; * ( 10 - $SizeS.length ) # Extra Spacing for Output
+$SP2 = &quot; &quot; * ( 14 - $FreeS.length ) # Extra Spacing for Output
+$SP3 = &quot; &quot; * ( 9 - $Percent.length) # Extra Spacing for Output
+$sp5 = &quot; &quot; * ( 14 - $UsedS.length) # Extra Spacing for Output
+#if (($PercentFree -lt &quot;10&quot;) -and ($PercentFree -gt &quot;5&quot;))
+# { $Alert = &quot; &lt;- Low Drive Space Warning&quot; }
+#Elseif ($PercentFree -le &quot;5&quot;)
+if ($PercentFree -le &quot;5&quot;)
+{ $Alert = &quot; &lt;- LOW DRIVE SPACE ALERT&quot;}
+else
+{ $Alert = &quot;&quot; }
+$OutPut += &quot; $DriveLetter$SP1$Sizes$sp5$UsedS$Sp2$FreeS$SP3$Percent$Alert`r`n&quot; # Displays Output
+}
+}
+Else
+{
+if ($OID -Eq $false)
+{
+$AllDrives = Get-WmiObject -computer $ComputerName Win32_volume |
+Where-Object -FilterScript {($_.DriveType -eq &quot;3&quot;) -and ($_.name -notlike &quot;\\*&quot;)} |
+select name, freespace, capacity |sort name
+$AllDrives1 = Get-WmiObject -computer $ComputerName Win32_Logicaldisk | Where-Object -FilterScript {$_.DriveType -eq &quot;3&quot;} |select DeviceID, FreeSpace, Size
+}
+else
+{
+$AllDrives = Get-WmiObject -Credential $Creds -computer $ComputerName Win32_volume |
+Where-Object -FilterScript {($_.DriveType -eq &quot;3&quot;) -and ($_.name -notlike &quot;\\*&quot;)} |
+select name, freespace, capacity |sort name
+$AllDrives1 = Get-WmiObject -Credential $Creds -computer $ComputerName Win32_Logicaldisk | Where-Object -FilterScript {$_.DriveType -eq &quot;3&quot;} |select DeviceID, FreeSpace, Size
+}
+$DateStamp = Get-Date
+$Output = &quot;`r`n`r`nServer = $ComputerName`r`nChecked on $DateStamp&quot; # Displays header
+[int]$SP1L = &quot;9&quot;
+foreach ($drive in $Alldrives)
+{
+$DRName = $drive.name
+if ($DRName.length -gt $SP1L) { $SP1L = $drive.name.length}
+}
+$SP4 = &quot; &quot; * ($SP1L + &quot;4&quot; - $Drive.name.length)
+$Output += &quot;`r`n`r`nDrive$sp4 Size Used`t Free % Free`r`n&quot;
+foreach ($Drive in $AllDrives) # Starts Loop thru each Drive
+{
+[int]$PercentFree = ($Drive.FreeSpace / $Drive.capacity)*100 # Calculates % Free on Drive
+$Size = ([int](($Drive.capacity /1gb))) # Calculates Total Size in Gig
+$FreeSpace = ([int](($Drive.FreeSpace /1gb)*10))/10 # Calculates Free Space in Gig
+[string]$DriveLetter = $Drive.name + (&quot; &quot; * ($SP1L- $Drive.name.length))
+# Isolates Drive Letter
+if ([int]$FreeSpace -eq $Freespace) {[string]$FreeS = &quot;$FreeSpace.0 GB&quot;} # Free Size OutPut information
+Else {[string]$FreeS = &quot;$FreeSpace GB&quot; } # Free Size OutPut information
+[string]$SizeS = &quot;$Size GB&quot; # Total Size OutPut information
+[string]$Percent = &quot;$PercentFree%&quot; # Total Percent output Information
+$Used = (([int](($drive.capacity - $drive.freespace)/1gb)*10))/10
+[string]$UsedS = &quot;$Used GB&quot;
+
+$SP1 = &quot; &quot; * ( 10 - $SizeS.length ) # Extra Spacing for Output
+$SP2 = &quot; &quot; * ( 14 - $FreeS.length ) # Extra Spacing for Output
+$SP3 = &quot; &quot; * ( 9 - $Percent.length) # Extra Spacing for Output
+$sp5 = &quot; &quot; * ( 14 - $UsedS.length) # Extra Spacing for Output
+
+if ($PercentFree -le &quot;5&quot;)
+{ $Alert = &quot; &lt;- LOW DRIVE SPACE ALERT&quot;}
+else
+{ $Alert = &quot;&quot; }
+$OutPut += &quot; $DriveLetter$SP1$Sizes$sp5$UsedS$Sp2$FreeS$SP3$Percent$Alert`r`n&quot; # Displays Output
+}
+$AppDrive = Compare-Object $AllDrives.name.substring(0,2) $AllDrives1.deviceid | ? {$_.Sideindicator -eq &quot;=&gt;&quot;}
+if ($AppDrive.InputObject.length -gt &quot;0&quot;)
+{
+$Output += &quot;`r`n`tApplication generated drive found on server`r`nDrive`t Size`t Free %`t Free`r`n&quot;
+foreach ($line in $AppDrive)
+{
+$Drive = $AllDrives1 |? {$_.Deviceid -eq $line.inputobject }
+[int]$PercentFree = ($Drive.FreeSpace / $Drive.size)*100 # Calculates % Free on Drive
+$Size = ([int](($Drive.size /1gb))) # Calculates Total Size in Gig
+$FreeSpace = ([int](($Drive.FreeSpace /1gb)*10))/10 # Calculates Free Space in Gig
+[string]$DriveLetter = $Drive.DeviceID # Isolates Drive Letter
+if ([int]$FreeSpace -eq $Freespace) {[string]$FreeS = &quot;$FreeSpace.0 GB&quot;} # Free Size OutPut information
+Else {[string]$FreeS = &quot;$FreeSpace GB&quot; } # Free Size OutPut information
+[string]$SizeS = &quot;$Size GB&quot; # Total Size OutPut information
+[string]$Percent = &quot;$PercentFree%&quot; # Total Percent output Information
+$Used = (([int](($drive.capacity - $drive.freespace)/1gb)*10))/10
+[string]$UsedS = &quot;$Used GB&quot;
+$SP1 = &quot; &quot; * ( 10 - $SizeS.length ) # Extra Spacing for Output
+$SP2 = &quot; &quot; * ( 14 - $FreeS.length ) # Extra Spacing for Output
+$SP3 = &quot; &quot; * ( 9 - $Percent.length) # Extra Spacing for Output
+$sp5 = &quot; &quot; * ( 14 - $UsedS.length) # Extra Spacing for Output
+if (($PercentFree -lt &quot;10&quot;) -and ($PercentFree -gt &quot;5&quot;))
+{ $Alert = &quot; &lt;- Low Drive Space Warning&quot; }
+Elseif ($PercentFree -le &quot;5&quot;)
+{ $Alert = &quot; &lt;- LOW DRIVE SPACE ALERT&quot;}
+else
+{ $Alert = &quot;&quot; }
+$OutPut += &quot; $DriveLetter$SP1$Sizes$sp5$UsedS$Sp2$FreeS$SP3$Percent$Alert`r`n&quot; # Displays Output
+}
+}
+
+}
+$OutPut # Output to Screen
+if ($Notepad) # Runs is Notepad is selected
+{
+[string]$LocalOut = $env:Temp+&quot;\Driveinfo.txt&quot; # Defines Output for Text file
+$Output &gt;$LocalOut # Saves Output to Text file
+Notepad $LocalOut # Opens Text file
+}
+}</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/07/powershell-script-to-find-disk-space_21.html">View original post on Blogger</a></p><nav class="pn"><a href="database-and-i-o-details.html">← Database and I/O details</a><a href="script-sql-script-to-report-all-the-users-that-have-access-to-a-specif.html">Script :SQL Script to report all the users that have access to a specific database, or objects within the database. →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

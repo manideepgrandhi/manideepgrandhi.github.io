@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technical :: High Availability And Disaster Recovery In SQL Server · Sqlservv.com</title><meta name="description" content="Hardware and Software are the backbones of most of businesses today. To minimize the downtime and impact to the business, we need a high availability (HA) or disaster recovery (DR)…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>29 November 2017</time></div>
+<h1>Technical :: High Availability And Disaster Recovery In SQL Server</h1><div class="chips"><a class="chip" href="../tags/technical.html">technical</a></div><div class="content"><p>Hardware and Software are the backbones of most of businesses today. To minimize the downtime and impact to the business, we need a high availability (HA) or disaster recovery (DR) plan in place. You should first understand the difference between High Availability and Disaster Recovery, so that you can explain it to your management and get all approval for procuring the perfect system in place</p>
+<p><b>High Availability</b></p>
+<p>Implementing something that gives you the ability to keep running the business in the event of some catastrophic failure is like a rocket having multiple engines so if one of the engines breaks down then the other engines can take it to orbit.</p>
+<p><b>Disaster Recovery</b></p>
+<p>Implementing something that gives you the ability to overcome data loss after disaster. A highly available system only makes your data available but they do not control whether the data is correct. Imagine a scenario in which a DBA or Developer forgets to add a WHERE clause to his or her UPDATE statement, and all of sudden the table is empty! High availability solutions do not help in a scenario like that. In fact, they just make the problem worse because they will duplicate the bad data to multiple nodes/sites. We should always have a updated fully documented disaster recovery plan.</p>
+<p><b>Following are different ways we can achieve HA and </b><b>DR</b><b>. Each has its own pros and cons</b></p>
+<p>Clustering</p>
+<p>Database snapshots</p>
+<p>Log Shipping</p>
+<p>Database Mirroring</p>
+<p>Replication</p>
+<p>Physical Redundancy</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Backups</code></pre></div>
+<p>You might have used log shipping, replication, clustering or mirroring to attain high availability and disaster recovery. Now, SQL Server alwayOn has also joined the list and it is next improved version of mirroring. Database mirroring has its own disadvantages. I mean, it cannot have more than one secondary database. Also, we cannot read the secondary database. So these drawbacks of database mirroring identified and resolved in SQL Server alwaysOn.</p>
+<p><b>Here are a few limitaitons of prior technologies which become motivation to develop SQL Server Always On!</b></p>
+<p><b>Clustering</b></p>
+<p>In clustering, we are covered for server failure but not for SAN failure. When SAN goes down then cluster goes down. So we cannot use clustering for Disaster recovery.</p>
+<p><b>Replication</b></p>
+<p>In replication, we cannot have complete copy of the database. We can publish only a few types of objects like tables, views and other objects. So the secondary server is not an exact copy of the primary. There is always a delay in response. So this is also not a high availability solution.</p>
+<p><b>Log shipping</b></p>
+<p>Like clustering and replication, log shipping also has primary and secondary databases. There will be log backups running in a scheduled manner from primary to secondary. (For example: Every 3 minutes) But when Server goes down within a three minute period, then you will start losing the data. It can be used as warm stand by. Log shipping is used for disaster recovery purpose because if Primary Server goes down, then we can use the Secondary Server.</p>
+<p><b>Database mirroring</b></p>
+<p>We have to set up mirroring at the database level. We can have only one copy of the primary database. If we have more than that, we are unable to read from secondary server. The database in secondary server will be in recovery mode.</p>
+<p><b>So what is the enhancement done in alwaysOn?</b></p>
+<p>You have no need to have monitoring server in alwaysOn. AlwaysOn has an inbuilt technology to switch the automatic failover from primary to secondary. Behind the scenes, it uses Windows clustering and quorum.</p>
+<p>You can have more than one secondary server.You can read the secondary databaseSo, alwaysOn has resolved most of the mirroring limitations.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/technical-high-availability-and.html">View original post on Blogger</a></p><nav class="pn"><a href="active-sessions-script.html">← Active sessions script</a><a href="technical-replication-agents-and-jobs.html">Technical - Replication agents and jobs →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,188 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Different scripts tp get database backup hsitory · Sqlservv.com</title><meta name="description" content="distinct CONVERT(CHAR(100), SERVERPROPERTY(&#x27;Servername&#x27;)) AS Server, msdb.dbo.backupset.database_name, msdb.dbo.backupset.backup_start_date, msdb.dbo.backupset.backup_finish_date, …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 May 2017</time></div>
+<h1>Different scripts tp get database backup hsitory</h1><div class="chips"><a class="chip" href="../tags/backup.html">backup</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT</code></pre></div>
+<p>&nbsp;&nbsp; distinct CONVERT(CHAR(100), SERVERPROPERTY('Servername')) AS Server,</p>
+<p>&nbsp;&nbsp; msdb.dbo.backupset.database_name,&nbsp;</p>
+<p>&nbsp;&nbsp; msdb.dbo.backupset.backup_start_date,&nbsp;</p>
+<p>&nbsp;&nbsp; msdb.dbo.backupset.backup_finish_date,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql"> CAST((DATEDIFF(second,  msdb.dbo.backupset.backup_start_date,msdb.dbo.backupset.backup_finish_date)) AS varchar)+ &#x27; secs  &#x27; AS [Total Time] ,
+   Cast(msdb.dbo.backupset.backup_size/1024/1024 AS numeric(10,2)) AS &#x27;Backup Size(MB)&#x27;,
+   msdb.dbo.backupset.name AS backupset_name
+FROM   msdb.dbo.backupmediafamily
+   INNER JOIN msdb.dbo.backupset ON msdb.dbo.backupmediafamily.media_set_id = msdb.dbo.backupset.media_set_id
+--Enter your database below
+--and database_name = &#x27;db_name_here&#x27;
+and msdb.dbo.backupset.backup_start_date&gt;&#x27;2013-12-31&#x27; and msdb.dbo.backupset.backup_start_date&lt;&#x27;2014-01-27 23:59:59&#x27;
+ORDER BY
+   msdb.dbo.backupset.database_name,
+   msdb.dbo.backupset.backup_start_date
+----------------------------------------------------------
+SELECT p.database_name AS DatabaseName,
+p.backup_start_date AS &#x27;Backup Start Time&#x27;,
+p.backup_finish_date AS &#x27;Backup Finish Time&#x27;,
+CAST((DATEDIFF(MINUTE, p.backup_start_date, p.backup_finish_date)) AS varchar)+ &#x27; min  &#x27;+ CAST((DATEDIFF(ss, p.backup_start_date, p.backup_finish_date)) AS varchar) + &#x27; sec &#x27; AS [Total Time] ,
+CASE p.type
+WHEN &#x27;D&#x27; THEN &#x27;Full &#x27;
+WHEN &#x27;I&#x27; THEN &#x27;Diffrential&#x27;
+WHEN &#x27;L&#x27; THEN &#x27;Log&#x27;
+END AS &#x27;Backup Type&#x27;,
+Cast(p.backup_size/1024/1024 AS numeric(10,2)) AS &#x27;Backup Size(MB)&#x27; ,
+a.physical_device_name AS &#x27;Physical File location&#x27;
+FROM msdb..backupmediafamily a,
+msdb..backupset p
+WHERE a.media_set_id=p.media_set_id
+-- Uncomment below line and Replace &lt;Database name&gt; with DB you want to check backup history
+--and p.database_name=&#x27;Database name&#x27;
+-- Uncomment below line and replace start and end dates with dates you want to check history
+--and p.backup_start_date&gt;&#x27;2013-01-20&#x27; and p.backup_start_date&lt;&#x27;2013-01-25 23:59:59&#x27;
+--Uncomment below line to see only the full backups, replace with &#x27;I&#x27; to check diffrential and &#x27;L&#x27; to check only Log backups.
+--and p.type=&#x27;D&#x27;
+ORDER BY p.backup_start_date DESC
+------------------------------------
+--Latest Full/Differential/Log backup of one/all databases with duration:
+SELECT Database_name,
+       MAX(Backup_finish_date) AS &#x27;latest Backup Date&#x27;,
+       CAST((DATEDIFF(hh, MAX(Backup_finish_date), GETDATE())) AS varchar) AS [Total Time]
+FROM msdb..backupset
+--Replace &#x27;D&#x27; with &#x27;I&#x27; to check latet Diff backup and &#x27;L&#x27; to check latest full backup
+WHERE TYPE=&#x27;D&#x27;
+--Uncomment below line and replace database name you want to check latest full backup
+ --and Database_name=&#x27;master&#x27;
+GROUP BY database_name
+---  Script to get name of databases are never backed up:
+SELECT name AS &#x27;Database Name&#x27;,
+       NULL AS [last backup]
+FROM sys.sysdatabases
+WHERE name NOT IN
+    (SELECT database_name
+     FROM msdb..backupset)
+  AND name &lt;&gt; &#x27;tempdb&#x27;
+--
+SELECT sdb.Name AS DatabaseName,
+COALESCE(CONVERT(VARCHAR(12), MAX(bus.backup_finish_date), 101),&#x27;-&#x27;) AS LastBackUpTime
+FROM sys.sysdatabases sdb
+LEFT OUTER JOIN msdb.dbo.backupset bus ON bus.database_name = sdb.name
+GROUP BY sdb.Name
+-------------------------------------------------------------------------------------------
+--Most Recent Database Backup for Each Database
+-------------------------------------------------------------------------------------------
+SELECT
+   CONVERT(CHAR(100), SERVERPROPERTY(&#x27;Servername&#x27;)) AS Server,
+   msdb.dbo.backupset.database_name,
+   MAX(msdb.dbo.backupset.backup_finish_date) AS last_db_backup_date
+FROM   msdb.dbo.backupmediafamily
+   INNER JOIN msdb.dbo.backupset ON msdb.dbo.backupmediafamily.media_set_id = msdb.dbo.backupset.media_set_id
+WHERE  msdb..backupset.type = &#x27;D&#x27;
+GROUP BY
+   msdb.dbo.backupset.database_name
+ORDER BY
+   msdb.dbo.backupset.database_name
+-------------------------------------------------------------------------------------------
+--Most Recent Database Backup for Each Database - Detailed
+-------------------------------------------------------------------------------------------
+SELECT
+   A.[Server],
+   A.last_db_backup_date,
+   B.backup_start_date,
+   B.expiration_date,
+   B.backup_size,
+   B.logical_device_name,
+   B.physical_device_name,
+   B.backupset_name,
+   B.description
+FROM
+   (
+   SELECT
+       CONVERT(CHAR(100), SERVERPROPERTY(&#x27;Servername&#x27;)) AS Server,
+       msdb.dbo.backupset.database_name,
+       MAX(msdb.dbo.backupset.backup_finish_date) AS last_db_backup_date
+   FROM    msdb.dbo.backupmediafamily
+       INNER JOIN msdb.dbo.backupset ON msdb.dbo.backupmediafamily.media_set_id = msdb.dbo.backupset.media_set_id
+   WHERE   msdb..backupset.type = &#x27;D&#x27;
+   GROUP BY
+       msdb.dbo.backupset.database_name
+   ) AS A
+   LEFT JOIN
+   (
+   SELECT
+   CONVERT(CHAR(100), SERVERPROPERTY(&#x27;Servername&#x27;)) AS Server,</code></pre></div>
+<p>msdb.dbo.backupset.database_name,</p>
+<p>msdb.dbo.backupset.backup_start_date,</p>
+<p>msdb.dbo.backupset.backup_finish_date,</p>
+<p>msdb.dbo.backupset.expiration_date,</p>
+<p>msdb.dbo.backupset.backup_size,</p>
+<p>msdb.dbo.backupmediafamily.logical_device_name,</p>
+<p>msdb.dbo.backupmediafamily.physical_device_name,</p>
+<p>msdb.dbo.backupset.name AS backupset_name,</p>
+<p>msdb.dbo.backupset.description</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM   msdb.dbo.backupmediafamily
+   INNER JOIN msdb.dbo.backupset ON msdb.dbo.backupmediafamily.media_set_id = msdb.dbo.backupset.media_set_id
+WHERE  msdb..backupset.type = &#x27;D&#x27;
+   ) AS B
+   ON A.[server] = B.[server] AND A.[database_name] = B.[database_name] AND A.[last_db_backup_date] = B.[backup_finish_date]
+ORDER BY
+   A.database_name
+SELECT
+  DISTINCT
+        a.Name AS DatabaseName ,
+        CONVERT(SYSNAME, DATABASEPROPERTYEX(a.name, &#x27;Recovery&#x27;)) RecoveryModel ,
+        COALESCE(( SELECT   CONVERT(VARCHAR(12), MAX(backup_finish_date), 101)
+                   FROM     msdb.dbo.backupset
+                   WHERE    database_name = a.name
+                            AND type = &#x27;D&#x27;
+                            AND is_copy_only = &#x27;0&#x27;
+                 ), &#x27;No Full&#x27;) AS &#x27;Full&#x27; ,
+        COALESCE(( SELECT   CONVERT(VARCHAR(12), MAX(backup_finish_date), 101)
+                   FROM     msdb.dbo.backupset
+                   WHERE    database_name = a.name
+                            AND type = &#x27;I&#x27;
+                            AND is_copy_only = &#x27;0&#x27;
+                 ), &#x27;No Diff&#x27;) AS &#x27;Diff&#x27; ,
+        COALESCE(( SELECT   CONVERT(VARCHAR(20), MAX(backup_finish_date), 120)
+                   FROM     msdb.dbo.backupset
+                   WHERE    database_name = a.name
+                            AND type = &#x27;L&#x27;
+                 ), &#x27;No Log&#x27;) AS &#x27;LastLog&#x27; ,
+        COALESCE(( SELECT   CONVERT(VARCHAR(20), backup_finish_date, 120)
+                   FROM     ( SELECT    ROW_NUMBER() OVER ( ORDER BY backup_finish_date DESC ) AS &#x27;rownum&#x27; ,
+                                        backup_finish_date
+                              FROM      msdb.dbo.backupset
+                              WHERE     database_name = a.name
+                                        AND type = &#x27;L&#x27;
+                            ) withrownum
+                   WHERE    rownum = 2
+                 ), &#x27;No Log&#x27;) AS &#x27;LastLog2&#x27;
+FROM    sys.databases a
+        LEFT OUTER JOIN msdb.dbo.backupset b ON b.database_name = a.name
+WHERE   a.name &lt;&gt; &#x27;tempdb&#x27;
+        AND a.state_desc = &#x27;online&#x27;
+GROUP BY a.Name ,
+        a.compatibility_level
+ORDER BY a.name
+- Get the latest successful backups
+-- Shows databasename, backup start &amp; end time, duration, backup file, -- backup size, compressed backup size (if used) and backup type.
+SELECT
+bs.database_name AS &#x27;Database Name&#x27;,bs.backup_start_date AS &#x27;Backup Start&#x27;,bs.backup_finish_date AS &#x27;Backup Finished&#x27;,DATEDIFF(MINUTE, bs.backup_start_date, bs.backup_finish_date) AS &#x27;Duration (min)&#x27;,bmf.physical_device_name AS &#x27;Backup File&#x27;,
+CASE
+WHEN bs.[type] = &#x27;D&#x27;THEN &#x27;Full Backup&#x27;
+WHEN bs.[type] = &#x27;I&#x27;THEN &#x27;Differential Database&#x27;
+WHEN bs.[type] = &#x27;L&#x27;THEN &#x27;Log&#x27;
+WHEN bs.[type] = &#x27;F&#x27;THEN &#x27;File/Filegroup&#x27;
+WHEN bs.[type] = &#x27;G&#x27;THEN &#x27;Differential File&#x27;
+WHEN bs.[type] = &#x27;P&#x27;THEN &#x27;Partial&#x27;
+WHEN bs.[type] = &#x27;Q&#x27;THEN &#x27;Differential partial&#x27; ENDAS &#x27;Backup Type&#x27;,ROUND(((bs.backup_size/1024)/1024),2) AS &#x27;Backup Size (MB)&#x27;,ROUND(((bs.compressed_backup_size/1024)/1024),2) AS &#x27;Compressed Backup Size (MB)&#x27;
+FROM msdb..backupmediafamily bmfINNER JOIN msdb..backupset bsON bmf.media_set_id = bs.media_set_idORDER BY bs.backup_start_date DESC</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/different-scripts-tp-get-database_8.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-get-sql-server-information-of-remote-servers.html">← Powershell Script to get SQL Server information of remote servers</a><a href="disk-free-space-report-using-powershell-for-multiple-servers.html">Disk Free space report using powershell for multiple servers →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

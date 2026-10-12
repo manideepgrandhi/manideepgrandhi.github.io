@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlwaysOn sync logins · Sqlservv.com</title><meta name="description" content="Windows logins and groups Another advantage with Windows logins are that you don’t have to know the password because Windows or Active Directory manages that for you. This query wi…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 April 2020</time></div>
+<h1>AlwaysOn sync logins</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p>Windows logins and groups</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">As I mentioned above, Windows/AD logins and groups already come with a SID (which is what connects logins to users). This means that you can create a login for a given Windows account on any number of servers, and all those logins will get the same SID.</code></pre></div>
+<p>Another advantage with Windows logins are that you don’t have to know the password because Windows or Active Directory manages that for you.</p>
+<p>This query will show you how to generate&nbsp;<strong>CREATE LOGIN</strong>&nbsp;statements for all Windows users and groups:</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT N&#x27;CREATE LOGIN [&#x27;+sp.[name]+&#x27;] FROM WINDOWS;&#x27;
+FROM master.sys.server_principals AS sp
+WHERE sp.[type] IN (&#x27;U&#x27;, &#x27;G&#x27;) AND
+      sp.is_disabled=0 AND
+      sp.[name] NOT LIKE &#x27;NT [AS]%\%&#x27;;</code></pre></div>
+<p>SQL Server logins</p>
+<p>SQL Server logins generate a new SID when they are created, so if you just create a login on two servers, they’ll end up with different SIDs. To manage this, you can actually manually specify the SID of a SQL Server login when you create it:</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">CREATE LOGIN [login_name]
+WITH PASSWORD=&#x27;Great password&#x27;,
+     SID=0x02963F...18A3DECEBE;</code></pre></div>
+<p>You can read the SID from the primary replica’s&nbsp;<strong>sys.server_principals</strong>&nbsp;DMV and then explicitly state that SID when you’re creating the same login on all your secondary replicas.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">While you’re at it, read the hashed password from sys.sql_logins. That way, you don’t have to know or write down the passwords – you can just synchronize the hashed passwords between replicas.
+
+CREATE LOGIN [login_name]
+WITH PASSWORD=0x0200A6860363412...478650 HASHED,
+     CHECK_POLICY=OFF,
+     SID=0x02963F...18A3DECEBE;
+
+Here’s how to get the information you need from the primary replica:
+SELECT N&#x27;CREATE LOGIN [&#x27;+sp.[name]+&#x27;] WITH PASSWORD=0x&#x27;+
+       CONVERT(nvarchar(max), l.password_hash, 2)+N&#x27; HASHED, CHECK_POLICY=OFF, &#x27;+
+       N&#x27;SID=0x&#x27;+CONVERT(nvarchar(max), sp.[sid], 2)+N&#x27;;&#x27;
+FROM master.sys.server_principals AS sp
+INNER JOIN master.sys.sql_logins AS l ON sp.[sid]=l.[sid]
+WHERE sp.[type]=&#x27;S&#x27; AND sp.is_disabled=0;
+
+Server roles
+If you use user-defined server roles, you may want to set them up on the secondary replicas as well. Here’s a list of your user-defined server roles from the primary replica:
+
+SELECT N&#x27;CREATE SERVER ROLE [&#x27;+sp.[name]+N&#x27;];&#x27;
+FROM sys.server_principals AS sp
+WHERE sp.principal_id&gt;=100 AND
+      sp.[type]=&#x27;R&#x27;;
+
+Permissions
+And here are the server-level permissions for all types of server-level principals:
+
+---    GRANT/DENY        (permission)           TO  principal
+SELECT p.state_desc+N&#x27; &#x27;+p.[permission_name]+N&#x27; TO [&#x27;+sp.[name] COLLATE database_default+N&#x27;];&#x27;
+FROM sys.server_permissions AS p
+INNER JOIN sys.server_principals AS sp ON
+    p.grantee_principal_id=sp.principal_id;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/alwayson-sync-logins.html">View original post on Blogger</a></p><nav class="pn"><a href="resource-database-details.html">← resource database details</a><a href="script-to-capture-topology-of-alwayson-configuration.html">Script to capture topology of Alwayson configuration →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capture Sp_whoisactive results to a Logging Table · Sqlservv.com</title><meta name="description" content="Step 1: Create Your destination_table">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>24 April 2018</time></div>
+<h1>Capture Sp_whoisactive results to a Logging Table</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><p><strong>Step 1: Create Your destination_table</strong></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">use master
+go
+DECLARE @destination_table VARCHAR(4000) ;
+SET @destination_table = &#x27;WhoIsActive_ResultSets&#x27;;
+DECLARE @schema VARCHAR(4000) ;
+-- Specify all your proc parameters here
+EXEC master..sp_WhoIsActive @get_plans=1, @get_full_inner_text=1, @get_transaction_info=1, @get_task_info=2, @get_locks=1, @get_avg_time=1, @get_additional_info=1,@find_block_leaders=1,
+       @return_schema = 1,
+       @schema = @schema OUTPUT ;
+SET @schema = REPLACE(@schema, &#x27;&lt;table_name&gt;&#x27;, @destination_table) ;
+PRINT @schema
+EXEC(@schema) ;
+GO
+Step 2: Script To Capture Data to the logging table created in Step 1
+DECLARE @destination_table VARCHAR(4000);
+SET @destination_table = &#x27;&#x27;WhoIsActive_ResultSets&#x27;&#x27;;
+EXEC master..sp_WhoIsActive @get_plans=1, @get_full_inner_text=1, @get_transaction_info=1, @get_task_info=2, @get_locks=1, @get_avg_time=1, @get_additional_info=1,@find_block_leaders=1,
+            @destination_table = @destination_table ;
+Step 3: Query To Capture data from the table
+-- Step 3: Query the resultset
+SELECT * FROM WhoIsActive_ResultSets r
+ WHERE CAST(r.collection_time AS DATE) = CAST(GETDATE() AS date);</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/04/capture-spwhoisactive-results-to.html">View original post on Blogger</a></p><nav class="pn"><a href="oracle-concepts-oracle-shutdown-commands.html">← Oracle Concepts - Oracle shutdown commands</a><a href="favorite-links.html">Favorite Links →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

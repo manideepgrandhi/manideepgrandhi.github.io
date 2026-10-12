@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Log_reuse_wait_desc showing as Availability_Replica · Sqlservv.com</title><meta name="description" content="Recently in one my Always On Availability replica environment I got an issue where one of the availability replica database log file has grown completely, and we got a request to s…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>02 February 2020</time></div>
+<h1>Log_reuse_wait_desc showing as Availability_Replica</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p>Recently in one my Always On Availability replica environment I got an issue where one of the availability replica database log file has grown completely, and we got a request to shrink the issue. When we run the below command we found that “log_reuse_wait_desc” showing as “Availability_Replica</p>
+<p>What this means is&nbsp;this indicates that the logged changes in the availability database at the primary replica that have not arrived and that these changes were applied to the availability database at one of the secondary replicas. Until logged changes arrive and are applied, the changes cannot be truncated from the availability database log at the primary replica.</p>
+<p><b>Troubleshooting:</b></p>
+<p>"Log Send Queue" and "Redo Queue" are measurable data points during availability database synchronization. You can monitor these data points in order to determine whether an availability database log cannot be truncated because of the log uses type AVAILABILITY_REPLICA.</p>
+<p>·&nbsp; &nbsp;<b>Log Send Queue</b></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">When a transaction is performed at the primary, the logged blocks must be delivered and hardened to the database log file at the secondary. Any delay will prevent truncation of those logged changes in the database at the primary replica. A common reasons for a sustained log send queue is latency in the network or during hardening (write to disk) of the log blocks on the secondary.
+As soon as it is hardened to the secondary database log file, a dedicated redo thread applies the log records. If the redo operation cannot keep up with the transaction log that is generated, log growth may occur. If the secondary replica redo operation is behind in applying those changes to a corresponding secondary database, the primary will truncate the transaction log.
+· Redo Queue
+As soon as it is hardened to the secondary database log file, a dedicated redo thread applies the log records. If the redo operation cannot keep up with the transaction log that is generated, log growth may occur. If the secondary replica redo operation is behind in applying those changes to a corresponding secondary database, the primary will truncate the transaction log
+Identifying the secondary database that is delaying log truncation:
+If there is more than one secondary, there may be a particular secondary that is responsible for the log truncation issue. To identify the secondary database that is delaying log truncation, log on to the primary replica, query the truncation_lsn column of the sys.dm_hadr_database_replica_statesdynamic management view (DMV), and then review the log_send_queue and redo_queue data points to help diagnose the issue.
+The AlwaysOn dashboard and the sys.dm_hadr_database_replica_states DMV help monitor the redo progress. The following table lists some key fields:</code></pre></div>
+<p>FieldDescription</p>
+<p>log_send_queue_size Size of log records that did not arrive at the secondary replica.</p>
+<p>log_send_rate Rate at which log records are being sent to the secondary databases.</p>
+<p>redo_queue_size Size of log records in the log files of the secondary replica that has not yet been redone, in kilobytes (KB).</p>
+<p>redo_rate Rate at which the log records are being redone on a given secondary database, in KB per second.</p>
+<p>last_redone_lsn Actual log sequence number of the last log record that was redone on the secondary database. The&nbsp;last_redone_lsn&nbsp;value is always less than&nbsp;the&nbsp;last_hardened_lsn&nbsp;value.</p>
+<p>last_received_lsn Log block ID that identifies the point up to which all log blocks are received by the secondary replica that hosts this secondary database. This field reflects a log-block ID that is padded with zeros. It is not an actual log sequence number.</p>
+<p>For example, execute the following query against the primary replica in order to report the&nbsp;log_send_queue&nbsp;and&nbsp;redo_queue&nbsp;values for each secondary availability database.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">select ar.replica_server_name, drs.truncation_lsn, drs.log_send_queue_size, drs.redo_queue_size
+from sys.dm_hadr_database_replica_states drs join sys.availability_replicas ar
+on drs.replica_id=ar.replica_id
+where drs.is_local=0</code></pre></div>
+<p><b>Workaround:</b></p>
+<p>After you identify the secondary database that makes this occur, try one or more of the following methods&nbsp;to work around this issue temporarily:</p>
+<p>Take the database out of the availability group for the offending secondary</p>
+<p>Note&nbsp;This method will result in the loss of the High Availability/Disaster Recovery scenario for the secondary. You may have to set up the Availability Group again in the future.</p>
+<p>Add more log space or log files.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/02/logreusewaitdesc-showing-as.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-agent-job-schedules.html">← SQL Agent:Job schedules</a><a href="how-to-measure-transactions-per-seconds-in-sql-server.html">How to Measure Transactions Per Seconds in SQL Server? →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

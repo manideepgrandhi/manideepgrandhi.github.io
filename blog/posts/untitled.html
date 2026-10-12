@@ -1,0 +1,82 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Untitled · Sqlservv.com</title><meta name="description" content="You may encounter this message when connecting to an instance remotely. If you log on to the system, it will connect as expected. To resolve, you can look at a good server&#x27;s SPN&#x27;s …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>08 November 2018</time></div>
+<h1>Untitled</h1><div class="chips"></div><div class="content"><p>You may encounter this message when connecting to an instance remotely.&nbsp; If you log on to the system, it will connect as expected.</p>
+<p>To resolve, you can look at a good server's SPN's and see what is different and remove the bad SPN entries.</p>
+<p>At Comcast, we do not specifically put in SPN's correlating to the service account.</p>
+<p>1. Look at the SPN of a known working system.&nbsp; In this example, I used DCMDB-WC-1P</p>
+<p>a. Open a command prompt</p>
+<p>b. Enter: setspn -l DCMDB-WC-1P</p>
+<p>i. That is -L with a lowercase L</p>
+<p>c. The output should look like this:</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  Registered ServicePrincipalNames for CN=DCMDB-WC-1P,OU=DCM Integration,OU=Produc
+  tion Databases,OU=Servers,OU=Corporate,DC=cable,DC=comcast,DC=com:</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WSMAN/DCMDB-WC-1P.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WSMAN/DCMDB-WC-1P</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TERMSRV/DCMDB-WC-1P</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TERMSRV/DCMDB-WC-1P.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RestrictedKrbHost/DCMDB-WC-1P</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; HOST/DCMDB-WC-1P</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RestrictedKrbHost/DCMDB-WC-1P.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; HOST/DCMDB-WC-1P.cable.comcast.com</p>
+<p>2. Look at the SPN of the bad system.&nbsp; In this example, TDSETH-QC-1Q.</p>
+<p>a. Open a command prompt or use the same from earlier</p>
+<p>b. Enter: setspn -l TDSETH-QC-1Q</p>
+<p>i. That is -L with a lowercase L</p>
+<p>c. Output may look like this:</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  Registered ServicePrincipalNames for CN=tdseth-qc-1q,OU=PENTAHO (TDS),OU=Non-Pro
+  duction Databases,OU=Servers,OU=Corporate,DC=cable,DC=comcast,DC=com:</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com:1433</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TERMSRV/TDSETH-QC-1Q</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TERMSRV/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RestrictedKrbHost/TDSETH-QC-1Q</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; HOST/TDSETH-QC-1Q</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RestrictedKrbHost/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; HOST/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>3. Compare the two to see what is on the &quot;bad&quot; spn list that isn't on the good SPN list and vice-versa.&nbsp; Table for comparison:</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  DCMDB-WC-1P (good) TDSETH-QC-1Q (bad)</code></pre></div>
+<p>WSMAN/DCMDB-WC-1P.cable.comcast.com</p>
+<p>WSMAN/DCMDB-WC-1P</p>
+<p>MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com:1433</p>
+<p>MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>TERMSRV/DCMDB-WC-1P TERMSRV/TDSETH-QC-1Q</p>
+<p>TERMSRV/DCMDB-WC-1P.cable.comcast.com TERMSRV/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>RestrictedKrbHost/DCMDB-WC-1P RestrictedKrbHost/TDSETH-QC-1Q</p>
+<p>HOST/DCMDB-WC-1P HOST/TDSETH-QC-1Q</p>
+<p>RestrictedKrbHost/DCMDB-WC-1P.cable.comcast.com RestrictedKrbHost/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>HOST/DCMDB-WC-1P.cable.comcast.com HOST/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>4. Delete the MSSQLSvc items that exist on the bad host, but not on the good.&nbsp;</p>
+<p>a. setspn -D MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com:1433 TDSETH-QC-1Q</p>
+<p>b. setspn -D MSSQLSvc/TDSETH-QC-1Q.cable.comcast.com TDSETH-QC-1Q</p>
+<p>c. setspn -A WSMAN/TDSETH-QC-1Q.cable.comcast.com TDSETH-QC-1Q</p>
+<p>d. setspn -A WSMAN/TDSETH-QC-1Q TDSETH-QC-1Q</p>
+<p>5. Re-run setspn -l for each host and compare the results again.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  DCMDB-WC-1P (good) TDSETH-QC-1Q (should now be good)</code></pre></div>
+<p>WSMAN/DCMDB-WC-1P.cable.comcast.com WSMAN/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>WSMAN/DCMDB-WC-1P WSMAN/TDSETH-QC-1Q</p>
+<p>TERMSRV/DCMDB-WC-1P TERMSRV/TDSETH-QC-1Q</p>
+<p>TERMSRV/DCMDB-WC-1P.cable.comcast.com TERMSRV/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>RestrictedKrbHost/DCMDB-WC-1P RestrictedKrbHost/TDSETH-QC-1Q</p>
+<p>HOST/DCMDB-WC-1P HOST/TDSETH-QC-1Q</p>
+<p>RestrictedKrbHost/DCMDB-WC-1P.cable.comcast.com RestrictedKrbHost/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>HOST/DCMDB-WC-1P.cable.comcast.com HOST/TDSETH-QC-1Q.cable.comcast.com</p>
+<p>6. Wait approximately 5-10 minutes for the updates to propagate through active directory, and then try to connect to SQL Server remotely.&nbsp; If still failing, escalate to Comcast L2.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">--</code></pre></div>
+<p>Thanks,</p>
+<p>Manideep Grandhi</p>
+<p>91 7842413650</p>
+<p>Hyderabad</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/11/you-may-encounter-this-message-when.html">View original post on Blogger</a></p><nav class="pn"><a href="calculate-maxdop-setting.html">← Calculate MAXDOP setting!!!</a><a href="dirty-page-count.html">Dirty page count →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

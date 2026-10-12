@@ -1,0 +1,218 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation --Activity Monitor · Sqlservv.com</title><meta name="description" content="SUBSTRING(st.text,(qs.statement_start_offset/2)+1,((CASE qs.statement_end_offset WHEN -1 THEN DATALENGTH(st.text) ELSE qs.statement_end_offset END - qs.statement_start_offset)/2) +…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 May 2017</time></div>
+<h1>Automation --Activity Monitor</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [DBA]
+GO
+
+/*** CREATE TABLE TO COLLECT PROCESS DATA ***/
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N&#x27;[dbo].[DBA_Monitor_Processes]&#x27;) AND type in (N&#x27;U&#x27;))
+DROP TABLE [dbo].[DBA_Monitor_Processes]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[DBA_Monitor_Processes](
+    [Time] [datetime] NULL,
+    [SessionId] [int] NULL,
+    [HostName] [nvarchar](50) NULL,
+    [LoginName] [nvarchar](50) NULL,
+    [NTUserName] [nvarchar](50) NULL,
+    [Session_Status] [nvarchar](50) NULL,
+    [Request_Status] [nvarchar](50) NULL,
+    [WaitType] [nvarchar](50) NULL,
+    [Wait(ms)] [int] NULL,
+    [WaitResource] [nvarchar](50) NULL,
+    [Blocked] [int] NULL,
+    [Process(ms)] [int] NULL,
+    [ElapsedTime(ms)] [int] NULL,
+    [DB_name] [nvarchar](max) NULL,
+    [Object] [nvarchar](max) NULL,
+    [StepText] [nvarchar](max) NULL
+) ON [PRIMARY]
+
+GO
+
+/*** CREATE INDEX ON [Time] field ***/
+CREATE CLUSTERED INDEX [IDX_Time] ON [dbo].[DBA_Monitor_Processes]
+        (
+    [Time] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON, FILLFACTOR = 85) ON [PRIMARY];
+GO
+
+/*** CREATE PROCEDURE TO QUERY FOR THE DATA ***/
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N&#x27;[dbo].[ap_DBA_get_current_processes]&#x27;) AND type in (N&#x27;P&#x27;))
+DROP PROCEDURE [dbo].[ap_DBA_get_current_processes]
+GO
+
+--
+CREATE PROCEDURE [dbo].[ap_DBA_get_current_processes]
+
+AS
+BEGIN
+
+SET NOCOUNT ON;
+
+select    getdate() time,
+        s.session_id,
+        s.host_name,
+        s.login_name,
+        s.nt_user_name,
+        s.status,
+        qs.status,
+        qs.wait_type,
+        qs.wait_time as [wait ms],
+        qs.wait_resource,
+        qs.blocking_session_id as [blocked],
+        qs.total_elapsed_time as [process ms],
+        cast(86400000*cast(getdate()-s.last_request_start_time as real) as bigint) [elapsed msec],
+        db_name(qs.database_id) as db_name,
+        case when st.objectid is null then st.text else db_name(st.dbid) + &#x27;.&#x27; + object_schema_name(st.objectid,st.dbid) + &#x27;.&#x27; + object_name(st.objectid,st.dbid) end as [object],</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBSTRING(st.text,(qs.statement_start_offset/2)+1,((CASE qs.statement_end_offset WHEN -1 THEN DATALENGTH(st.text) ELSE qs.statement_end_offset END - qs.statement_start_offset)/2) + 1) AS [step text]</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">from
+    master.sys.dm_exec_sessions s
+        left join
+    master.sys.dm_exec_requests qs
+        on s.session_id = qs.session_id
+    OUTER APPLY sys.dm_exec_sql_text(qs.sql_handle) AS st
+where (</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; s.host_name is not null -- make sure we know what host connection is coming from</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">        and
+        (
+            --check for statements that are currently executing that are either
+            --    a) waiting but not in the waitfor wait type
+            --  b) not waiting, not sleeping, running longer than 3sec
+            qs.wait_type != &#x27;WAITFOR&#x27;
+            or
+            (
+                --no waiting, spid is not sleeping, and total elapsed time is &gt; 3sec
+                qs.wait_type is null
+                and
+                s.status!=&#x27;sleeping&#x27;
+                and qs.total_elapsed_time&gt;3000
+             )
+         )
+       )
+       -- pull in all blocking
+       or s.session_id in (select blocking_session_id from master.sys.dm_exec_requests)
+order by qs.total_elapsed_time desc
+
+END
+
+GO
+
+/*** CREATE JOB ***/
+
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA_Monitor_Processes]    Script Date: 04/27/2010 16:08:42 ******/
+IF  EXISTS (SELECT job_id FROM msdb.dbo.sysjobs_view WHERE name = N&#x27;DBA_Monitor_Processes&#x27;)
+EXEC msdb.dbo.sp_delete_job @job_name=N&#x27;DBA_Monitor_Processes&#x27;, @delete_unused_schedule=1
+GO
+
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA_Monitor_Processes]    Script Date: 04/27/2010 16:08:42 ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 04/27/2010 16:08:42 ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N&#x27;[Uncategorized (Local)]&#x27; AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N&#x27;JOB&#x27;, @type=N&#x27;LOCAL&#x27;, @name=N&#x27;[Uncategorized (Local)]&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N&#x27;DBA_Monitor_Processes&#x27;,
+        @enabled=1,
+        @notify_level_eventlog=0,
+        @notify_level_email=0,
+        @notify_level_netsend=0,
+        @notify_level_page=0,
+        @delete_level=0,
+        @description=N&#x27;No description available.&#x27;,
+        @category_name=N&#x27;[Uncategorized (Local)]&#x27;,
+        @owner_login_name=N&#x27;sa&#x27;, @job_id = @jobId OUTPUT
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Exec  Insert Statement]    Script Date: 04/27/2010 16:08:43 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Exec  Insert Statement&#x27;,
+        @step_id=1,
+        @cmdexec_success_code=0,
+        @on_success_action=3,
+        @on_success_step_id=0,
+        @on_fail_action=2,
+        @on_fail_step_id=0,
+        @retry_attempts=0,
+        @retry_interval=0,
+        @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+        @command=N&#x27;Insert into [dbo].[DBA_Monitor_Processes] exec [dbo].[ap_DBA_get_current_processes] &#x27;,
+        @database_name=N&#x27;DBA&#x27;,
+        @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [purge rolling 90 days]    Script Date: 04/27/2010 16:08:43 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;purge rolling 90 days&#x27;,
+        @step_id=2,
+        @cmdexec_success_code=0,
+        @on_success_action=1,
+        @on_success_step_id=0,
+        @on_fail_action=2,
+        @on_fail_step_id=0,
+        @retry_attempts=0,
+        @retry_interval=0,
+        @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+        @command=N&#x27;delete
+  FROM [DBA].[dbo].[DBA_Monitor_Processes]
+WHERE [Time] &lt; dateadd(d, -90, getdate())&#x27;,
+        @database_name=N&#x27;DBA&#x27;,
+        @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N&#x27;Every 10 sec&#x27;,
+        @enabled=1,
+        @freq_type=4,
+        @freq_interval=1,
+        @freq_subday_type=2,
+        @freq_subday_interval=10,
+        @freq_relative_interval=0,
+        @freq_recurrence_factor=0,
+        @active_start_date=20090711,
+        @active_end_date=99991231,
+        @active_start_time=0,
+        @active_end_time=235959
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N&#x27;(local)&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT &gt; 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/automation-activity-monitor_9.html">View original post on Blogger</a></p><nav class="pn"><a href="acid-properties.html">← ACID Properties</a><a href="automation-tracking-server-level-changes.html">Automation -- Tracking Server Level Changes →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

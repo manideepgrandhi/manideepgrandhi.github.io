@@ -1,0 +1,154 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script :SQL Script to report all the users that have access to a specific database, or objects within the database. · Sqlservv.com</title><meta name="description" content="--1) List all access provisioned to a SQL user or Windows user/group directly SELECT [UserType] = CASE princ.[type] WHEN &#x27;S&#x27; THEN &#x27;SQL User&#x27; WHEN &#x27;U&#x27; THEN &#x27;Windows User&#x27; WHEN &#x27;G&#x27; T…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>02 August 2017</time></div>
+<h1>Script :SQL Script to report all the users that have access to a specific database, or objects within the database.</h1><div class="chips"><a class="chip" href="../tags/security.html">security</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  --1) List all access provisioned to a SQL user or Windows user/group directly
+    SELECT
+        [UserType] = CASE princ.[type]
+                         WHEN &#x27;S&#x27; THEN &#x27;SQL User&#x27;
+                         WHEN &#x27;U&#x27; THEN &#x27;Windows User&#x27;
+                         WHEN &#x27;G&#x27; THEN &#x27;Windows Group&#x27;
+                     END,
+        [DatabaseUserName] = princ.[name],
+        [LoginName]        = ulogin.[name],
+        [Role]             = NULL,
+        [PermissionType]   = perm.[permission_name],
+        [PermissionState]  = perm.[state_desc],
+        [ObjectType] = CASE perm.[class]
+                           WHEN 1 THEN obj.[type_desc]        -- Schema-contained objects
+                           ELSE perm.[class_desc]             -- Higher-level objects
+                       END,
+        [Schema] = objschem.[name],
+        [ObjectName] = CASE perm.[class]
+                           WHEN 3 THEN permschem.[name]       -- Schemas
+                           WHEN 4 THEN imp.[name]             -- Impersonations
+                           ELSE OBJECT_NAME(perm.[major_id])  -- General objects
+                       END,
+        [ColumnName] = col.[name]
+    FROM
+        --Database user
+        sys.database_principals            AS princ
+        --Login accounts
+        LEFT JOIN sys.server_principals    AS ulogin    ON ulogin.[sid] = princ.[sid]
+        --Permissions
+        LEFT JOIN sys.database_permissions AS perm      ON perm.[grantee_principal_id] = princ.[principal_id]
+        LEFT JOIN sys.schemas              AS permschem ON permschem.[schema_id] = perm.[major_id]
+        LEFT JOIN sys.objects              AS obj       ON obj.[object_id] = perm.[major_id]
+        LEFT JOIN sys.schemas              AS objschem  ON objschem.[schema_id] = obj.[schema_id]
+        --Table columns
+        LEFT JOIN sys.columns              AS col       ON col.[object_id] = perm.[major_id]
+                                                           AND col.[column_id] = perm.[minor_id]
+        --Impersonations
+        LEFT JOIN sys.database_principals  AS imp       ON imp.[principal_id] = perm.[major_id]
+    WHERE
+        princ.[type] IN (&#x27;S&#x27;,&#x27;U&#x27;,&#x27;G&#x27;)
+        -- No need for these system accounts
+        AND princ.[name] NOT IN (&#x27;sys&#x27;, &#x27;INFORMATION_SCHEMA&#x27;)
+UNION
+    --2) List all access provisioned to a SQL user or Windows user/group through a database or application role
+    SELECT
+        [UserType] = CASE membprinc.[type]
+                         WHEN &#x27;S&#x27; THEN &#x27;SQL User&#x27;
+                         WHEN &#x27;U&#x27; THEN &#x27;Windows User&#x27;
+                         WHEN &#x27;G&#x27; THEN &#x27;Windows Group&#x27;
+                     END,
+        [DatabaseUserName] = membprinc.[name],
+        [LoginName]        = ulogin.[name],
+        [Role]             = roleprinc.[name],
+        [PermissionType]   = perm.[permission_name],
+        [PermissionState]  = perm.[state_desc],
+        [ObjectType] = CASE perm.[class]
+                           WHEN 1 THEN obj.[type_desc]        -- Schema-contained objects
+                           ELSE perm.[class_desc]             -- Higher-level objects
+                       END,
+        [Schema] = objschem.[name],
+        [ObjectName] = CASE perm.[class]
+                           WHEN 3 THEN permschem.[name]       -- Schemas
+                           WHEN 4 THEN imp.[name]             -- Impersonations
+                           ELSE OBJECT_NAME(perm.[major_id])  -- General objects
+                       END,
+        [ColumnName] = col.[name]
+    FROM
+        --Role/member associations
+        sys.database_role_members          AS members
+        --Roles
+        JOIN      sys.database_principals  AS roleprinc ON roleprinc.[principal_id] = members.[role_principal_id]
+        --Role members (database users)
+        JOIN      sys.database_principals  AS membprinc ON membprinc.[principal_id] = members.[member_principal_id]
+        --Login accounts
+        LEFT JOIN sys.server_principals    AS ulogin    ON ulogin.[sid] = membprinc.[sid]
+        --Permissions
+        LEFT JOIN sys.database_permissions AS perm      ON perm.[grantee_principal_id] = roleprinc.[principal_id]
+        LEFT JOIN sys.schemas              AS permschem ON permschem.[schema_id] = perm.[major_id]
+        LEFT JOIN sys.objects              AS obj       ON obj.[object_id] = perm.[major_id]
+        LEFT JOIN sys.schemas              AS objschem  ON objschem.[schema_id] = obj.[schema_id]
+        --Table columns
+        LEFT JOIN sys.columns              AS col       ON col.[object_id] = perm.[major_id]
+                                                           AND col.[column_id] = perm.[minor_id]
+        --Impersonations
+        LEFT JOIN sys.database_principals  AS imp       ON imp.[principal_id] = perm.[major_id]
+    WHERE
+        membprinc.[type] IN (&#x27;S&#x27;,&#x27;U&#x27;,&#x27;G&#x27;)
+        -- No need for these system accounts
+        AND membprinc.[name] NOT IN (&#x27;sys&#x27;, &#x27;INFORMATION_SCHEMA&#x27;)
+UNION
+    --3) List all access provisioned to the public role, which everyone gets by default
+    SELECT
+        [UserType]         = &#x27;{All Users}&#x27;,
+        [DatabaseUserName] = &#x27;{All Users}&#x27;,
+        [LoginName]        = &#x27;{All Users}&#x27;,
+        [Role]             = roleprinc.[name],
+        [PermissionType]   = perm.[permission_name],
+        [PermissionState]  = perm.[state_desc],
+        [ObjectType] = CASE perm.[class]
+                           WHEN 1 THEN obj.[type_desc]        -- Schema-contained objects
+                           ELSE perm.[class_desc]             -- Higher-level objects
+                       END,
+        [Schema] = objschem.[name],
+        [ObjectName] = CASE perm.[class]
+                           WHEN 3 THEN permschem.[name]       -- Schemas
+                           WHEN 4 THEN imp.[name]             -- Impersonations
+                           ELSE OBJECT_NAME(perm.[major_id])  -- General objects
+                       END,
+        [ColumnName] = col.[name]
+    FROM
+        --Roles
+        sys.database_principals            AS roleprinc
+        --Role permissions
+        LEFT JOIN sys.database_permissions AS perm      ON perm.[grantee_principal_id] = roleprinc.[principal_id]
+        LEFT JOIN sys.schemas              AS permschem ON permschem.[schema_id] = perm.[major_id]
+        --All objects
+        JOIN      sys.objects              AS obj       ON obj.[object_id] = perm.[major_id]
+        LEFT JOIN sys.schemas              AS objschem  ON objschem.[schema_id] = obj.[schema_id]
+        --Table columns
+        LEFT JOIN sys.columns              AS col       ON col.[object_id] = perm.[major_id]
+                                                           AND col.[column_id] = perm.[minor_id]
+        --Impersonations
+        LEFT JOIN sys.database_principals  AS imp       ON imp.[principal_id] = perm.[major_id]
+    WHERE
+        roleprinc.[type] = &#x27;R&#x27;
+        AND roleprinc.[name] = &#x27;public&#x27;
+        AND obj.[is_ms_shipped] = 0
+ORDER BY
+    [UserType],
+    [DatabaseUserName],
+    [LoginName],
+    [Role],
+    [Schema],
+    [ObjectName],
+    [ColumnName],
+    [PermissionType],
+    [PermissionState],
+    [ObjectType]</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/script-sql-script-to-report-all-users_2.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-find-disk-space.html">← Powershell script to find disk space</a><a href="automation-collecting-disk-free-space.html">Automation --Collecting Disk free space →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,84 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>blocking-Head 2 · Sqlservv.com</title><meta name="description" content="/* SQL Blocking Tree w/Cursor info * Displays blocked processes with relevant information, ordered by lead blocker. * Original Ref: https://blog.sqlauthority.com/2015/07/07/sql-ser…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 April 2020</time></div>
+<h1>blocking-Head 2</h1><div class="chips"><a class="chip" href="../tags/blocking.html">blocking</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/* SQL Blocking Tree w/Cursor info
+* Displays blocked processes with relevant information, ordered by lead blocker.
+* Original Ref: https://blog.sqlauthority.com/2015/07/07/sql-server-identifying-blocking-chain-using-sql-scripts/
+* 2020-04-15 / JB: Minor changes on previous version, adjusted to my coding style.
+*     Added:
+*      (1) Table name
+*      (2) SQL text for cursors
+* Original Ref: https://pastebin.com/zKhGjywt
+*
+*/
+IF OBJECT_ID(&#x27;tempdb..#Blocks&#x27;) IS NOT NULL
+    DROP TABLE #Blocks
+SELECT   spid
+        ,blocked
+        ,REPLACE (REPLACE (st.TEXT, CHAR(10), &#x27; &#x27;), CHAR (13), &#x27; &#x27; ) AS batch
+INTO     #Blocks
+FROM     sys.sysprocesses spr
+ CROSS APPLY sys.dm_exec_sql_text(spr.SQL_HANDLE) st
+GO
+WITH BlockingTree (spid, blocking_spid, [level], batch)
+AS
+(
+    SELECT   blc.spid
+            ,blc.blocked
+            ,CAST (REPLICATE (&#x27;0&#x27;, 4-LEN (CAST (blc.spid AS VARCHAR))) + CAST (blc.spid AS VARCHAR) AS VARCHAR (1000)) AS [level]
+            ,blc.batch
+    FROM    #Blocks blc
+    WHERE   (blc.blocked = 0 OR blc.blocked = SPID) AND
+   EXISTS (SELECT * FROM #Blocks blc2 WHERE blc2.BLOCKED = blc.SPID AND blc2.BLOCKED &lt;&gt; blc2.SPID)
+    UNION ALL
+    SELECT   blc.spid
+            ,blc.blocked
+            ,CAST(bt.[level] + RIGHT (CAST ((1000 + blc.SPID) AS VARCHAR (100)), 4) AS VARCHAR (1000)) AS [level]
+            ,blc.batch
+    FROM     #Blocks AS blc
+  INNER JOIN BlockingTree bt
+   ON blc.blocked = bt.SPID
+    WHERE   blc.blocked &gt; 0 AND
+   blc.blocked &lt;&gt; blc.SPID
+)
+SELECT N&#x27;&#x27; + ISNULL(REPLICATE (N&#x27;|         &#x27;, LEN (LEVEL)/4 - 2),&#x27;&#x27;)
+        + CASE WHEN (LEN(LEVEL)/4 - 1) = 0 THEN &#x27;&#x27; ELSE &#x27;|------  &#x27; END
+        + CAST (bt.SPID AS NVARCHAR (10)) AS BlockingTree
+        ,spr.lastwaittype   AS [Type]
+        ,spr.loginame       AS [Login Name]
+        ,st.text            AS [SQL Text]
+  ,IIF(cur.sql_handle IS NULL, &#x27;&#x27;, (SELECT [TEXT] FROM sys.dm_exec_sql_text (cur.sql_handle))) AS [Cursor SQL Text]
+        ,DB_NAME(spr.dbid)  AS [Database]
+  ,OBJECT_NAME(sli.rsc_objid) AS [Table]
+        ,spr.cmd            AS [Command]
+        ,spr.waitresource   AS [Wait Resource]
+        ,spr.program_name   AS [Application]
+        ,spr.hostname       AS [HostName]
+        ,spr.last_batch     AS [Last Batch Time]
+FROM BlockingTree bt
+ LEFT OUTER JOIN sys.sysprocesses spr
+  ON spr.spid = bt.spid
+ CROSS APPLY sys.dm_exec_sql_text(spr.SQL_HANDLE) st
+ LEFT JOIN sys.dm_exec_cursors(0) cur
+  ON cur.session_id = spr.spid AND
+   cur.fetch_status != 0
+ JOIN master.dbo.syslockinfo sli
+  ON sli.req_spid = spr.spid
+ JOIN master.dbo.spt_values spv
+  ON spv.[type] = &#x27;LR&#x27; AND
+   spv.[name] = &#x27;TAB&#x27; AND
+   spv.number = sli.rsc_type
+ORDER BY LEVEL ASC</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/blocking-head-2.html">View original post on Blogger</a></p><nav class="pn"><a href="locking-head.html">← Locking Head</a><a href="ola-jobs.html">OLA Jobs →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

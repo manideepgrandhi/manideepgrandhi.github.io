@@ -1,0 +1,88 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Query blocking chain from sp_whoisactive · Sqlservv.com</title><meta name="description" content="use dba go If OBJECT_ID(&#x27;tempdb..#T&#x27;) IS NOT NULL DROP TABLE #T --- Checking the blocking tree, provide the collection time SET NOCOUNT ON -- SELECT [dd hh:mm:ss.mss] , session_id …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 September 2020</time></div>
+<h1>Query blocking chain from sp_whoisactive</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">use dba
+go
+If OBJECT_ID(&#x27;tempdb..#T&#x27;) IS NOT NULL
+       DROP TABLE #T
+--- Checking the blocking tree, provide the collection time
+SET NOCOUNT ON
+--
+SELECT [dd hh:mm:ss.mss]
+       , session_id
+     , blocking_session_id
+     , cast(sql_text as nvarchar(max)) as BATCH
+       , database_name, status, program_name, host_name, login_name, login_time, wait_info, collection_time
+  INTO #T
+  from [CODBA].[dbo].[monitor_WhoIsActive] T
+where collection_time = &#x27;2019-07-11 05:23:02.823&#x27;
+-- IN(
+--&#x27;2019-07-29 12:03:02.793&#x27;)
+--&#x27;2019-07-22 08:48:02.883&#x27;)
+--&#x27;2019-07-17 04:44:58.273&#x27;,
+--&#x27;2019-07-17 04:39:58.600&#x27;)
+--&#x27;2019-07-17 04:35:00.757&#x27;,
+--&#x27;2019-07-17 04:29:58.660&#x27;)
+--=&#x27;2019-07-11 05:23:02.823&#x27;--&#x27;2019-07-17 04:39:58.600&#x27; --IN (&#x27;2019-07-30 07:28:01.980&#x27;, &#x27;2019-07-23 05:13:02.160&#x27;, &#x27;2019-07-22 13:23:02.190&#x27;) -- Collection time of interest
+--
+go
+--
+WITH BLOCKERS ( [dd hh:mm:ss.mss], session_id
+              , blocking_session_id
+              , LEVEL
+              , BATCH
+                      , database_name, status, program_name, hostname, loginame, login_time, wait_info, collection_time)
+AS
+(
+SELECT [dd hh:mm:ss.mss], session_id
+     , blocking_session_id
+      , CAST (REPLICATE (&#x27;0&#x27;, 4-LEN (CAST (session_id AS VARCHAR))) + CAST (session_id AS VARCHAR) AS VARCHAR (1000)) AS LEVEL
+      , BATCH
+         , database_name, status, program_name, host_name, login_name, login_time, wait_info, collection_time
+  FROM #T R
+WHERE ( ( blocking_session_id = 0 )
+      or ( blocking_session_id is null )
+      OR ( blocking_session_id = session_id ) )
+   AND EXISTS ( SELECT *
+                  FROM #T R2
+                 WHERE ( R2.blocking_session_id = R.session_id )
+                   AND ( R2.blocking_session_id &lt;&gt; R2.session_id ) )
+UNION ALL
+    SELECT R.[dd hh:mm:ss.mss], R.session_id
+         , R.blocking_session_id
+         , CAST (BLOCKERS.LEVEL + RIGHT (CAST ((1000 + R.session_id) AS VARCHAR (100)), 4) AS VARCHAR (1000)) AS LEVEL
+         , R.BATCH
+             , R.database_name, R.status, R.program_name, R.host_name, R.login_name, R.login_time, R.wait_info, R.collection_time
+      FROM #T AS R
+INNER JOIN BLOCKERS ON R.blocking_session_id = BLOCKERS.session_id
+     WHERE ( R.blocking_session_id &gt; 0 )
+       AND ( R.blocking_session_id &lt;&gt; R.session_id )
+)
+--
+  SELECT [dd hh:mm:ss.mss], N&#x27;    &#x27;
+       + REPLICATE (N&#x27;|         &#x27;, LEN (LEVEL)/4 - 1)
+       + CASE
+              WHEN (LEN(LEVEL)/4 - 1) = 0 THEN &#x27;HEAD -  &#x27;
+              ELSE &#x27;|------  &#x27;
+         END
+       + CAST (session_id AS NVARCHAR (10))
+       + N&#x27; &#x27;
+       + BATCH AS BLOCKING_TREE
+          , database_name, status, program_name, hostname, loginame, login_time, wait_info, collection_time
+    FROM BLOCKERS
+ORDER BY LEVEL ASC
+--
+drop table #T</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/09/query-blocking-chain-from-spwhoisactive.html">View original post on Blogger</a></p><nav class="pn"><a href="auto-resume-ag-data-movement.html">← Auto resume AG data movement</a><a href="listing-the-disks-using-windows-powershell-windows-server-2012-and-lat.html">Listing the disks using Windows PowerShell (Windows Server 2012 and later) →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

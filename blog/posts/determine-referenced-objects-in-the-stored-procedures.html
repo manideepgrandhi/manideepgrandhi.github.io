@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Determine Referenced Objects in the Stored Procedures · Sqlservv.com</title><meta name="description" content="use &lt;databasename&gt; go SELECT DISTINCT object_schema_name(Referencing_ID) as SchemaName, object_name(Referencing_ID) as SPName, referencer.type, referenced_database_name, referenced…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>10 May 2018</time></div>
+<h1>Determine Referenced Objects in the Stored Procedures</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">use &lt;databasename&gt;
+go
+SELECT DISTINCT object_schema_name(Referencing_ID) as SchemaName, 	object_name(Referencing_ID) as SPName, 	referencer.type, 	referenced_database_name, 	referenced_schema_name, 	referenced_entity_name, referenced.type
+FROM sys.sql_expression_dependencies
+LEFT JOIN sys.objects referencer ON referencing_id = referencer.object_ID
+LEFT JOIN sys.objects referenced ON referenced_id = referenced.object_ID
+WHERE referencing_Class = 1 AND referenced_class = 1 AND referencer.type IN (&#x27;p&#x27;)
+--AND object_name(Referencing_ID) = &#x27;&#x27;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/05/determine-referenced-objects-in-stored.html">View original post on Blogger</a></p><nav class="pn"><a href="favorite-links.html">← Favorite Links</a><a href="locking-information-along-with-blocking-spid-s.html">Locking information along with blocking spid&#x27;s →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

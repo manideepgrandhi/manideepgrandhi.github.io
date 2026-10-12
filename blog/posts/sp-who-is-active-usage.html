@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sp_who is active usage · Sqlservv.com</title><meta name="description" content="EXEC sp_WhoIsActive @filter = &#x27;&#x27;, @filter_type = &#x27;session&#x27;, @not_filter = &#x27;&#x27;, @not_filter_type = &#x27;session&#x27;, @show_own_spid = 0, @show_system_spids = 0, @show_sleeping_spids = 1, @g…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>12 May 2017</time></div>
+<h1>Sp_who is active usage</h1><div class="chips"></div><div class="content"><p><img loading="lazy" src="https://tr.cloudmagic.com/h/v6/emailtag/tag/2.0/1494567737/e02d2aa3040863f8fa6a3bb7157c0189/4/9176d5d101e5163d4784b5fc25f60630/4cdb88fd93c973e42f226965d9ed781f/3f8049b82ac425b0774519b29f734b9c/newton.gif" alt=""></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">EXEC sp_WhoIsActive
+      @filter = &#x27;&#x27;,
+      @filter_type = &#x27;session&#x27;,
+      @not_filter = &#x27;&#x27;,
+      @not_filter_type = &#x27;session&#x27;,
+      @show_own_spid = 0,
+      @show_system_spids = 0,
+      @show_sleeping_spids = 1,
+      @get_full_inner_text = 0,
+      @get_plans = 0,
+      @get_outer_command = 0,
+      @get_transaction_info = 0,
+      @get_task_info = 1,
+      @get_locks = 0,
+      @get_avg_time = 0,
+      @get_additional_info = 0,
+      @find_block_leaders = 0,
+      @delta_interval = 0,
+      @output_column_list = &#x27;[dd%][session_id][sql_text][sql_command][login_name][wait_info][tasks][tran_log%][cpu%][temp%][block%][reads%][writes%][context%][physical%][query_plan][locks][%]&#x27;,
+      @sort_order = &#x27;[start_time] ASC&#x27;,
+      @format_output = 1,
+      @destination_table = &#x27;&#x27;,
+      @return_schema = 0,
+      @schema = NULL,
+      @help = 0</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/spwho-is-active-usage_11.html">View original post on Blogger</a></p><nav class="pn"><a href="automation-track-database-level-changes.html">← Automation -Track Database level changes</a><a href="sql-backup-information-using-powershell.html">Sql backup information using powershell →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

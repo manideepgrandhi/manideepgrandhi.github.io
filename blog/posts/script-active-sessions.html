@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script :Active sessions · Sqlservv.com</title><meta name="description" content="SELECT SUBSTRING(dest.text, ( der.statement_start_offset / 2 ) + 1, ( CASE der.statement_end_offset WHEN -1 THEN DATALENGTH(dest.text) ELSE der.statement_end_offset - der.statement…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>17 November 2017</time></div>
+<h1>Script :Active sessions</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT  SUBSTRING(dest.text, ( der.statement_start_offset / 2 ) + 1,
+                  ( CASE der.statement_end_offset
+                      WHEN -1 THEN DATALENGTH(dest.text)
+                      ELSE der.statement_end_offset
+                           - der.statement_start_offset
+                    END ) / 2 + 1) AS querystatement ,
+        deqp.query_plan ,
+        der.session_id ,
+        der.start_time ,
+        der.status ,
+        DB_NAME(der.database_id) AS DBName ,
+        USER_NAME(der.user_id) AS UserName ,
+        der.blocking_session_id ,
+        der.wait_type ,
+        der.wait_time ,
+        der.wait_resource ,
+        der.last_wait_type ,
+        der.cpu_time ,
+        der.total_elapsed_time ,
+        der.reads ,
+        der.writes
+FROM    sys.dm_exec_requests AS der
+        CROSS APPLY sys.dm_exec_sql_text(der.sql_handle) AS dest
+        CROSS APPLY sys.dm_exec_query_plan(der.plan_handle) AS deqp;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/script-active-sessions_17.html">View original post on Blogger</a></p><nav class="pn"><a href="technical-locks-blocks-and-deadlocks.html">← Technical - locks, blocks and deadlocks</a><a href="script-most-expensive-queries.html">Script:most expensive queries →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

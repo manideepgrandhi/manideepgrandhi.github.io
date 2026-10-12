@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sys.dm_db_index_physical_stats · Sqlservv.com</title><meta name="description" content="SELECT DB_NAME(ps.database_id) AS [Database Name], SCHEMA_NAME(o.[schema_id]) AS [Schema Name], OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], i.[name] AS [Index Name], ps.index_id, p…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 April 2020</time></div>
+<h1>sys.dm_db_index_physical_stats</h1><div class="chips"><a class="chip" href="../tags/fragmentation.html">fragmentation</a><a class="chip" href="../tags/index.html">index</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT DB_NAME(ps.database_id) AS [Database Name], SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
+OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], i.[name] AS [Index Name], ps.index_id,
+ps.index_type_desc, ps.avg_fragmentation_in_percent,
+ps.fragment_count, ps.page_count, i.fill_factor, i.has_filter,
+i.filter_definition, i.[allow_page_locks]
+FROM sys.dm_db_index_physical_stats(DB_ID(),NULL, NULL, NULL , N&#x27;DETAILED&#x27;) AS ps
+INNER JOIN sys.indexes AS i WITH (NOLOCK)
+ON ps.[object_id] = i.[object_id]
+AND ps.index_id = i.index_id
+INNER JOIN sys.objects AS o WITH (NOLOCK)
+ON i.[object_id] = o.[object_id]
+WHERE ps.database_id = DB_ID()
+--AND ps.page_count &gt; 2500
+ORDER BY ps.avg_fragmentation_in_percent DESC OPTION (RECOMPILE);
+SELECT
+ OBJECT_NAME ([ips].[object_id]) AS [Object Name],
+ [si].[name] AS [Index Name],
+ ROUND ([ips].[avg_fragmentation_in_percent], 2) AS [Fragmentation],
+ [ips].[page_count] AS [Pages],
+ ROUND ([ips].[avg_page_space_used_in_percent], 2) AS [Page Density]
+FROM sys.dm_db_index_physical_stats (
+ DB_ID (N&#x27;AdventureWorksDW2012&#x27;),
+ NULL,
+ NULL,
+ NULL,
+ N&#x27;DETAILED&#x27;) [ips]
+CROSS APPLY [sys].[indexes] [si]
+WHERE
+ [si].[object_id] = [ips].[object_id]
+ AND [si].[index_id] = [ips].[index_id]
+ AND [ips].[index_level] = 0 -- Just the leaf level
+ --and OBJECT_NAME ([ips].[object_id])=&#x27;FactCurrencyRate&#x27;
+ AND [ips].[alloc_unit_type_desc] = N&#x27;IN_ROW_DATA&#x27;;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/sysdmdbindexphysicalstats.html">View original post on Blogger</a></p><nav class="pn"><a href="ola-jobs.html">← OLA Jobs</a><a href="fill-factor-for-indexes.html">Fill_Factor for Indexes →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

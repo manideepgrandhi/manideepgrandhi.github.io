@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Locking information along with blocking spid&#x27;s · Sqlservv.com</title><meta name="description" content="SELECT DTL.resource_type, CASE WHEN DTL.resource_type IN (&#x27;DATABASE&#x27;, &#x27;FILE&#x27;, &#x27;METADATA&#x27;) THEN DTL.resource_type WHEN DTL.resource_type = &#x27;OBJECT&#x27; THEN OBJECT_NAME(DTL.resource_ass…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>17 July 2018</time></div>
+<h1>Locking information along with blocking spid&#x27;s</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT DTL.resource_type,
+CASE
+WHEN DTL.resource_type IN (&#x27;DATABASE&#x27;, &#x27;FILE&#x27;, &#x27;METADATA&#x27;) THEN DTL.resource_type
+WHEN DTL.resource_type = &#x27;OBJECT&#x27; THEN OBJECT_NAME(DTL.resource_associated_entity_id, SP.[dbid])
+WHEN DTL.resource_type IN (&#x27;KEY&#x27;, &#x27;PAGE&#x27;, &#x27;RID&#x27;) THEN            (
+SELECT OBJECT_NAME([object_id])
+FROM sys.partitions
+WHERE sys.partitions.hobt_id =                DTL.resource_associated_entity_id            )
+ELSE &#x27;Unidentified&#x27;
+END AS requested_object_name, DTL.request_mode, DTL.request_status,    DEST.TEXT, SP.spid, SP.blocked, SP.status, SP.loginame
+FROM sys.dm_tran_locks DTL
+INNER JOIN sys.sysprocesses SP          ON DTL.request_session_id = SP.spid
+--
+INNER JOIN sys.[dm_exec_requests] AS SDER ON SP.[spid] = [SDER].[session_id]
+CROSS APPLY sys.dm_exec_sql_text(SP.sql_handle) AS DEST
+WHERE SP.dbid = DB_ID()    AND DTL.[resource_type] &lt;&gt; &#x27;DATABASE&#x27;
+ORDER BY DTL.[request_session_id];</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/07/view-author-httpthesqlagentman.html">View original post on Blogger</a></p><nav class="pn"><a href="determine-referenced-objects-in-the-stored-procedures.html">← Determine Referenced Objects in the Stored Procedures</a><a href="testing.html">Testing →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

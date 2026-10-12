@@ -1,0 +1,68 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filter schema changes using trace file · Sqlservv.com</title><meta name="description" content="declare @d1 datetime; declare @diff int; declare @curr_tracefilename varchar(500); declare @base_tracefilename varchar(500); declare @indx int ; declare @temp_trace table ( obj_nam…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>20 July 2020</time></div>
+<h1>Filter schema changes using trace file</h1><div class="chips"><a class="chip" href="../tags/schema-chnages.html">schema_chnages</a><a class="chip" href="../tags/trace.html">trace</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">    declare @d1 datetime;
+declare @diff int;
+declare @curr_tracefilename varchar(500);
+declare @base_tracefilename varchar(500);
+declare @indx int ;
+declare @temp_trace table (
+ obj_name nvarchar(256) collate database_default
+, database_name nvarchar(256) collate database_default
+, start_time datetime
+, event_class int
+, event_subclass int
+, object_type int
+, server_name nvarchar(256) collate database_default
+, login_name nvarchar(256) collate database_default
+, application_name nvarchar(256) collate database_default
+, ddl_operation nvarchar(40) collate database_default
+);
+     select @curr_tracefilename = path from sys.traces where is_default = 1 ;
+set @curr_tracefilename = reverse(@curr_tracefilename)
+select @indx = PATINDEX(&#x27;%\%&#x27;, @curr_tracefilename)
+set @curr_tracefilename = reverse(@curr_tracefilename)
+set @base_tracefilename = LEFT(@curr_tracefilename,len(@curr_tracefilename) - @indx) + &#x27;\log.trc&#x27;;
+       insert into @temp_trace
+select ObjectName
+, DatabaseName
+, StartTime
+, EventClass
+, EventSubClass
+, ObjectType
+, ServerName
+, LoginName
+, ApplicationName
+, &#x27;temp&#x27;
+from ::fn_trace_gettable( @base_tracefilename, default )
+where EventClass in (46,47,164) and EventSubclass = 0 and
+DatabaseID &lt;&gt; 2
+         update @temp_trace set ddl_operation = &#x27;CREATE&#x27; where
+event_class = 46
+update @temp_trace set ddl_operation = &#x27;DROP&#x27; where
+event_class = 47
+update @temp_trace set ddl_operation = &#x27;ALTER&#x27; where
+event_class = 164
+           select @d1 = min(start_time) from @temp_trace
+set @diff= datediff(hh,@d1,getdate())
+set @diff=@diff/24;
+             select @diff as difference
+, @d1 as date
+, object_type as obj_type_desc
+, *
+from @temp_trace where object_type not in (21587)
+--and obj_name=&#x27;OPRICH&#x27;
+order by start_time desc</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/07/filter-schema-changes-using-trace-file.html">View original post on Blogger</a></p><nav class="pn"><a href="rseolving-single-user-mode-issue.html">← Rseolving &quot;single_user&quot; mode issue</a><a href="auto-resume-ag-data-movement.html">Auto resume AG data movement →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Replication configuration · Sqlservv.com</title><meta name="description" content="--USE --&lt;Select Publisher Database&gt; SELECT @@ServerName as publisherserver, DB_NAME() publisherdb, sp.name as publicationname, sp.immediate_sync, sp.allow_anonymous, OBJECT_SCHEMA_…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>06 July 2017</time></div>
+<h1>Replication configuration</h1><div class="chips"><a class="chip" href="../tags/replication.html">Replication</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">--USE --&lt;Select Publisher Database&gt;
+SELECT
+@@ServerName as publisherserver,
+DB_NAME() publisherdb,
+sp.name as publicationname,
+sp.immediate_sync,
+sp.allow_anonymous,
+OBJECT_SCHEMA_NAME(sa.objid, db_id()) as articleSchema,
+sa.name as articlename,
+s.status subscription_status,
+CASE s.status
+       WHEN 0  THEN &#x27;Inactive&#x27;
+       WHEN 1  THEN  &#x27;Subscribed (Not Published)&#x27;
+       ELSE &#x27;Active (Published)&#x27;
+END AS subscription_status_desc,
+sa.pre_creation_cmd,
+CASE sa.pre_creation_cmd
+       WHEN 0  THEN &#x27;none&#x27;
+       WHEN 1  THEN &#x27;drop&#x27;
+       WHEN 2  THEN &#x27;delete&#x27;
+       ELSE &#x27;truncate&#x27;
+END AS pre_creation_cmd_desc,
+UPPER (srv.srvname) AS subscriberservername,
+s.dest_db as subscriberdb,
+case s.sync_type
+             when 2 then
+                           case s.nosync_type
+                                  WHEN 3 THEN 5
+                                  WHEN 2 THEN 4
+                                  WHEN 1 THEN 3
+                                  else 2
+                END
+                     ELSE s.sync_type
+END as sync_type,
+case s.sync_type
+              when 2 then
+                 case s.nosync_type
+                    WHEN 3 THEN &#x27;initialize with lsn&#x27;
+                    WHEN 2 THEN &#x27;initialize with backup&#x27;
+                    WHEN 1 THEN &#x27;replication support only&#x27;
+                    else CAST (2 AS VARCHAR (2)) +&#x27;none&#x27;
+                 END
+                       when 1 THEN &#x27;automatic&#x27;
+              ELSE CAST (s.sync_type AS VARCHAR)
+END as sync_type_desc
+FROM dbo.syspublications sp
+JOIN dbo.sysarticles sa ON sp.pubid = sa.pubid
+JOIN dbo.syssubscriptions s ON sa.artid = s.artid
+JOIN master.dbo.sysservers srv ON s.srvid = srv.srvid
+go</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/07/replication-configuration_5.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-job-history.html">← Sql job history</a><a href="backup-history.html">Backup history →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

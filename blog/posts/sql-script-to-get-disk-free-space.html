@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sql Script to get disk free space · Sqlservv.com</title><meta name="description" content="Recently I&#x27;ve come across a situation where I need to pull the disk free space percent on a server. I can achieve this by logging into the server or by using xp_cmdshell in query a…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>22 April 2017</time><span class="badge">★ Top script</span></div>
+<h1>Sql Script to get disk free space</h1><div class="chips"><a class="chip star" href="../tags/5star.html">5star</a><a class="chip" href="../tags/scripts.html">scripts</a><a class="chip" href="../tags/space.html">Space</a></div><div class="content"><p>Recently I've come across a situation where I need to pull the disk free space percent on a server. I can achieve this by logging into the server or by using xp_cmdshell in query analyzer.</p>
+<p>Since it is a time consuming task and xp_cmdshell will not give free percent details, I've used below script to complete the task which saved my time by 10 minutes.</p>
+<p>Hope it will help you too.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT DISTINCT
+vs.volume_mount_point [Drive],
+CAST(vs.total_bytes / 1048576 as decimal(12,2)) [TotalMBs],
+CAST(vs.available_bytes / 1048576 as decimal(12,2)) [FreeSpaceMBs],
+CAST((CAST(vs.available_bytes / 1048576 as decimal(12,2)) * 100) / (CAST(vs.total_bytes / 1048576 as decimal(12,2))) as decimal(12,2)) [% Free]
+FROM sys.master_files mf
+CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) vs
+
+SELECT DISTINCT</code></pre></div>
+<p>volume_mount_point [Disk Mount Point],</p>
+<p>file_system_type [File System Type],</p>
+<p>logical_volume_name as [Logical Drive Name],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">CONVERT(DECIMAL(18,2),total_bytes/1073741824.0) AS [Total Size in GB], ---1GB = 1073741824 bytes
+CONVERT(DECIMAL(18,2),available_bytes/1073741824.0) AS [Available Size in GB],
+CAST(CAST(available_bytes AS FLOAT)/ CAST(total_bytes AS FLOAT) AS DECIMAL(18,2)) * 100 AS [Space Free %]
+FROM sys.master_files
+CROSS APPLY sys.dm_os_volume_stats(database_id, file_id)</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/sql-script-to-get-disk-free-space_22.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-query-to-get-database-size-and-free-space.html">← Sql query to get Database size and free space</a><a href="different-ways-to-find-sql-startup-time.html">Different ways to find SQL startup time →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

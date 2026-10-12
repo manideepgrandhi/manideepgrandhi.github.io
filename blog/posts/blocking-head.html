@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blocking Head · Sqlservv.com</title><meta name="description" content="SET NOCOUNT ON GO SELECT SPID , BLOCKED , REPLACE ( REPLACE ( T . TEXT , CHAR ( 10 ), &#x27; &#x27; ), CHAR ( 13 ), &#x27; &#x27; ) AS BATCH INTO #T FROM sys . sysprocesses R CROSS APPLY sys . dm_exec…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>17 April 2020</time></div>
+<h1>Blocking Head</h1><div class="chips"><a class="chip" href="../tags/blocking.html">blocking</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SET NOCOUNT ON
+GO
+
+SELECT SPID, BLOCKED, REPLACE (REPLACE (T.TEXT, CHAR(10), &#x27; &#x27;), CHAR (13), &#x27; &#x27; ) AS BATCH INTO #T
+FROM sys.sysprocesses R
+CROSS APPLY sys.dm_exec_sql_text(R.SQL_HANDLE) T
+GO
+
+WITH BLOCKERS (SPID, BLOCKED, LEVEL, BATCH)
+AS (SELECT
+       SPID,
+       BLOCKED,
+       CAST (REPLICATE (&#x27;0&#x27;, 4-LEN (CAST (SPID AS VARCHAR))) + CAST (SPID AS VARCHAR) AS VARCHAR (1000)) AS LEVEL,
+       BATCH
+   FROM #T R
+   WHERE (BLOCKED = 0 OR BLOCKED = SPID)
+   AND EXISTS (SELECT * FROM #T R2 WHERE R2.BLOCKED = R.SPID AND R2.BLOCKED &lt;&gt; R2.SPID)
+   UNION ALL
+   SELECT
+      R.SPID,
+      R.BLOCKED,
+      CAST (BLOCKERS.LEVEL + RIGHT (CAST ((1000 + R.SPID) AS VARCHAR (100)), 4) AS VARCHAR (1000)) AS LEVEL,
+      R.BATCH
+   FROM #T AS R
+   INNER JOIN BLOCKERS ON R.BLOCKED = BLOCKERS.SPID
+   WHERE R.BLOCKED &gt; 0 AND R.BLOCKED &lt;&gt; R.SPID
+   )
+SELECT
+   N&#x27; &#x27; + REPLICATE (N&#x27;| &#x27;, LEN (LEVEL)/4 - 1) +
+   CASE WHEN (LEN(LEVEL)/4 - 1) = 0 THEN &#x27;HEAD - &#x27; ELSE &#x27;|------ &#x27; END
+   + CAST (SPID AS NVARCHAR (10)) + N&#x27; &#x27; + BATCH AS BLOCKING_TREE
+FROM BLOCKERS ORDER BY LEVEL ASC
+GO
+
+DROP TABLE #T
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/04/blocking-head.html">View original post on Blogger</a></p><nav class="pn"><a href="slow-queries-with-sql-dmvs.html">← Slow Queries With SQL DMVs</a><a href="locking-head.html">Locking Head →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

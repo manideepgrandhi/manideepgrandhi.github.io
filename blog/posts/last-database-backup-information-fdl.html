@@ -1,0 +1,65 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Database backup information(FDL) · Sqlservv.com</title><meta name="description" content="SET NOCOUNT ON GO SET quoted_identifier OFF DECLARE @dbname AS VARCHAR (80) DECLARE @msgdb AS VARCHAR (100) DECLARE @dbbkpname AS VARCHAR (80) DECLARE @dypart1 AS VARCHAR (2) DECLA…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 December 2018</time></div>
+<h1>Last Database backup information(FDL)</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  SET    NOCOUNT ON
+  GO
+  SET    quoted_identifier OFF
+  DECLARE    @dbname AS    VARCHAR(80)
+  DECLARE    @msgdb AS    VARCHAR(100)
+  DECLARE    @dbbkpname AS    VARCHAR(80)
+  DECLARE    @dypart1 AS    VARCHAR(2)
+  DECLARE    @dypart2 AS    VARCHAR(3)
+  DECLARE    @dypart3 AS    VARCHAR(4)
+  DECLARE    @currentdate AS    VARCHAR(10)
+  DECLARE    @server_name AS    VARCHAR(30)
+  SELECT    @server_name = @@servername
+  SELECT    @dypart1 = DATEPART(dd,GETDATE())
+  SELECT    @dypart2 = DATENAME(mm,GETDATE())
+  SELECT    @dypart3 = DATEPART(yy,GETDATE())
+  SELECT    @currentdate= @dypart1 + @dypart2 + @dypart3
+  PRINT  &quot;#################################################################&quot;
+  PRINT  &quot;#   SERVERNAME : &quot;+   @server_name + &quot;   DATE : &quot;+   @currentdate +&quot;#&quot;
+  PRINT  &quot;#################################################################&quot;
+  PRINT  &quot;DatabaseName   Full Diff TranLog&quot;
+  PRINT  &quot;#################################################################&quot;
+  SELECT    SUBSTRING(s.name,1,50)  AS    &#x27;DATABASE Name&#x27;,
+  b.backup_start_date  AS    &#x27;Full DB Backup Status&#x27;,
+  c.backup_start_date  AS    &#x27;Differential DB Backup Status&#x27;,
+  d.backup_start_date  AS    &#x27;Transaction Log Backup Status&#x27;
+  FROM    MASTER..sysdatabases s
+  LEFT    OUTER   JOIN   msdb..backupset b
+  ON    s.name    = b.database_name
+  AND    b.backup_start_date =
+  (SELECT    MAX(backup_start_date)AS    &#x27;Full DB Backup Status&#x27;
+  FROM    msdb..backupset
+  WHERE    database_name = b.database_name
+  AND    TYPE = &#x27;D&#x27;)  --   full database backups only, not log backups
+  LEFT    OUTER   JOIN   msdb..backupset c
+  ON    s.name    = c.database_name
+  AND    c.backup_start_date =
+  (SELECT    MAX(backup_start_date)&#x27;Differential   DB Backup Status&#x27;
+  FROM    msdb..backupset
+  WHERE    database_name = c.database_name
+  AND    TYPE = &#x27;I&#x27;)
+  LEFT    OUTER   JOIN   msdb..backupset d
+  ON    s.name    = d.database_name
+  AND    d.backup_start_date =
+  (SELECT    MAX(backup_start_date)&#x27;Transaction   Log Backup Status&#x27;
+  FROM    msdb..backupset
+  WHERE    database_name = d.database_name
+  AND    TYPE = &#x27;L&#x27;)
+  WHERE    s.name    &lt;&gt;&#x27;tempdb&#x27;
+  ORDER    BY   s.name</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/12/last-database-backup-informationfdl.html">View original post on Blogger</a></p><nav class="pn"><a href="fw-cpu-utilization-from-last-n-minutes.html">← Fw: CPU Utilization from last N minutes !!!</a><a href="disk-space-usage-and-database-growth-details.html">Disk Space usage and database growth details →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

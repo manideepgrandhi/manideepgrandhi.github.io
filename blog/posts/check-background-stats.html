@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Check background Stats · Sqlservv.com</title><meta name="description" content="auto_created, user_created, no_recompute, has_filter, is_temporary, is_incremental">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>16 May 2020</time></div>
+<h1>Check background Stats</h1><div class="chips"><a class="chip" href="../tags/stats.html">stats</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT  time_queued, des.session_id, des.login_name,
+        OBJECT_NAME(object_id1) AS [object],
+        ss.name as [statistic_name], sc.name AS [statistic_columns],</code></pre></div>
+<p>auto_created, user_created, no_recompute, has_filter, is_temporary, is_incremental</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM    sys.dm_exec_background_job_queue bq
+JOIN    sys.stats ss ON ss.object_id = bq.object_id1
+                        AND ss.stats_id = bq.object_id2
+JOIN    sys.stats_columns stc ON stc.object_id = ss.object_id
+                                 AND stc.stats_id = ss.stats_id
+JOIN    sys.columns sc ON sc.column_id = stc.column_id
+                          AND sc.object_id = stc.object_id
+JOIN  sys.dm_exec_sessions des ON des.session_id = bq.session_id
+WHERE   in_progress = 1
+OPTION(RECOMPILE);</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/05/check-background-stats.html">View original post on Blogger</a></p><nav class="pn"><a href="rebuild-vs-reorg.html">← Rebuild Vs Reorg</a><a href="stop-sql-job-after-defined-time-limit.html">Stop Sql job after defined time limit →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

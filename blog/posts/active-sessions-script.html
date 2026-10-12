@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Active sessions script · Sqlservv.com</title><meta name="description" content="r.[wait_time]/1000 AS &#x27;wait_time&#x27;, r.[logical_reads], r.[writes], r.[cpu_time], r.[blocking_session_id] as &#x27;blocker_spid&#x27;, s.[last_request_start_time], t.[text] as &#x27;sql&#x27;, r.[sql_ha…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>27 November 2017</time></div>
+<h1>Active sessions script</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/*** ACTIVE SESSIONS ***/
+
+SELECT s.[session_id] AS &#x27;spid&#x27;, s.[host_process_id] AS &#x27;host_PID&#x27;, db_name(r.[database_id]) as &#x27;dbname&#x27;,
+  s.[login_name] as &#x27;login_name&#x27;, s.[host_name] AS &#x27;host_name&#x27;, r.[command],
+  r.[status] as &#x27;status&#x27;, r.[total_elapsed_time]/1000 AS &#x27;duration&#x27;,
+  &#x27;wait_type&#x27; =
+   (CASE
+    WHEN r.[wait_type] is null THEN &#x27;NONE&#x27;
+    ELSE r.[wait_type]
+   END),</code></pre></div>
+<p>&#160;&#160;r.[wait_time]/1000 AS 'wait_time', r.[logical_reads], r.[writes], r.[cpu_time],&#160;</p>
+<p>&#160;&#160;r.[blocking_session_id] as 'blocker_spid', s.[last_request_start_time], t.[text] as 'sql',&#160;</p>
+<p>&#160;&#160;r.[sql_handle]</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM sys.dm_exec_sessions s
+LEFT OUTER JOIN sys.dm_exec_requests r ON s.[session_id] = r.[session_id]
+OUTER APPLY sys.dm_exec_sql_text(r.sql_handle) AS t
+WHERE s.[login_name] &lt;&gt; &#x27;sa&#x27; and s.[session_id] &lt;&gt; @@SPID
+AND s.[status] = &#x27;running&#x27;
+--AND s.[session_id] = 121
+--AND s.[login_name] = &#x27;EAGLE\DIB1443a&#x27;
+ORDER BY &#x27;duration&#x27; desc
+go
+
+/*
+sp_who2 active
+/*** INACTIVE SESSIONS ***/
+
+SELECT s.[session_id] AS &#x27;spid&#x27;, s.[host_process_id] AS &#x27;host_PID&#x27;,</code></pre></div>
+<p>&#160;&#160;s.[login_name], s.[host_name] AS 'host_name',</p>
+<p>&#160;&#160;s.[login_time], s.[status],</p>
+<p>&#160;&#160;s.[last_request_start_time], s.[last_request_end_time],&#160;</p>
+<p>&#160;&#160;datediff(ss, s.[last_request_start_time],&#160;&#160;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">   (CASE
+    WHEN s.[status] = &#x27;Running&#x27; THEN GETDATE()
+    ELSE s.[last_request_end_time]
+   END)) as &#x27;total_secs&#x27;, s.[cpu_time], (s.[memory_usage]*8) as memory_KB
+FROM sys.dm_exec_sessions s
+WHERE s.[login_name] &lt;&gt; &#x27;sa&#x27; and s.[session_id] &lt;&gt; @@SPID
+AND s.[status] &lt;&gt; &#x27;running&#x27; and s.[status] &lt;&gt; &#x27;suspended&#x27;
+ORDER BY s.[cpu_time]
+
+*/</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/active-sessions-script.html">View original post on Blogger</a></p><nav class="pn"><a href="script-buffer-pool-usage-by-each-database.html">← Script:Buffer pool usage by each database</a><a href="technical-high-availability-and-disaster-recovery-in-sql-server.html">Technical :: High Availability And Disaster Recovery In SQL Server →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

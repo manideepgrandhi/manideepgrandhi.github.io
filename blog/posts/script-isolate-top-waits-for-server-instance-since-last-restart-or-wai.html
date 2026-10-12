@@ -1,0 +1,89 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script:Isolate top waits for server instance since last restart or wait statistics clear · Sqlservv.com</title><meta name="description" content="WITH [Waits] AS (SELECT [wait_type], [wait_time_ms] / 1000.0 AS [WaitS], ([wait_time_ms] - [signal_wait_time_ms]) / 1000.0 AS [ResourceS], [signal_wait_time_ms] / 1000.0 AS [Signal…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>10 July 2017</time></div>
+<h1>Script:Isolate top waits for server instance since last restart or wait statistics clear</h1><div class="chips"><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">WITH [Waits] AS
+(SELECT
+[wait_type],
+[wait_time_ms] / 1000.0 AS [WaitS],
+([wait_time_ms] - [signal_wait_time_ms]) / 1000.0 AS [ResourceS],
+[signal_wait_time_ms] / 1000.0 AS [SignalS],
+[waiting_tasks_count] AS [WaitCount],
+100.0 * [wait_time_ms] / SUM ([wait_time_ms]) OVER() AS [Percentage],
+ROW_NUMBER() OVER(ORDER BY [wait_time_ms] DESC) AS [RowNum]
+FROM sys.dm_os_wait_stats
+WHERE [wait_type] NOT IN (
+N&#x27;BROKER_EVENTHANDLER&#x27;, N&#x27;BROKER_RECEIVE_WAITFOR&#x27;,
+N&#x27;BROKER_TASK_STOP&#x27;, N&#x27;BROKER_TO_FLUSH&#x27;,
+N&#x27;BROKER_TRANSMITTER&#x27;, N&#x27;CHECKPOINT_QUEUE&#x27;,
+N&#x27;CHKPT&#x27;, N&#x27;CLR_AUTO_EVENT&#x27;,
+N&#x27;CLR_MANUAL_EVENT&#x27;, N&#x27;CLR_SEMAPHORE&#x27;,
+
+-- Maybe uncomment these four if you have mirroring issues
+N&#x27;DBMIRROR_DBM_EVENT&#x27;, N&#x27;DBMIRROR_EVENTS_QUEUE&#x27;,
+N&#x27;DBMIRROR_WORKER_QUEUE&#x27;, N&#x27;DBMIRRORING_CMD&#x27;,
+
+N&#x27;DIRTY_PAGE_POLL&#x27;, N&#x27;DISPATCHER_QUEUE_SEMAPHORE&#x27;,
+N&#x27;EXECSYNC&#x27;, N&#x27;FSAGENT&#x27;,
+N&#x27;FT_IFTS_SCHEDULER_IDLE_WAIT&#x27;, N&#x27;FT_IFTSHC_MUTEX&#x27;,
+
+-- Maybe uncomment these six if you have AG issues
+N&#x27;HADR_CLUSAPI_CALL&#x27;, N&#x27;HADR_FILESTREAM_IOMGR_IOCOMPLETION&#x27;,
+N&#x27;HADR_LOGCAPTURE_WAIT&#x27;, N&#x27;HADR_NOTIFICATION_DEQUEUE&#x27;,
+N&#x27;HADR_TIMER_TASK&#x27;, N&#x27;HADR_WORK_QUEUE&#x27;,
+
+N&#x27;KSOURCE_WAKEUP&#x27;, N&#x27;LAZYWRITER_SLEEP&#x27;,
+N&#x27;LOGMGR_QUEUE&#x27;, N&#x27;MEMORY_ALLOCATION_EXT&#x27;,
+N&#x27;ONDEMAND_TASK_QUEUE&#x27;,
+N&#x27;PREEMPTIVE_XE_GETTARGETSTATE&#x27;,
+N&#x27;PWAIT_ALL_COMPONENTS_INITIALIZED&#x27;,
+N&#x27;PWAIT_DIRECTLOGCONSUMER_GETNEXT&#x27;,
+N&#x27;QDS_PERSIST_TASK_MAIN_LOOP_SLEEP&#x27;, N&#x27;QDS_ASYNC_QUEUE&#x27;,
+N&#x27;QDS_CLEANUP_STALE_QUERIES_TASK_MAIN_LOOP_SLEEP&#x27;,
+N&#x27;QDS_SHUTDOWN_QUEUE&#x27;, N&#x27;REDO_THREAD_PENDING_WORK&#x27;,
+N&#x27;REQUEST_FOR_DEADLOCK_SEARCH&#x27;, N&#x27;RESOURCE_QUEUE&#x27;,
+N&#x27;SERVER_IDLE_CHECK&#x27;, N&#x27;SLEEP_BPOOL_FLUSH&#x27;,
+N&#x27;SLEEP_DBSTARTUP&#x27;, N&#x27;SLEEP_DCOMSTARTUP&#x27;,
+N&#x27;SLEEP_MASTERDBREADY&#x27;, N&#x27;SLEEP_MASTERMDREADY&#x27;,
+N&#x27;SLEEP_MASTERUPGRADED&#x27;, N&#x27;SLEEP_MSDBSTARTUP&#x27;,
+N&#x27;SLEEP_SYSTEMTASK&#x27;, N&#x27;SLEEP_TASK&#x27;,
+N&#x27;SLEEP_TEMPDBSTARTUP&#x27;, N&#x27;SNI_HTTP_ACCEPT&#x27;,
+N&#x27;SP_SERVER_DIAGNOSTICS_SLEEP&#x27;, N&#x27;SQLTRACE_BUFFER_FLUSH&#x27;,
+N&#x27;SQLTRACE_INCREMENTAL_FLUSH_SLEEP&#x27;,
+N&#x27;SQLTRACE_WAIT_ENTRIES&#x27;, N&#x27;WAIT_FOR_RESULTS&#x27;,
+N&#x27;WAITFOR&#x27;, N&#x27;WAITFOR_TASKSHUTDOWN&#x27;,
+N&#x27;WAIT_XTP_RECOVERY&#x27;,
+N&#x27;WAIT_XTP_HOST_WAIT&#x27;, N&#x27;WAIT_XTP_OFFLINE_CKPT_NEW_LOG&#x27;,
+N&#x27;WAIT_XTP_CKPT_CLOSE&#x27;, N&#x27;XE_DISPATCHER_JOIN&#x27;,
+N&#x27;XE_DISPATCHER_WAIT&#x27;, N&#x27;XE_TIMER_EVENT&#x27;)
+AND [waiting_tasks_count] &gt; 0
+)
+SELECT
+MAX ([W1].[wait_type]) AS [WaitType],
+CAST (MAX ([W1].[WaitS]) AS DECIMAL (16,2)) AS [Wait_S],
+CAST (MAX ([W1].[ResourceS]) AS DECIMAL (16,2)) AS [Resource_S],
+CAST (MAX ([W1].[SignalS]) AS DECIMAL (16,2)) AS [Signal_S],
+MAX ([W1].[WaitCount]) AS [WaitCount],
+CAST (MAX ([W1].[Percentage]) AS DECIMAL (5,2)) AS [Percentage],
+CAST ((MAX ([W1].[WaitS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgWait_S],
+CAST ((MAX ([W1].[ResourceS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgRes_S],
+CAST ((MAX ([W1].[SignalS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgSig_S],
+CAST (&#x27;https://www.sqlskills.com/help/waits/&#x27; + MAX ([W1].[wait_type]) as XML) AS [Help/Info URL]
+FROM [Waits] AS [W1]
+INNER JOIN [Waits] AS [W2]
+ON [W2].[RowNum] &lt;= [W1].[RowNum]
+GROUP BY [W1].[RowNum]
+HAVING SUM ([W2].[Percentage]) - MAX( [W1].[Percentage] ) &lt; 95; -- percentage threshold
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/07/scriptisolate-top-waits-for-server_10.html">View original post on Blogger</a></p><nav class="pn"><a href="tempdb-contention-2.html">← Tempdb contention</a><a href="last-fdl-backup-details-using-powershell.html">Last FDL backup details using powershell →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,129 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation-SQL server Restart email. · Sqlservv.com</title><meta name="description" content="USE [msdb] GO /****** Object: Job [DBA - Alert - SQL Agent Started] Script Date: 3/4/2016 6:29:50 AM ******/ BEGIN TRANSACTION DECLARE @ReturnCode INT SELECT @ReturnCode = 0 /*****…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>04 August 2017</time></div>
+<h1>Automation-SQL server Restart email.</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [msdb]
+GO
+
+/****** Object:  Job [DBA - Alert - SQL Agent Started]    Script Date: 3/4/2016 6:29:50 AM ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [DBA Alerts]    Script Date: 3/4/2016 6:29:50 AM ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N&#x27;DBA Alerts&#x27; AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N&#x27;JOB&#x27;, @type=N&#x27;LOCAL&#x27;, @name=N&#x27;DBA Alerts&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N&#x27;DBA - Alert - SQL Agent Started&#x27;,
+  @enabled=1,
+  @notify_level_eventlog=2,
+  @notify_level_email=0,
+  @notify_level_netsend=0,
+  @notify_level_page=0,
+  @delete_level=0,
+  @description=N&#x27;No description available.&#x27;,
+  @category_name=N&#x27;DBA Alerts&#x27;,
+  @owner_login_name=N&#x27;sa&#x27;, @job_id = @jobId OUTPUT
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Send Alert Email]    Script Date: 3/4/2016 6:29:50 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Send Alert Email&#x27;,
+  @step_id=1,
+  @cmdexec_success_code=0,
+  @on_success_action=3,
+  @on_success_step_id=2,
+  @on_fail_action=2,
+  @on_fail_step_id=2,
+  @retry_attempts=0,
+  @retry_interval=1,
+  @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+  @command=N&#x27;DECLARE @v_recipients VARCHAR(255),
+  @v_body VARCHAR(1000),
+  @v_subject VARCHAR(255),
+  @v_profile_name VARCHAR(255),
+  @v_importance VARCHAR(6),
+  @v_body_format VARCHAR (20)
+
+SET @v_recipients = &#x27;&#x27;_chq--ie-infrasupport_@abc.com&#x27;&#x27;; --semicolon delimited list
+SET @v_body = &#x27;&#x27;The SQL Server Agent was started on &#x27;&#x27;+@@servername+&#x27;&#x27;.  Possible causes: server reboot, failover, or agent was not running and was turned on.&#x27;&#x27;
+SET @v_subject = &#x27;&#x27;Non-Production: &#x27;&#x27;+@@servername+&#x27;&#x27;: ALERT: SQL Agent Started&#x27;&#x27;
+SET @v_profile_name = &#x27;&#x27;IE_SQL_DBA_Profile&#x27;&#x27;
+SET @v_importance = &#x27;&#x27;High&#x27;&#x27; --Low, Normal, High
+SET @v_body_format = &#x27;&#x27;TEXT&#x27;&#x27; --TEXT, HTML
+
+EXECUTE msdb.dbo.sp_send_dbmail
+   @recipients=@v_recipients,
+   @body= @v_body,
+   @subject = @v_subject,
+   @profile_name = @v_profile_name,
+   @importance = @v_importance,
+   @body_format = @v_body_format&#x27;,
+  @database_name=N&#x27;master&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Insert Into DBA Alerts and Warnings Table]    Script Date: 3/4/2016 6:29:50 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Insert Into DBA Alerts and Warnings Table&#x27;,
+  @step_id=2,
+  @cmdexec_success_code=0,
+  @on_success_action=1,
+  @on_success_step_id=0,
+  @on_fail_action=2,
+  @on_fail_step_id=0,
+  @retry_attempts=0,
+  @retry_interval=0,
+  @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+  @command=N&#x27;DECLARE @server_name varchar(255),
+  @job_name varchar(100)
+
+SELECT @server_name = CONVERT(varchar(255), @@servername)
+
+SELECT @job_name = convert(varchar(100), [name])
+FROM msdb.dbo.sysjobs
+WHERE job_id = CONVERT(uniqueidentifier, $(ESCAPE_NONE(JOBID)))
+
+INSERT INTO [dbo].[DBA_Alerts_Warnings] ([alert_description]) VALUES (@job_name)
+
+&#x27;,
+  @database_name=N&#x27;DBA&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N&#x27;On Agent Start&#x27;,
+  @enabled=1,
+  @freq_type=64,
+  @freq_interval=0,
+  @freq_subday_type=0,
+  @freq_subday_interval=0,
+  @freq_relative_interval=0,
+  @freq_recurrence_factor=0,
+  @active_start_date=20080410,
+  @active_end_date=99991231,
+  @active_start_time=0,
+  @active_end_time=235959,
+  @schedule_uid=N&#x27;75a9ea1c-98e2-492c-85a1-3f328ed8ff79&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N&#x27;(local)&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT &gt; 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/automation-sql-server-restart-email_3.html">View original post on Blogger</a></p><nav class="pn"><a href="automation-collecting-disk-free-space.html">← Automation --Collecting Disk free space</a><a href="automation-tracking-modifications-done-to-sys-jobs-in-sql-server.html">Automation-Tracking modifications done to Sys jobs in SQL Server →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

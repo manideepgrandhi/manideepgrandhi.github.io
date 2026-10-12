@@ -1,0 +1,67 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Get-driveinfo · Sqlservv.com</title><meta name="description" content="&lt;# .SYNOPSIS This script gets and displays basic information about drives on a local system. .DESCRIPTION This script uses the System.Io.DriveInfo&#x27;s GetDrives method to get drive i…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>25 June 2017</time></div>
+<h1>Get-driveinfo</h1><div class="chips"></div><div class="content"><p>&lt;#&#160;</p>
+<p>.SYNOPSIS&#160;</p>
+<p>&#160;&#160;&#160; This script gets and displays basic information about drives on a local system.&#160;&#160;</p>
+<p>.DESCRIPTION&#160;</p>
+<p>&#160;&#160;&#160; This script uses the System.Io.DriveInfo's GetDrives method to get drive&#160;</p>
+<p>&#160;&#160;&#160; info which is then displayed.&#160;&#160; This is a re-implementation of an MSDN&#160;</p>
+<p>&#160;&#160;&#160; sample.&#160;</p>
+<p>.NOTES&#160;</p>
+<p>&#160;&#160;&#160; File Name&#160; : Get-DriveInfo.ps1&#160;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">    Author     : Thomas Lee - tfl@psp.co.uk</code></pre></div>
+<p>&#160;&#160;&#160; Requires&#160;&#160; : PowerShell Version 2.0&#160;</p>
+<p>.LINK&#160;</p>
+<p>&#160;&#160;&#160; This script posted to:&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<a href="http://googleweblight.com/i?u=http://pshscripts.blogspot.com/2010/07/get-driveinfops1.html&hl=en-IN" rel="noopener">http://pshscripts.blogspot.com/2010/07/get-driveinfops1.html</a>&#160;</p>
+<p>&#160;&#160;&#160; MSDN Sample posted at:&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<a href="http://googleweblight.com/i?u=http://msdn.microsoft.com/en-us/library/system.io.driveinfo.aspx&hl=en-IN" rel="noopener">http://msdn.microsoft.com/en-us/library/system.io.driveinfo.aspx</a>&#160;&#160;</p>
+<p>.EXAMPLE&#160;</p>
+<p>&#160;&#160; PSH [C:\foo]: .\Get-Driveinfo.ps1&#160;</p>
+<p>&#160;&#160; Drive C:\&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; File type: Fixed&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Volume label:&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; File system: NTFS&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Available space to current user:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 6.75 gb&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Total available space:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 6.75 gb&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Total size of drive:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 48.828 gb&#160;</p>
+<p>&#160;&#160; Drive D:\&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; File type: Fixed&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Volume label:&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; File system: FAT32&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Available space to current user:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 1.81 gb&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Total available space:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 1.81 gb&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; Total size of drive:&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 2.003 gb&#160;</p>
+<p>&#160;&#160;&#160;&#160;&#160; &lt;ETC...&gt;&#160;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#&gt;
+# Get Drive Info
+$allDrives = [system.IO.DriveInfo]::GetDrives()
+# Now display details
+foreach ($d in $allDrives)  {
+    &quot;Drive {0}&quot; -f $d.Name
+     &quot;  File type: {0}&quot; -f $d.DriveType
+    if ($d.IsReady)  {
+         &quot;  Volume label: {0}&quot; -f $d.VolumeLabel
+         &quot;  File system: {0}&quot;  -f $d.DriveFormat
+         $fs  = $d.AvailableFreeSpace/1gb
+         $tfs = $d.TotalFreeSpace/1gb
+         $TS  = $d.TotalSize/1gb
+         &quot;  Available space to current user:{0, 15:n2} gb&quot; -f $fs
+         &quot;  Total available space:          {0, 15:n2} gb&quot; -f $tfs
+         &quot;  Total size of drive:            {0, 15:n3} gb&quot; -f $ts
+    }
+}</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/get-driveinfo_24.html">View original post on Blogger</a></p><nav class="pn"><a href="sessions-which-are-using-tempdb.html">← Sessions which are using tempdb</a><a href="alwayson-monitor.html">Alwayson monitor →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

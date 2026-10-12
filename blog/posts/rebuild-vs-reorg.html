@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rebuild Vs Reorg · Sqlservv.com</title><meta name="description" content="https://www.sqlskills.com/blogs/paul/sqlskills-sql101-rebuild-vs-reorganize/ Locks Required An offline index rebuild of any index holds a schema-modification (i.e. super-exclusive)…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>14 May 2020</time></div>
+<h1>Rebuild Vs Reorg</h1><div class="chips"><a class="chip" href="../tags/index.html">index</a></div><div class="content"><p><strong><a href="https://www.sqlskills.com/blogs/paul/sqlskills-sql101-rebuild-vs-reorganize/" rel="noopener">https://www.sqlskills.com/blogs/paul/sqlskills-sql101-rebuild-vs-reorganize/</a></strong></p>
+<p><strong>Locks Required</strong></p>
+<p>An offline index rebuild of any index holds a&nbsp;schema-modification (i.e. super-exclusive) table lock – no updates or reads of the entire table.</p>
+<p>An&nbsp;online index rebuild of any index acquires a short-term shared table lock at the start of the&nbsp;operation, holds an intent-shared table lock throughout the operation (which will only block&nbsp;exclusive and schema-modification table locks), and then acquires a short-term schema-modification &nbsp;table lock at the end of the operation. ‘Online’ is a bit of a misnomer. From SQL Server 2014, you can use the&nbsp;<em>WAIT_AT_LOW_PRIORITY</em>&nbsp;option to delay the potential for blocking – see&nbsp;<a href="https://www.sqlskills.com/blogs/paul/low-priority-locking-wait-types/" rel="noopener">this blog post</a>.</p>
+<p>An index reorganize holds an intent-exclusive table lock throughout the operation, which will&nbsp;only block shared, exclusive, and schema-modification table locks. One of the major reasons I wrote&nbsp;<em>DBCC&nbsp;INDEXDEFRAG</em>&nbsp;for SQL Server 2000 was as an online alternative to&nbsp;<em>DBCC DBREINDEX</em>.</p>
+<p><strong>Interruptible or Not</strong></p>
+<p>An index rebuild operation cannot be interrupted without it rolling back everything it’s done so far – it’s atomic – all or nothing. In SQL Server 2017, however, there is a resumable-online index rebuild feature.</p>
+<p>An index reorganize can be interrupted and the worst that will happen is that a single page move&nbsp;operation is rolled back.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/05/rebuild-vs-reorg.html">View original post on Blogger</a></p><nav class="pn"><a href="data-types-and-sizes.html">← data types and sizes</a><a href="check-background-stats.html">Check background Stats →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

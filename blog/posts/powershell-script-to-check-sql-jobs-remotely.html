@@ -1,0 +1,96 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Powershell script to check sql jobs remotely · Sqlservv.com</title><meta name="description" content="&lt;# PS C:\&gt; checkSQLJobs SQLInstanceName Options JA ## List Of All Jobs JR ## List Of Currently Running Jobs JS ## List Of Jobs with last status &quot;Succeeded&quot; JF ## List Of Jobs with …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 August 2017</time></div>
+<h1>Powershell script to check sql jobs remotely</h1><div class="chips"><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><p>&lt;#</p>
+<p>PS C:\&gt; checkSQLJobs SQLInstanceName Options</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Options are :</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp; JA ## List Of All Jobs</p>
+<p>&nbsp;&nbsp;&nbsp; JR ## List Of Currently Running Jobs</p>
+<p>&nbsp;&nbsp;&nbsp; JS ## List Of Jobs with last status "Succeeded"</p>
+<p>&nbsp;&nbsp;&nbsp; JF ## List Of Jobs with last status "Failed"</p>
+<p>&nbsp;&nbsp;&nbsp; JC ## List Of Jobs with last status "Cancelled"</p>
+<p>&nbsp;&nbsp;&nbsp; JD ## List Of "Disabled" Jobs</p>
+<p>&nbsp;&nbsp;&nbsp; JNS ## List Of Jobs which are not scheduled"</p>
+<p>&nbsp;&nbsp;&nbsp; jnxtrun ## Jobs Next Run date and time</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#&gt;
+#######################
+cd \
+Set-ExecutionPolicy RemoteSigned
+Add-PSSnapin SqlServerCmdletSnapin100
+Add-PSSnapin SqlServerProviderSnapin100
+[System.Reflection.Assembly]::LoadWithPartialName(&quot;Microsoft.SqlServer.Smo&quot;)
+#######################
+
+function checkSQLJobs
+{
+$srv=NEW-OBJECT (&#x27;MICROSOFT.SQLSERVER.MANAGEMENT.SMO.SERVER&#x27;) $args[0]
+
+###########################################################################################################################
+if($args[1] -EQ &quot;JA&quot;) ## List Of All Jobs
+{
+$srv.jobserver.jobs| where-object {$_.name -like &quot;*&quot;} | sort-object -descending {$_.lastrundate} | select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JR&quot;) ## List Of Running Jobs
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.currentrunstatus -eq 1 } | sort-object -descending {$_.lastrundate} |
+select name,currentrunstatus,currentrunstep,lastrundate,lastrunoutcome,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JS&quot;) ## List Of Jobs with status &quot;Succeeded&quot;
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.lastrunoutcome -eq &quot;succeeded&quot; -and $_.currentrunstatus -ne 1} | sort-object -descending {$_.lastrundate} |
+select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JF&quot;) ## List Of Jobs with status &quot;Failed&quot;
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.lastrunoutcome -eq &quot;failed&quot; -and $_.currentrunstatus -ne 1} | sort-object -descending {$_.lastrundate} |
+select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JC&quot;) ## List Of Jobs with status &quot;Cancelled&quot;
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;**&quot; -and $_.lastrunoutcome -eq &quot;cancelled&quot; -and $_.currentrunstatus -ne 1} | sort-object -descending {$_.lastrundate} |
+select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JD&quot;) ## List Of Jobs with status &quot;Disabled&quot;
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.isenabled -eq 0 } | sort-object -descending {$_.lastrundate} |
+select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;JNS&quot;) ## List Of Jobs which are not scheduled&quot;
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.isenabled -eq 1 -and $_.nextrundate -eq &quot;1/1/0001 12:00:00 AM&quot; } | sort-object -descending {$_.lastrundate} |
+select name,lastrundate,lastrunoutcome,currentrunstatus,currentrunstep,isenabled,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+elseif($args[1] -EQ &quot;jnxtrun&quot;) ## Jobs Next Run date and time
+{
+$srv.jobserver.jobs|
+where-object {$_.name -like &quot;*&quot; -and $_.isenabled -eq 1 -and $_.nextrundate -ne &quot;1/1/0001 12:00:00 AM&quot; } | sort-object  {$_.nextrundate} |
+select name,currentrunstatus,nextrundate | format-table -AUTOSIZE | Out-String -Width 4096
+}
+###########################################################################################################################
+}</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/powershell-script-to-check-sql-jobs_9.html">View original post on Blogger</a></p><nav class="pn"><a href="draft.html">← Draft</a><a href="sql-script-to-get-datbase-size-in-gb.html">Sql Script to get datbase size in GB →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

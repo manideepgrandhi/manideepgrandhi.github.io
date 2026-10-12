@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>query Database growth settings · Sqlservv.com</title><meta name="description" content="SELECT DB_NAME ( A . DATABASE_ID ) AS DBNAME , A . NAME AS FILENAME , SIZE / 128.0 AS CURRENTSIZE_MB , B . RECOVERY_MODEL_DESC , A . TYPE_DESC , CASE WHEN IS_PERCENT_GROWTH = 0 THE…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>26 November 2019</time></div>
+<h1>query Database growth settings</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT DB_NAME(A.DATABASE_ID) AS DBNAME
+    ,A.NAME AS FILENAME
+    ,SIZE / 128.0 AS CURRENTSIZE_MB
+    ,B.RECOVERY_MODEL_DESC
+    ,A.TYPE_DESC
+    ,CASE
+        WHEN IS_PERCENT_GROWTH = 0
+            THEN LTRIM(STR(A.GROWTH * 8.0 / 1024, 10, 1)) + &#x27; MB, &#x27;
+        ELSE &#x27;BY &#x27; + CAST(A.GROWTH AS VARCHAR) + &#x27; PERCENT, &#x27;
+        END + CASE
+        WHEN MAX_SIZE = - 1
+            THEN &#x27;UNRESTRICTED GROWTH&#x27;
+        ELSE &#x27;RESTRICTED GROWTH TO &#x27; + LTRIM(STR(MAX_SIZE * 8.0 /
+                    1024, 10, 1)) + &#x27; MB&#x27;
+        END AS AUTOGROW
+    ,A.PHYSICAL_NAME
+FROM SYS.MASTER_FILES A
+JOIN SYS.DATABASES B ON A.DATABASE_ID = B.DATABASE_ID
+
+ --For particular DB
+SELECT DB_NAME() AS DBNAME
+    ,NAME AS FILENAME
+    ,SIZE / 128.0 AS CURRENTSIZE_MB
+    ,SIZE / 128.0 - (
+        (SIZE / 128.0) - CAST(FILEPROPERTY(NAME,
+                &#x27;SPACEUSED&#x27;) AS INT) / 128.0
+        ) AS USEDSPACE_MB
+    ,SIZE / 128.0 - CAST(FILEPROPERTY(NAME, &#x27;SPACEUSED&#x27;) AS INT) /
+    128.0 AS FREESPACEMB
+    ,PHYSICAL_NAME
+    ,DATABASEPROPERTYEX(DB_NAME(), &#x27;RECOVERY&#x27;) AS
+    RECOVERY_MODEL
+    ,TYPE_DESC
+    ,CASE
+        WHEN IS_PERCENT_GROWTH = 0
+            THEN LTRIM(STR(GROWTH * 8.0 / 1024, 10, 1)) + &#x27; MB, &#x27;
+        ELSE &#x27;BY &#x27; + CAST(GROWTH AS VARCHAR) + &#x27; PERCENT, &#x27;
+        END + CASE
+        WHEN MAX_SIZE = - 1
+            THEN &#x27;UNRESTRICTED GROWTH&#x27;
+        ELSE &#x27;RESTRICTED GROWTH TO &#x27; + LTRIM(STR(MAX_SIZE * 8.0 /
+                    1024, 10, 1)) + &#x27; MB&#x27;
+        END AS AUTO_GROW
+FROM SYS.MASTER_FILES
+WHERE DATABASE_ID = DB_ID()
+
+SELECT DB_NAME(database_id) AS database_name
+        , database_id
+        , [file_id]
+    , type_desc
+    , data_space_id
+    , name AS logical_file_name
+    , physical_name
+        , (SIZE*8/1024) AS size_mb
+        , CASE max_size
+                WHEN -1 THEN &#x27;unlimited&#x27;
+                ELSE CAST((CAST (max_size AS BIGINT)) * 8 / 1024 AS VARCHAR(10))
+        END AS max_size_mb
+    , CASE is_percent_growth
+                WHEN 1 THEN CAST(growth AS VARCHAR(3)) + &#x27; %&#x27;
+                WHEN 0 THEN CAST(growth*8/1024 AS VARCHAR(10)) + &#x27; mb&#x27;
+        END AS growth_increment
+    , is_percent_growth
+FROM sys.master_files
+ORDER BY 1, type_desc DESC, [file_id];</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2019/11/query-database-growth-settings.html">View original post on Blogger</a></p><nav class="pn"><a href="size-of-total-plan-cache-vs-adhoc-plan-cache.html">← Size of total plan cache vs adhoc plan cache</a><a href="rename-all-user-tables-in-a-sql-database.html">Rename all user tables in a SQL Database →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,313 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation-Tracking modifications done to Sys jobs in SQL Server · Sqlservv.com</title><meta name="description" content="/***** DEPLOY sysjobs and sysjobsteps audit logging *****/ SELECT &#x27;Start - sysjobs and sysjobsteps audit logging deployment&#x27; GO /***** dbo.sysjobs *****/ USE [DBA] GO /*create the …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>04 August 2017</time></div>
+<h1>Automation-Tracking modifications done to Sys jobs in SQL Server</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/***** DEPLOY sysjobs and sysjobsteps audit logging *****/
+
+SELECT &#x27;Start - sysjobs and sysjobsteps audit logging deployment&#x27;
+GO
+
+/***** dbo.sysjobs *****/
+
+USE [DBA]
+GO
+
+/*create the logging table in DBA database*/
+
+IF NOT EXISTS (select 1 from DBA.sys.objects where name = &#x27;Logging_msdb_sysjobs_modifications&#x27;)
+BEGIN
+
+ CREATE TABLE [dbo].[Logging_msdb_sysjobs_modifications](
+  [job_id] [uniqueidentifier] NOT NULL,
+  [originating_server_id] [int] NOT NULL,
+  [name] [sysname] NOT NULL,
+  [enabled] [tinyint] NOT NULL,
+  [description] [nvarchar](512) NULL,
+  [start_step_id] [int] NOT NULL,
+  [category_id] [int] NOT NULL,
+  [owner_sid] [varbinary](85) NOT NULL,
+  [notify_level_eventlog] [int] NOT NULL,
+  [notify_level_email] [int] NOT NULL,
+  [notify_level_netsend] [int] NOT NULL,
+  [notify_level_page] [int] NOT NULL,
+  [notify_email_operator_id] [int] NOT NULL,
+  [notify_netsend_operator_id] [int] NOT NULL,
+  [notify_page_operator_id] [int] NOT NULL,
+  [delete_level] [int] NOT NULL,
+  [date_created] [datetime] NOT NULL,
+  [date_modified] [datetime] NOT NULL,
+  [version_number] [int] NOT NULL,
+  [host_name] varchar(255) NULL,
+  [login_name] varchar(1000) NULL,
+  [modification_type] varchar(50) NULL,
+  [insert_date_time] datetime NULL
+ ) ON [PRIMARY];
+
+ ALTER TABLE dbo.[Logging_msdb_sysjobs_modifications] ADD CONSTRAINT
+  DF_Logging_sysjobs_modifications_insert_date_time_1 DEFAULT getdate() FOR insert_date_time;
+END
+GO
+
+/*** CREATE TRIGGERS ***/
+
+/* LOG INSERTS */
+USE msdb
+GO
+
+-- =============================================
+-- Author:  S. Kusen
+-- Create date: 2014-08-01
+-- Description: This will log inserts to the sysjobs table and who did it, and when.
+-- =============================================
+IF EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_insert_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobs_insert_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_insert_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobs_insert_log_entry]
+   ON  dbo.sysjobs
+   AFTER INSERT
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+ IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobs_modifications&#x27;&#x27;)
+  BEGIN
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobs_modifications] (job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name(), suser_sname(), &#x27;&#x27;INSERT&#x27;&#x27;, GETDATE()
+   FROM inserted i
+  END
+
+END&#x27;)
+
+/* LOG UPDATES */
+-- =============================================
+-- Description: This will log updates to the sysjobs table and who did it, and when.
+-- =============================================
+
+IF EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_update_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobs_update_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_update_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobs_update_log_entry]
+   ON  dbo.sysjobs
+   AFTER UPDATE
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+
+ IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobs_modifications&#x27;&#x27;)
+  BEGIN
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobs_modifications] (job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name(), suser_sname(), &#x27;&#x27;UPDATE-before&#x27;&#x27;, GETDATE()
+   FROM deleted d
+
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobs_modifications] (job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name(), suser_sname(), &#x27;&#x27;UPDATE-after&#x27;&#x27;, GETDATE()
+   FROM inserted i
+  END
+
+END&#x27;)
+
+/* LOG DELETES */
+-- =============================================
+-- Description: This will log updates to the sysjobs table and who did it, and when.
+-- =============================================
+IF  EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_delete_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobs_delete_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobs_delete_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobs_delete_log_entry]
+   ON  dbo.sysjobs
+   AFTER DELETE
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+ IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobs_modifications&#x27;&#x27;)
+  BEGIN
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobs_modifications] (job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, originating_server_id, name, enabled, description, start_step_id, category_id, owner_sid, notify_level_eventlog, notify_level_email, notify_level_netsend, notify_level_page, notify_email_operator_id, notify_netsend_operator_id, notify_page_operator_id, delete_level, date_created, date_modified, version_number, host_name(), suser_sname(), &#x27;&#x27;DELETE&#x27;&#x27;, GETDATE()
+   FROM deleted d
+  END
+END&#x27;)
+GO
+
+/***** dbo.sysjobsteps *****/
+
+USE [DBA]
+GO
+
+/*create the logging table in DBA database*/
+
+IF NOT EXISTS (select 1 from DBA.sys.objects where name = &#x27;Logging_msdb_sysjobsteps_modifications&#x27;)
+BEGIN
+
+ CREATE TABLE [dbo].[Logging_msdb_sysjobsteps_modifications](
+ [job_id] [uniqueidentifier] NOT NULL,
+ [step_id] [int] NOT NULL,
+ [step_name] [sysname] NOT NULL,
+ [subsystem] [nvarchar](40) NOT NULL,
+ [command] [nvarchar](max) NULL,
+ [flags] [int] NOT NULL,
+ [cmdexec_success_code] [int] NOT NULL,
+ [on_success_action] [tinyint] NOT NULL,
+ [on_success_step_id] [int] NOT NULL,
+ [on_fail_action] [tinyint] NOT NULL,
+ [on_fail_step_id] [int] NOT NULL,
+ [server] [sysname] NULL,
+ [database_name] [sysname] NULL,
+ [database_user_name] [sysname] NULL,
+ [retry_attempts] [int] NOT NULL,
+ [retry_interval] [int] NOT NULL,
+ [os_run_priority] [int] NOT NULL,
+ [output_file_name] [nvarchar](200) NULL,
+ [last_run_outcome] [int] NOT NULL,
+ [last_run_duration] [int] NOT NULL,
+ [last_run_retries] [int] NOT NULL,
+ [last_run_date] [int] NOT NULL,
+ [last_run_time] [int] NOT NULL,
+ [proxy_id] [int] NULL,
+ [step_uid] [uniqueidentifier] NULL,
+ [host_name] varchar(255) NULL,
+ [login_name] varchar(1000) NULL,
+ [modification_type] varchar(50) NULL,
+ [insert_date_time] datetime NULL
+ ) ON [PRIMARY];
+
+ ALTER TABLE dbo.[Logging_msdb_sysjobsteps_modifications] ADD CONSTRAINT
+  DF_Logging_sysjobsteps_modifications_insert_date_time_1 DEFAULT getdate() FOR insert_date_time;
+END
+GO
+
+/*** CREATE TRIGGERS ***/
+
+/* LOG INSERTS */
+USE msdb
+GO
+
+-- =============================================
+
+-- Description: This will log inserts to the sysjobsteps table and who did it, and when.
+-- =============================================
+IF EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_insert_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobsteps_insert_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_insert_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobsteps_insert_log_entry]
+   ON  dbo.sysjobsteps
+   AFTER INSERT
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+ IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobsteps_modifications&#x27;&#x27;)
+  BEGIN
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobsteps_modifications] (job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name(), suser_sname(), &#x27;&#x27;INSERT&#x27;&#x27;, GETDATE()
+   FROM inserted i
+  END
+
+END&#x27;);
+
+/* LOG UPDATES */
+-- =============================================
+-- Description: This will log updates to the sysjobsteps table and who did it, and when.
+-- =============================================
+IF EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_update_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobsteps_update_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_update_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobsteps_update_log_entry]
+   ON  dbo.sysjobsteps
+   AFTER UPDATE
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    /*only log updates where the job step command is different */
+ /*IF (SELECT command from inserted) &lt;&gt; (select command from deleted) or (SELECT step_name from inserted) &lt;&gt; (select step_name from deleted)*/
+ IF EXISTS
+ (
+  SELECT 1
+  FROM inserted i
+  inner join deleted d
+  on i.step_uid = d.step_uid
+  where i.command &lt;&gt; d.command
+  or i.step_name &lt;&gt; d.step_name
+  or i.step_id &lt;&gt; d.step_id
+  )
+ BEGIN
+
+  IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobsteps_modifications&#x27;&#x27;)
+  BEGIN
+
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobsteps_modifications] (job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name(), suser_sname(), &#x27;&#x27;UPDATE-before&#x27;&#x27;, GETDATE()
+   FROM deleted d
+
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobsteps_modifications] (job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name(), suser_sname(), &#x27;&#x27;UPDATE-after&#x27;&#x27;, GETDATE()
+   FROM inserted i
+  END
+ END
+
+END&#x27;)
+
+/* LOG DELETES */
+-- =============================================
+-- Description: This will log updates to the sysjobsteps table and who did it, and when.
+-- =============================================
+
+IF EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_delete_log_entry&#x27;)
+EXEC(&#x27;DROP TRIGGER comcast_dba_sysjobsteps_delete_log_entry&#x27;);
+
+IF NOT EXISTS (select 1 from sys.triggers where name = &#x27;comcast_dba_sysjobsteps_delete_log_entry&#x27;)
+EXEC(&#x27;CREATE TRIGGER [comcast_dba_sysjobsteps_delete_log_entry]
+   ON  dbo.sysjobsteps
+   AFTER DELETE
+AS
+BEGIN
+ -- SET NOCOUNT ON added to prevent extra result sets from
+ -- interfering with SELECT statements.
+ SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+
+ IF EXISTS (select 1 from DBA.sys.objects where name = &#x27;&#x27;Logging_msdb_sysjobsteps_modifications&#x27;&#x27;)
+  BEGIN
+   INSERT INTO [DBA].[dbo].[Logging_msdb_sysjobsteps_modifications] (job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name, login_name, modification_type, insert_date_time)
+   SELECT job_id, step_id, step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time, proxy_id, step_uid, host_name(), suser_sname(), &#x27;&#x27;DELETE&#x27;&#x27;, GETDATE()
+   FROM deleted d
+  END
+END&#x27;)
+GO
+
+SELECT &#x27;End - sysjobs and sysjobsteps audit logging deployment&#x27;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/automation-tracking-modifications-done_3.html">View original post on Blogger</a></p><nav class="pn"><a href="automation-sql-server-restart-email.html">← Automation-SQL server Restart email.</a><a href="draft.html">Draft →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

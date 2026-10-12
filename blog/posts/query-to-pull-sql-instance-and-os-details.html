@@ -1,0 +1,68 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Query to pull sql instance and OS details · Sqlservv.com</title><meta name="description" content="declare @version varchar(4) select @version = substring(@@version,22,4) IF CONVERT(SMALLINT, @version) &gt;= 2012 EXEC (&#x27;SELECT SERVERPROPERTY(&#x27;&#x27;ServerName&#x27;&#x27;) AS [Instance Name], CASE…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>22 April 2017</time></div>
+<h1>Query to pull sql instance and OS details</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">declare @version varchar(4)
+select @version = substring(@@version,22,4)
+IF CONVERT(SMALLINT, @version) &gt;= 2012
+EXEC (&#x27;SELECT
+SERVERPROPERTY(&#x27;&#x27;ServerName&#x27;&#x27;) AS [Instance Name],
+CASE LEFT(CONVERT(VARCHAR, SERVERPROPERTY(&#x27;&#x27;ProductVersion&#x27;&#x27;)),4)
+WHEN &#x27;&#x27;11.0&#x27;&#x27; THEN &#x27;&#x27;SQL Server 2012&#x27;&#x27;
+WHEN &#x27;&#x27;12.0&#x27;&#x27; THEN &#x27;&#x27;SQL Server 2014&#x27;&#x27;
+ELSE &#x27;&#x27;Newer than SQL Server 2014&#x27;&#x27;
+END AS [Version Build],
+SERVERPROPERTY (&#x27;&#x27;Edition&#x27;&#x27;) AS [Edition],
+SERVERPROPERTY(&#x27;&#x27;ProductLevel&#x27;&#x27;) AS [Service Pack],
+CASE SERVERPROPERTY(&#x27;&#x27;IsIntegratedSecurityOnly&#x27;&#x27;)
+WHEN 0 THEN &#x27;&#x27;SQL Server and Windows Authentication mode&#x27;&#x27;
+WHEN 1 THEN &#x27;&#x27;Windows Authentication mode&#x27;&#x27;
+END AS [Server Authentication],
+CASE SERVERPROPERTY(&#x27;&#x27;IsClustered&#x27;&#x27;)
+WHEN 0 THEN &#x27;&#x27;False&#x27;&#x27;
+WHEN 1 THEN &#x27;&#x27;True&#x27;&#x27;
+END AS [Is Clustered?],
+SERVERPROPERTY(&#x27;&#x27;ComputerNamePhysicalNetBIOS&#x27;&#x27;) AS [Current Node Name],
+SERVERPROPERTY(&#x27;&#x27;Collation&#x27;&#x27;) AS [ SQL Collation],
+[cpu_count] AS [CPUs],
+[physical_memory_kb]/1024 AS [RAM (MB)]
+FROM
+[sys].[dm_os_sys_info]&#x27;)
+ELSE IF CONVERT(SMALLINT, @version) &gt;= 2005
+EXEC (&#x27;SELECT
+SERVERPROPERTY(&#x27;&#x27;ServerName&#x27;&#x27;) AS [Instance Name],
+CASE LEFT(CONVERT(VARCHAR, SERVERPROPERTY(&#x27;&#x27;ProductVersion&#x27;&#x27;)),4)
+WHEN &#x27;&#x27;9.00&#x27;&#x27; THEN &#x27;&#x27;SQL Server 2005&#x27;&#x27;
+WHEN &#x27;&#x27;10.0&#x27;&#x27; THEN &#x27;&#x27;SQL Server 2008&#x27;&#x27;
+WHEN &#x27;&#x27;10.5&#x27;&#x27; THEN &#x27;&#x27;SQL Server 2008 R2&#x27;&#x27;
+END AS [Version Build],
+SERVERPROPERTY (&#x27;&#x27;Edition&#x27;&#x27;) AS [Edition],
+SERVERPROPERTY(&#x27;&#x27;ProductLevel&#x27;&#x27;) AS [Service Pack],
+CASE SERVERPROPERTY(&#x27;&#x27;IsIntegratedSecurityOnly&#x27;&#x27;)
+WHEN 0 THEN &#x27;&#x27;SQL Server and Windows Authentication mode&#x27;&#x27;
+WHEN 1 THEN &#x27;&#x27;Windows Authentication mode&#x27;&#x27;
+END AS [Server Authentication],
+CASE SERVERPROPERTY(&#x27;&#x27;IsClustered&#x27;&#x27;)
+WHEN 0 THEN &#x27;&#x27;False&#x27;&#x27;
+WHEN 1 THEN &#x27;&#x27;True&#x27;&#x27;
+END AS [Is Clustered?],
+SERVERPROPERTY(&#x27;&#x27;ComputerNamePhysicalNetBIOS&#x27;&#x27;) AS [Current Node Name],
+SERVERPROPERTY(&#x27;&#x27;Collation&#x27;&#x27;) AS [ SQL Collation],
+[cpu_count] AS [CPUs],
+[physical_memory_in_bytes]/1048576 AS [RAM (MB)]
+FROM
+[sys].[dm_os_sys_info]&#x27;)
+ELSE
+SELECT &#x27;This SQL Server instance is running SQL Server 2000 or lower! You will need alternative methods in getting the SQL Server instance level information.&#x27;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/query-to-pull-sql-instance-and-os_22.html">View original post on Blogger</a></p><nav class="pn"><a href="script-to-get-recent-database-restore-history.html">← Script to get recent database restore history.</a><a href="script-to-get-failed-jobs-in-last-24-hours.html">Script to get failed jobs in last 24 hours →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Who started long running sql agent job · Sqlservv.com</title><meta name="description" content="SELECT top 1 msdb.dbo.agent_datetime(run_date, run_time) as &#x27;Job_RunDateTime&#x27; , sj. name , sh.run_date, sh.run_duration , sh.step_name , Substring (sh.message,charindex( &#x27;The Job w…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>27 November 2019</time></div>
+<h1>Who started long running sql agent job</h1><div class="chips"><a class="chip" href="../tags/script.html">script</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT top 1  msdb.dbo.agent_datetime(run_date, run_time) as &#x27;Job_RunDateTime&#x27;,
+      sj.name
+    , sh.run_date, sh.run_duration
+    , sh.step_name
+    ,Substring(sh.message,charindex(&#x27;The Job was invoked by User&#x27;,sh.message)
+    ,charindex(&#x27;The last step to run&#x27;,sh.message)-charindex(&#x27;The Job was invoked by User&#x27;,sh.message))
+    [The Job was invoked by User]
+     , sh.message
+FROM msdb.dbo.sysjobs sj
+JOIN msdb.dbo.sysjobhistory sh ON sj.job_id = sh.job_id
+join msdb.dbo.sysjobs_view job on job.job_id=sj.job_id
+inner join msdb.dbo.sysjobactivity activity on job.job_id = activity.job_id
+where activity.run_Requested_date is not null and activity.stop_execution_date is null
+and  sj.name = N&#x27;my agent job name&#x27; AND step_id = 0
+Order by   msdb.dbo.agent_datetime(sh.run_date, sh.run_time) desc ;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2019/11/who-started-long-running-sql-agent-job.html">View original post on Blogger</a></p><nav class="pn"><a href="rename-all-user-tables-in-a-sql-database.html">← Rename all user tables in a SQL Database</a><a href="sql-server-how-much-free-space-i-have-in-my-database.html">SQL SERVER – How Much Free Space I Have in My Database? →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

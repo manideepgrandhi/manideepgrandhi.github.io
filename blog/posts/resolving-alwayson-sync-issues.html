@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resolving Alwayson Sync issues · Sqlservv.com</title><meta name="description" content="1. Firstly, try resume the database. 2. If item 1 doesn&#x27;t work, set the ag from sync mode to async mode, then change it back 3. If item 2 doesn&#x27;t work, on the secondary replica, re…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>26 August 2019</time></div>
+<h1>Resolving Alwayson Sync issues</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p><b><i>1. Firstly, try resume the database.</i></b></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">ALTER DATABASE [DBName] SET HADR RESUME;</code></pre></div>
+<p><b><i>2. If item 1 doesn't work, set the ag from sync mode to async mode, then change it back</i></b></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [master]
+GO
+ALTER AVAILABILITY GROUP [AGName]
+MODIFY REPLICA ON N&#x27;A\INSTANCE3&#x27; WITH (AVAILABILITY_MODE = ASYNCHRONOUS_COMMIT)
+GO
+USE [master]
+GO
+ALTER AVAILABILITY GROUP [AGName]
+MODIFY REPLICA ON N&#x27;A\INSTANCE3&#x27; WITH (AVAILABILITY_MODE = SYNCHRONOUS_COMMIT)
+GO</code></pre></div>
+<p><b><i>3. If item 2 doesn't work, on the secondary replica, remove db from ag then add it back</i></b></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">ALTER DATABASE [DBName] SET HADR OFF;
+GO
+alter database [DBName] set HADR AVAILABILITY GROUP = [AGName]
+go
+4. If 3 doesn&#x27;t work,
+on primary, make full backup and log backup if you don&#x27;t have recent backups,
+on secondary,
+ALTER DATABASE [DBName] SET HADR OFF;
+Restore database to latest log backup.
+on primary,
+ALTER AVAILABILITY GROUP [AGName]
+REMOVE DATABASE [DBName];
+Join the database in wizard.</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2019/08/resolving-alwayson-sync-issues.html">View original post on Blogger</a></p><nav class="pn"><a href="login-properties.html">← Login properties</a><a href="script-to-provide-backup-sequence-with-the-shortest-restore-time.html">Script to provide backup sequence with the shortest restore time →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

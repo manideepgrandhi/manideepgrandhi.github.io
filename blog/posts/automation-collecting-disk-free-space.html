@@ -1,0 +1,256 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation --Collecting Disk free space · Sqlservv.com</title><meta name="description" content="SELECT &#x27;Start - DBA_Maint_Collect_Disk_Free_Space deployment&#x27; GO USE [DBA] GO /*** Drop and re-create tables ***/ IF EXISTS (select name from sys.tables where name = &#x27;DBA_DiskFreeS…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>04 August 2017</time></div>
+<h1>Automation --Collecting Disk free space</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">SELECT &#x27;Start - DBA_Maint_Collect_Disk_Free_Space deployment&#x27;
+GO
+
+USE [DBA]
+GO
+
+/*** Drop and re-create tables ***/
+
+IF EXISTS (select name from sys.tables where name = &#x27;DBA_DiskFreeSpace&#x27;)
+BEGIN
+ DROP TABLE [dbo].[DBA_DiskFreeSpace];
+END
+
+CREATE TABLE [dbo].[DBA_DiskFreeSpace](
+ [driveLetter] [varchar](255) NOT NULL,
+ [capacityGB] [decimal](16, 2) NULL,
+ [freeGB] [decimal](16, 2) NULL,
+ [insertdate] [datetime] NULL,
+ [percentFreeSpace] [decimal](16, 2) NULL
+) ON [PRIMARY]
+GO
+
+IF EXISTS (select name from sys.tables where name = &#x27;DBA_DiskFreeSpace_Archive&#x27;)
+BEGIN
+ DROP TABLE [dbo].[DBA_DiskFreeSpace_Archive];
+END
+
+CREATE TABLE [dbo].[DBA_DiskFreeSpace_Archive](
+ [driveLetter] [varchar](255) NOT NULL,
+ [capacityGB] [decimal](16, 2) NULL,
+ [freeGB] [decimal](16, 2) NULL,
+ [insertdate] [datetime] NULL,
+ [percentFreeSpace] [decimal](16, 2) NULL
+) ON [PRIMARY]
+
+GO
+
+CREATE CLUSTERED INDEX [idx_clu_insertdate] ON [dbo].[DBA_DiskFreeSpace_Archive]
+(
+ [insertdate] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 100)
+GO
+
+USE [msdb]
+GO
+
+IF EXISTS (select name from dbo.sysjobs where name = &#x27;DBA_Maint_Collect_Disk_Free_Space&#x27;)
+BEGIN
+ EXEC dbo.sp_delete_job @job_name = &#x27;DBA_Maint_Collect_Disk_Free_Space&#x27;;
+END
+GO
+
+/****** Object:  Job [DBA_Maint_Collect_Disk_Free_Space]    Script Date: 7/13/2015 11:38:28 AM ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 7/13/2015 11:38:28 AM ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N&#x27;[Uncategorized (Local)]&#x27; AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N&#x27;JOB&#x27;, @type=N&#x27;LOCAL&#x27;, @name=N&#x27;[Uncategorized (Local)]&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+
+END
+
+--skip if sql 2005
+IF (SELECT SUBSTRING(convert(sysname, SERVERPROPERTY(&#x27;productversion&#x27;)), 1, charindex(&#x27;.&#x27;,convert(sysname, SERVERPROPERTY(&#x27;productversion&#x27;)))-1)) = 9 GOTO QuitWithRollback
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N&#x27;DBA_Maint_Collect_Disk_Free_Space&#x27;,
+  @enabled=1,
+  @notify_level_eventlog=0,
+  @notify_level_email=0,
+  @notify_level_netsend=0,
+  @notify_level_page=0,
+  @delete_level=0,
+  @description=N&#x27;No description available.&#x27;,
+  @category_name=N&#x27;[Uncategorized (Local)]&#x27;,
+  @owner_login_name=N&#x27;sa&#x27;, @job_id = @jobId OUTPUT
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Archive Data from Last Pull]    Script Date: 7/13/2015 11:38:29 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Archive Data from Last Pull&#x27;,
+  @step_id=1,
+  @cmdexec_success_code=0,
+  @on_success_action=3,
+  @on_success_step_id=0,
+  @on_fail_action=2,
+  @on_fail_step_id=0,
+  @retry_attempts=0,
+  @retry_interval=0,
+  @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+  @command=N&#x27;USE [DBA]
+GO
+
+INSERT INTO [dbo].[DBA_DiskFreeSpace_Archive]
+           ([driveLetter]
+           ,[capacityGB]
+           ,[freeGB]
+           ,[insertdate]
+           ,[percentFreeSpace])
+SELECT [driveLetter]
+      ,[capacityGB]
+      ,[freeGB]
+      ,[insertdate]
+      ,[percentFreeSpace]
+  FROM [dbo].[DBA_DiskFreeSpace]&#x27;,
+  @database_name=N&#x27;DBA&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Truncate Current Table]    Script Date: 7/13/2015 11:38:29 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Truncate Current Table&#x27;,
+  @step_id=2,
+  @cmdexec_success_code=0,
+  @on_success_action=3,
+  @on_success_step_id=0,
+  @on_fail_action=2,
+  @on_fail_step_id=0,
+  @retry_attempts=0,
+  @retry_interval=0,
+  @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+  @command=N&#x27;TRUNCATE TABLE [dbo].[DBA_DiskFreeSpace]&#x27;,
+  @database_name=N&#x27;DBA&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Pull data via Powershell]    Script Date: 7/13/2015 11:38:29 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Pull data via Powershell&#x27;,
+  @step_id=3,
+  @cmdexec_success_code=0,
+  @on_success_action=3,
+  @on_success_step_id=0,
+  @on_fail_action=2,
+  @on_fail_step_id=0,
+  @retry_attempts=0,
+  @retry_interval=0,
+  @os_run_priority=0, @subsystem=N&#x27;PowerShell&#x27;,
+  @command=N&#x27;#data table to hold results
+Function out-DataTable
+{
+  $dt = new-object Data.datatable
+  $First = $true
+
+  foreach ($item in $input){
+    $DR = $DT.NewRow()
+    $Item.PsObject.get_properties() | foreach {
+      if ($first) {
+        $Col =  new-object Data.DataColumn
+        $Col.ColumnName = $_.Name.ToString()
+        $DT.Columns.Add($Col)       }
+      if ($_.value -eq $null) {
+        $DR.Item($_.Name) = &quot;[empty]&quot;
+      }
+      elseif ($_.IsArray) {
+        $DR.Item($_.Name) =[string]::Join($_.value ,&quot;;&quot;)
+      }
+      else {
+        $DR.Item($_.Name) = $_.value
+      }
+    }
+    $DT.Rows.Add($DR)
+    $First = $false
+  }
+
+  return @(,($dt))
+
+}
+
+#function to retrieve disk information
+Function Get-DisksSpace ([string]$Servername, $unit= &quot;GB&quot;)
+{
+$measure = &quot;1$unit&quot;
+
+$dt = get-date
+
+Get-WmiObject -computername $serverName -query &quot;
+select Name, FreeSpace, Capacity
+  from Win32_Volume
+ where (DriveType = 2 or DriveType = 3) and Capacity IS NOT NULL&quot; `
+| select @{Label=&quot;driveLetter&quot;; Expression={$_.Name}} `
+        , @{Label=&quot;capacity$unit&quot;;Expression={&quot;{0:n2}&quot; -f($_.Capacity/$measure)}} `
+        , @{Label=&quot;free$unit&quot;;Expression={&quot;{0:n2}&quot; -f($_.freespace/$measure)}} `
+       , @{Label=&quot;insertdate&quot;; Expression={&quot;$dt&quot;}} `
+        , @{Label=&quot;percentFreeSpace&quot;;Expression={&quot;{0:n2}&quot; -f($_.freespace/$_.Capacity*100.0)}} }
+
+#execute the functions
+
+$serverInstance = &quot;$(ESCAPE_DQUOTE(SRVR))&quot;
+#$serverInstance = &quot;PACDCSQL03&quot;
+$s = &quot;$env:computername&quot;
+Get-DisksSpace $s
+
+$dataTable = Get-DisksSpace $s | out-DataTable
+$connectionString = &quot;Data Source=$serverInstance; Integrated Security=True;Initial Catalog=DBA;&quot;
+$bulkCopy = new-object (&quot;Data.SqlClient.SqlBulkCopy&quot;) $connectionString
+$bulkCopy.DestinationTableName = &quot;dbo.DBA_DiskFreeSpace&quot;
+$bulkCopy.WriteToServer($dataTable)
+&#x27;,
+  @database_name=N&#x27;master&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+/****** Object:  Step [Purge Archive Table]    Script Date: 7/13/2015 11:38:29 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N&#x27;Purge Archive Table&#x27;,
+  @step_id=4,
+  @cmdexec_success_code=0,
+  @on_success_action=1,
+  @on_success_step_id=0,
+  @on_fail_action=2,
+  @on_fail_step_id=0,
+  @retry_attempts=0,
+  @retry_interval=0,
+  @os_run_priority=0, @subsystem=N&#x27;TSQL&#x27;,
+  @command=N&#x27;  DELETE FROM [dbo].[DBA_DiskFreeSpace_Archive]
+  WHERE insertdate &lt; dateadd(day, -7, getdate())&#x27;,
+  @database_name=N&#x27;DBA&#x27;,
+  @flags=0
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N&#x27;every hour&#x27;,
+  @enabled=1,
+  @freq_type=4,
+  @freq_interval=1,
+  @freq_subday_type=8,
+  @freq_subday_interval=1,
+  @freq_relative_interval=0,
+  @freq_recurrence_factor=0,
+  @active_start_date=20150713,
+  @active_end_date=99991231,
+  @active_start_time=4500,
+  @active_end_time=235959
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N&#x27;(local)&#x27;
+IF (@@ERROR &lt;&gt; 0 OR @ReturnCode &lt;&gt; 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT &gt; 0) ROLLBACK TRANSACTION
+EndSave:
+GO
+
+SELECT &#x27;End - DBA_Maint_Collect_Disk_Free_Space deployment&#x27;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/automation-collecting-disk-free-space_3.html">View original post on Blogger</a></p><nav class="pn"><a href="script-sql-script-to-report-all-the-users-that-have-access-to-a-specif.html">← Script :SQL Script to report all the users that have access to a specific database, or objects within the database.</a><a href="automation-sql-server-restart-email.html">Automation-SQL server Restart email. →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

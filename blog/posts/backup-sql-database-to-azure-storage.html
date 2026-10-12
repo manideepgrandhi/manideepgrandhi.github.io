@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Backup Sql Database to Azure Storage · Sqlservv.com</title><meta name="description" content="please go through the attached video to get quick idea. Pre requisites to create a database backup to azure 1. Azure Storage account 2.Container to store backup.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>08 October 2017</time></div>
+<h1>Backup Sql Database to Azure Storage</h1><div class="chips"><a class="chip" href="../tags/azure.html">azure</a><a class="chip" href="../tags/backup.html">backup</a></div><div class="content"><p>please go through the attached video to get quick idea.</p>
+<p>Pre requisites to create a database backup to azure</p>
+<p>1. Azure Storage account</p>
+<p>2.Container to store backup.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">https://msdn.microsoft.com/library/dn435916(v=sql.120).aspx
+
+IF NOT EXISTS
+(SELECT * FROM sys.credentials
+WHERE credential_identity = &#x27;backuptoazure&#x27;)
+CREATE CREDENTIAL backuptoazure WITH IDENTITY = &#x27;sqlazuree&#x27;
+,SECRET = &#x27;xuo5LwSsxBSjL3j2w95PUG3LKlb6CehxJeWlFZWP3LBSqmW8KhB+w1PKcvSnL/lBM2h0KGPu+b941yPLagGs+A==&#x27; ;
+
+DECLARE @Full_Filename AS VARCHAR (300);
+SET @Full_Filename = &#x27;https://sqlazuree.blob.core.windows.net/sql/master126&#x27;+
+REPLACE (REPLACE (REPLACE (CONVERT (VARCHAR (40), GETDATE (), 120), &#x27;-&#x27;,&#x27;_&#x27;),&#x27;:&#x27;, &#x27;_&#x27;),&#x27; &#x27;, &#x27;_&#x27;) + &#x27;.bak&#x27;;
+--Back up Adventureworks2012 database
+
+BACKUP DATABASE master
+TO URL =  @Full_Filename
+WITH CREDENTIAL = &#x27;backuptoazure&#x27;
+,COMPRESSION
+
+DECLARE @log_Filename AS VARCHAR (300);
+SET @log_Filename = &#x27;https://sqlazuree.blob.core.windows.net/sql/master126&#x27;+
+REPLACE (REPLACE (REPLACE (CONVERT (VARCHAR (40), GETDATE (), 120), &#x27;-&#x27;,&#x27;_&#x27;),&#x27;:&#x27;, &#x27;_&#x27;),&#x27; &#x27;, &#x27;_&#x27;) + &#x27;.trn&#x27;;
+--Back up Adventureworks2012 database
+
+BACKUP log master
+TO URL =  @log_Filename
+WITH CREDENTIAL = &#x27;backuptoazure&#x27;
+,COMPRESSION</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/10/backup-sql-database-to-azure-storage_7.html">View original post on Blogger</a></p><nav class="pn"><a href="aws-training.html">← AWS training</a><a href="aws-public-key.html">AWS-Public key →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

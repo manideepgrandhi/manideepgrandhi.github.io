@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sql backup information using powershell · Sqlservv.com</title><meta name="description" content=".PARAMETER ComputerName The computer that is running Microsoft SQL Server that you’re targeting to query database backup information for. .PARAMETER InstanceName The instance name …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>12 May 2017</time></div>
+<h1>Sql backup information using powershell</h1><div class="chips"><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#Requires -Version 3.0
+function Get-MrDbBackupInfo {
+&lt;#
+.SYNOPSIS
+Returns database backup information for a Microsoft SQL Server database.
+.DESCRIPTION
+Get-DbBackupInfo is a function that returns database backup information for
+one or more Microsoft SQL Server databases.</code></pre></div>
+<p>.PARAMETER ComputerName</p>
+<p>The computer that is running Microsoft SQL Server that you&#8217;re targeting to</p>
+<p>query database backup information for.</p>
+<p>.PARAMETER InstanceName</p>
+<p>The instance name of SQL Server to return database backup information for.</p>
+<p>The default is the default SQL Server instance.</p>
+<p>.PARAMETER DatabaseName</p>
+<p>The database(s) to return backup information for. The default is all databases.</p>
+<p>.EXAMPLE</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">Get-DbBackupInfo -ComputerName sql01
+.EXAMPLE
+Get-DbBackupInfo -ComputerName sql01 -DatabaseName master, msdb, model
+.EXAMPLE
+Get-DbBackupInfo -ComputerName sql01 -InstanceName MrSQL -DatabaseName master,msdb, model
+.EXAMPLE
+&#x27;master&#x27;, &#x27;msdb&#x27;, &#x27;model&#x27; | Get-DbBackupInfo -ComputerName sql01</code></pre></div>
+<p>.INPUTS</p>
+<p>String</p>
+<p>.OUTPUTS</p>
+<p>PSCustomObject</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#&gt;
+   [CmdletBinding()]
+   param (
+      [Parameter(Mandatory,
+      ValueFromPipelineByPropertyName)]
+      [Alias(&#x27;ServerName&#x27;,&#x27;PSComputerName&#x27;)]
+      [string[]]$ComputerName,
+      [Parameter(ValueFromPipelineByPropertyName)]
+      [ValidateNotNullOrEmpty()]
+      [string[]]$InstanceName = &#x27;Default&#x27;,
+      [Parameter(ValueFromPipelineByPropertyName)]
+      [ValidateNotNullOrEmpty()]
+      [string[]]$DatabaseName = &#x27;*&#x27;
+   )
+   BEGIN {
+      $problem = $false</code></pre></div>
+<p>&#160;&#160;&#160;&#160;&#160;&#160;Write-Verbose -Message "Attempting to load SQL Module if it's not already loaded"</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">      if (-not (Get-Module -Name SQLPS)) {
+          try {
+              Import-Module -Name SQLPS -DisableNameChecking -ErrorAction Stop
+          }
+          catch {
+              $problem = $true
+              Write-Warning -Message &quot;An error has occurred.  Error details: $_.Exception.Message&quot;
+          }
+      }
+   }
+   PROCESS {
+       foreach ($Computer in $ComputerName) {
+            foreach ($Instance in $InstanceName) {</code></pre></div>
+<p>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Write-Verbose -Message 'Checking for default or named SQL instance'</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">                If (-not ($problem)) {
+                    If (($Instance -eq &#x27;Default&#x27;) -or ($Instance -eq &#x27;MSSQLSERVER&#x27;)) {
+                       $SQLInstance = $Computer
+                    }
+                    else {
+                       $SQLInstance = &quot;$Computer\$Instance&quot;
+                    }
+                    $SQL = New-Object(&#x27;Microsoft.SqlServer.Management.Smo.Server&#x27;) -ArgumentList $SQLInstance
+                }
+                if (-not $problem) {
+                     foreach ($db in $DatabaseName) {
+                         Write-Verbose -Message &quot;Verifying a database named: $db exists on SQL Instance $SQLInstance.&quot;
+                         try {
+                             if ($db -match &#x27;\*&#x27;) {
+                                  $databases = $SQL.Databases | Where-Object Name -like &quot;$db&quot;
+                             }
+                             else {
+                                  $databases = $SQL.Databases | Where-Object Name -eq &quot;$db&quot;
+                             }
+                         }
+                         catch {
+                             $problem = $true
+                             Write-Warning -Message &quot;An error has occurred.  Error details: $_.Exception.Message&quot;
+                         }
+                         if (-not $problem) {
+                             foreach ($database in $databases) {
+                                  Write-Verbose -Message &quot;Retrieving information for database: $database.&quot;
+                                  [PSCustomObject]@{
+                                      ComputerName = $SQL.Information.ComputerNamePhysicalNetBIOS
+                                      InstanceName = $Instance
+                                      DatabaseName = $database.Name
+                                      LastBackupDate = $database.LastBackupDate
+                                      LastDifferentialBackupDate = $database.LastDifferentialBackupDate
+                                      LastLogBackupDate = $database.LastLogBackupDate
+                                      RecoveryModel = $database.RecoveryModel
+                             }
+                          }
+                     }
+                 }
+             }
+         }
+      }
+   }
+}
+Get-MrDbBackupInfo -ComputerName sql01 | Format-Table</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/sql-backup-information-using-powershell_12.html">View original post on Blogger</a></p><nav class="pn"><a href="sp-who-is-active-usage.html">← Sp_who is active usage</a><a href="log-file-space-issue-monitoring-using-sql-server-dmv.html">Log File Space Issue Monitoring Using SQL Server DMV →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

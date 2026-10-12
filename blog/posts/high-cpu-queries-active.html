@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>High CPU queries - Active · Sqlservv.com</title><meta name="description" content="SELECT s.session_id ,r.STATUS ,r.blocking_session_id AS &#x27;blocked_by&#x27; ,r.wait_type ,r.wait_resource ,CONVERT(VARCHAR, DATEADD(ms, r.wait_time, 0), 8) AS &#x27;wait_time&#x27; ,r.cpu_time ,r.l…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 November 2020</time></div>
+<h1>High CPU queries - Active</h1><div class="chips"><a class="chip" href="../tags/cpu.html">cpu</a><a class="chip" href="../tags/perf.html">perf</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT s.session_id
+,r.STATUS
+,r.blocking_session_id AS &#x27;blocked_by&#x27;
+,r.wait_type
+,r.wait_resource
+,CONVERT(VARCHAR, DATEADD(ms, r.wait_time, 0), 8) AS &#x27;wait_time&#x27;
+,r.cpu_time
+,r.logical_reads
+,r.reads
+,r.writes
+,CONVERT(VARCHAR, DATEADD(ms, r.total_elapsed_time, 0), 8) AS &#x27;elapsed_time&#x27;
+,CAST((
+&#x27;&lt;?query -- &#x27; + CHAR(13) + CHAR(13) + Substring(st.TEXT, (r.statement_start_offset / 2) + 1, (
+(
+CASE r.statement_end_offset
+WHEN - 1
+THEN Datalength(st.TEXT)
+ELSE r.statement_end_offset
+END - r.statement_start_offset
+) / 2
+) + 1) + CHAR(13) + CHAR(13) + &#x27;--?&gt;&#x27;
+) AS XML) AS &#x27;query_text&#x27;
+,COALESCE(QUOTENAME(DB_NAME(st.dbid)) + N&#x27;.&#x27; + QUOTENAME(OBJECT_SCHEMA_NAME(st.objectid, st.dbid)) + N&#x27;.&#x27; + QUOTENAME(OBJECT_NAME(st.objectid, st.dbid)), &#x27;&#x27;) AS &#x27;stored_proc&#x27;
+--,qp.query_plan AS &#x27;xml_plan&#x27; -- uncomment (1) if you want to see plan
+,r.command
+,s.login_name
+,s.host_name
+,s.program_name
+,s.host_process_id
+,s.last_request_end_time
+,s.login_time
+,r.open_transaction_count
+FROM sys.dm_exec_sessions AS s
+INNER JOIN sys.dm_exec_requests AS r ON r.session_id = s.session_id
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) AS st
+--OUTER APPLY sys.dm_exec_query_plan(r.plan_handle) AS qp -- uncomment (2) if you want to see plan
+WHERE r.wait_type NOT LIKE &#x27;SP_SERVER_DIAGNOSTICS%&#x27;
+OR r.session_id != @@SPID
+ORDER BY r.cpu_time DESC
+,r.STATUS
+,r.blocking_session_id
+,s.session_id</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/11/high-cpu-queries-active.html">View original post on Blogger</a></p><nav class="pn"><a href="move-database-files-of-alwayson-enabled-database.html">← Move  database files of Alwayson  enabled database</a><a href="vlf-count.html">Vlf count →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

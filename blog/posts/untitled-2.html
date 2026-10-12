@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Untitled · Sqlservv.com</title><meta name="description" content="physical_name AS [Physical Name], size/128 AS [Total Size in MB], size/128.0 - CAST(FILEPROPERTY(name, &#x27;SpaceUsed&#x27;) AS int)/128.0 AS [Available Space In MB],">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>24 September 2018</time></div>
+<h1>Untitled</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  SELECT name AS [logical_file_name] ,</code></pre></div>
+<p>physical_name AS [Physical Name],</p>
+<p>size/128 AS [Total Size in MB],</p>
+<p>size/128.0 - CAST(FILEPROPERTY(name, 'SpaceUsed') AS int)/128.0 AS [Available Space In MB],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  (1.00 - (CAST(FILEPROPERTY(name, &#x27;SpaceUsed&#x27;) AS int)/128.0 / (size/128.0))) * 100.00 [pct_free_space]
+  FROM sys.database_files;
+
+  --SUM of space available used in a database
+  SELECT db_name(), file_type = CASE
+  WHEN type_desc = &#x27;LOG&#x27; THEN &#x27;LOG&#x27;
+  WHEN type_desc = &#x27;ROWS&#x27; THEN &#x27;DATA&#x27;
+  ELSE &#x27;UNKNOWN&#x27;
+  END,
+  --CONVERT(DECIMAL(18,2), SUM(size/128.0)) [size_in_mb],
+  CONVERT(DECIMAL(18,2),SUM(size/128.0/1024.0)) [size_in_gb],
+  CONVERT(DECIMAL(18,2),SUM(size/128.0/1024) - SUM(size/128.0/1024 - CAST(FILEPROPERTY(name, &#x27;SpaceUsed&#x27;) AS int)/128.0/1024)) [used_space_in_gb],
+  CONVERT(DECIMAL(18,2),SUM(size/128.0/1024 - CAST(FILEPROPERTY(name, &#x27;SpaceUsed&#x27;) AS int)/128.0/1024)) [available_space_in_gb]
+  FROM sys.database_files
+  GROUP BY type_desc</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/09/select-name-as-logicalfilename.html">View original post on Blogger</a></p><nav class="pn"><a href="untitled-3.html">← Untitled</a><a href="outdated-statistics.html">Outdated statistics →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

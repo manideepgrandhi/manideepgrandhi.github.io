@@ -1,0 +1,126 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Powershell script to generate uptime report of windows servers · Sqlservv.com</title><meta name="description" content="0 {&quot;Success&quot;} 11001 {&quot;Buffer Too Small&quot;} 11002 {&quot;Destination Net Unreachable&quot;} 11003 {&quot;Destination Host Unreachable&quot;} 11004 {&quot;Destination Protocol Unreachable&quot;} 11005 {&quot;Destination…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>03 May 2017</time></div>
+<h1>Powershell script to generate uptime report of windows servers</h1><div class="chips"><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Function GetStatusCode
+{
+    Param([int] $StatusCode)
+    switch($StatusCode)
+    {</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {"Success"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11001&nbsp;&nbsp; {"Buffer Too Small"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11002&nbsp;&nbsp; {"Destination Net Unreachable"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11003&nbsp;&nbsp; {"Destination Host Unreachable"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11004&nbsp;&nbsp; {"Destination Protocol Unreachable"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11005&nbsp;&nbsp; {"Destination Port Unreachable"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11006&nbsp;&nbsp; {"No Resources"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11007&nbsp;&nbsp; {"Bad Option"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11008&nbsp;&nbsp; {"Hardware Error"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11009&nbsp;&nbsp; {"Packet Too Big"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11010&nbsp;&nbsp; {"Request Timed Out"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11011&nbsp;&nbsp; {"Bad Request"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11012&nbsp;&nbsp; {"Bad Route"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11013&nbsp;&nbsp; {"TimeToLive Expired Transit"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11014&nbsp;&nbsp; {"TimeToLive Expired Reassembly"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11015&nbsp;&nbsp; {"Parameter Problem"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11016&nbsp;&nbsp; {"Source Quench"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11017&nbsp;&nbsp; {"Option Too Big"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11018&nbsp;&nbsp; {"Bad Destination"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11032&nbsp;&nbsp; {"Negotiating IPSEC"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11050&nbsp;&nbsp; {"General Failure"}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; default {"Failed"}</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">    }
+}
+
+Function GetUpTime
+{
+    param([string] $LastBootTime)
+    $Uptime = (Get-Date) - [System.Management.ManagementDateTimeconverter]::ToDateTime($LastBootTime)
+    &quot;Days: $($Uptime.Days); Hours: $($Uptime.Hours); Minutes: $($Uptime.Minutes); Seconds: $($Uptime.Seconds)&quot;
+}
+
+#Change value of the following parameter as needed
+$OutputFile = &quot;C:\users\ptmp001c\ureport\uptimer_$(get-date -f yyyy-MM-dd).htm&quot;
+$ServerList = Get-Content &quot;C:\users\ptmp001c\srvutime.txt&quot;
+
+$Result = @()
+Foreach($ServerName in $ServerList)
+{
+    $pingStatus = Get-WmiObject -Query &quot;Select * from win32_PingStatus where Address=&#x27;$ServerName&#x27;&quot;
+
+    $Uptime = $null
+    if($pingStatus.StatusCode -eq 0)
+    {
+        $OperatingSystem = Get-WmiObject Win32_OperatingSystem -ComputerName $ServerName -ErrorAction SilentlyContinue
+        $Uptime = GetUptime( $OperatingSystem.LastBootUpTime )
+    }
+
+    $Result += New-Object PSObject -Property @{
+        ServerName = $ServerName
+        IPV4Address = $pingStatus.IPV4Address
+        Status = GetStatusCode( $pingStatus.StatusCode )
+        Uptime = $Uptime
+    }
+}
+
+if($Result -ne $null)
+{
+    $HTML = &#x27;&lt;style type=&quot;text/css&quot;&gt;
+    #Header{font-family:&quot;Trebuchet MS&quot;, Arial, Helvetica, sans-serif;width:100%;border-collapse:collapse;}
+    #Header td, #Header th {font-size:14px;border:1px solid #98bf21;padding:3px 7px 2px 7px;}
+    #Header th {font-size:14px;text-align:left;padding-top:5px;padding-bottom:4px;background-color:#A7C942;color:#fff;}
+    #Header tr.alt td {color:#000;background-color:#EAF2D3;}
+    &lt;/Style&gt;&#x27;
+    $HTML += &quot;&lt;HTML&gt;&lt;BODY&gt;&lt;Table border=1 cellpadding=0 cellspacing=0 id=Header&gt;</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TR&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Server Name&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;IP Address&lt;/B&gt;&lt;/TD&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Status&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Uptime&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/TR&gt;"</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">    Foreach($Entry in $Result)
+    {
+        if($Entry.Status -ne &quot;Success&quot;)
+        {
+            $HTML += &quot;&lt;TR bgColor=Red&gt;&quot;
+        }
+        else
+        {
+            $HTML += &quot;&lt;TR&gt;&quot;
+        }
+        $HTML += &quot;
+                        &lt;TD&gt;$($Entry.ServerName)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.IPV4Address)&lt;/TD&gt;
+
+                    &lt;/TR&gt;&quot;
+    }
+    $HTML += &quot;&lt;/Table&gt;&lt;/BODY&gt;&lt;/HTML&gt;&quot;
+
+    $HTML | Out-File $OutputFile
+
+    #specify who gets notified
+    $notificationto = &quot;xyz@xyz.com&quot;
+
+    #$notificationto=&quot;_chq--ie-infrasupport_@xyz.com&quot;
+    # specify where the notifications come from
+   $notificationfrom =&quot;IE_Infra_Monitor@xyzcom&quot;
+    # specify the SMTP server
+    $smtpserver = &quot;mailrelay.xyzt.com&quot;
+
+    $body = [System.IO.File]::ReadAllText(&quot;C:\users\ptmp001c\ureport\uptimer_$(get-date -f yyyy-MM-dd).htm&quot;)
+
+ Send-MailMessage -Body $body -BodyAsHtml -Priority High -to $notificationto -from $notificationfrom -Subject &quot;Uptime Report $(get-date -f yyyy-MM-dd)&quot; -SmtpServer $smtpServer
+
+}</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/powershell-script-to-generate-uptime_3.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-generate-sql-server-inventory-along-with-email.html">← Powershell Script to generate SQL Server inventory along with email</a><a href="powershell-script-to-get-disk-free-space-of-a-remote-system.html">powershell script to get disk free space of a remote system →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

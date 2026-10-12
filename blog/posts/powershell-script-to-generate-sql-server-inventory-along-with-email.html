@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Powershell Script to generate SQL Server inventory along with email · Sqlservv.com</title><meta name="description" content="&lt;########################################################################### &lt;TR&gt; &lt;TH&gt;&lt;B&gt;Server Name&lt;/B&gt;&lt;/TH&gt; &lt;TH&gt;&lt;B&gt;PhysicalMemory (MB)&lt;/B&gt;&lt;/TH&gt; &lt;TH&gt;&lt;B&gt;Logical Processors&lt;/B&gt;&lt;/TH&gt;…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>03 May 2017</time></div>
+<h1>Powershell Script to generate SQL Server inventory along with email</h1><div class="chips"><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><p>&lt;###########################################################################</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#
+#
+#https://msdn.microsoft.com/en-us/library/microsoft.sqlserver.management.smo.server.aspx
+#
+###########################################################################&gt;
+
+param(
+    [string]$InputFile,
+    [string]$OutputFile
+)
+
+#$ServerListFile = $InputFile
+
+#$OutputFile = $OutputFile
+
+#$ServerList = Get-Content $ServerListFile -ErrorAction SilentlyContinue
+$ServerList = Get-Content &quot;C:\Users\ptmp001c\srvdb.txt&quot;
+$OutputFile=&quot;C:\Users\ptmp001c\dbinventory_$(get-date -f yyyy-MM-dd).htm&quot;
+
+[Reflection.Assembly]::LoadWithPartialName(&quot;Microsoft.SqlServer.Smo&quot;)
+$Result = @()
+Foreach($SQLServer in $ServerList)
+{
+    $SQLServerInfo = new-object “Microsoft.SqlServer.Management.Smo.Server” $SQLServer
+    $Result += $SQLServerInfo | Select Name,DefaultFile,DefaultLog, Edition,ProductLevel, Version,ErrorLogPath,FilestreamLevel, ServiceAccount,ServerType, Platform, IsClustered, PhysicalMemory, Processors,AvailabilityGroups,ClusterQuorumType
+}
+
+if($Result -ne $null)
+{
+    $HTML = &#x27;&lt;style type=&quot;text/css&quot;&gt;
+    #Header{font-family:&quot;Trebuchet MS&quot;, Arial, Helvetica, sans-serif;width:100%;border-collapse:collapse;}
+    #Header td, #Header th {font-size:14px;border:1px solid #98bf21;padding:3px 7px 2px 7px;}
+    #Header th {font-size:14px;text-align:left;padding-top:5px;padding-bottom:4px;background-color:#A7C942;color:#fff;}
+    #Header tr.alt td {color:#000;background-color:#EAF2D3;}
+    &lt;/Style&gt;&#x27;
+    $HTML += &quot;&lt;HTML&gt;&lt;BODY&gt;&lt;Table border=1 cellpadding=0 cellspacing=0 width=100% id=Header&gt;</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TR&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Server Name&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;PhysicalMemory (MB)&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Logical Processors&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;ServerType&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Platform&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;DefaultFile&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;DefaultLog&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Edition&lt;/B&gt;&lt;/TD&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;ProductLevel&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;Version&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;ErrorLogPath&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;FilestreamLevel&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;ServiceAccount&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;IsClustered&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;AvailabilityGroups&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;TH&gt;&lt;B&gt;ClusterQuorumType&lt;/B&gt;&lt;/TH&gt;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/TR&gt;"</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">    Foreach($Entry in $Result)
+    {
+        $HTML += &quot;&lt;TR&gt;
+                        &lt;TD&gt;$($Entry.Name)&lt;/TD&gt;
+                        &lt;TD align=center&gt;$($Entry.PhysicalMemory)&lt;/TD&gt;
+                        &lt;TD align=center&gt;$($Entry.Processors)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.ServerType)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.Platform)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.DefaultFile)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.DefaultLog)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.Edition)&lt;/TD&gt;
+                        &lt;TD align=center&gt;$($Entry.ProductLevel)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.Version)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.ErrorLogPath)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.FilestreamLevel)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.ServiceAccount)&lt;/TD&gt;
+                        &lt;TD align=center&gt;$($Entry.IsClustered)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.AvailabilityGroups)&lt;/TD&gt;
+                        &lt;TD&gt;$($Entry.ClusterQuorumType)&lt;/TD&gt;
+                    &lt;/TR&gt;&quot;
+    }
+    $HTML += &quot;&lt;/Table&gt;&lt;/BODY&gt;&lt;/HTML&gt;&quot;
+
+    $HTML | Out-File $OutputFile
+}
+
+$body = [System.IO.File]::ReadAllText(&quot;C:\Users\ptmp001c\dbinventory_$(get-date -f yyyy-MM-dd).htm&quot;)
+Send-MailMessage -To Manideep_Grandhi@xyz.com -From IE_Infra_Monitor@xyz.com -Subject &quot;Database Inventory Report $(get-date -f yyyy-MM-dd) &quot; -Body $body -BodyAsHtml -Priority High -SmtpServer mailrelay.xyz.com
+
+#Invoke-Item C:\Users\ptmp001c\dbinventory_$(get-date -f yyyy-MM-dd).htm</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/powershell-script-to-generate-sql_3.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-generate-database-backup-report-along-with-email.html">← Powershell script to generate database backup report along with email</a><a href="powershell-script-to-generate-uptime-report-of-windows-servers.html">Powershell script to generate uptime report of windows servers →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

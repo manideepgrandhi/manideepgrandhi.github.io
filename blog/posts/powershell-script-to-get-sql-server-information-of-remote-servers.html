@@ -1,0 +1,231 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Powershell Script to get SQL Server information of remote servers · Sqlservv.com</title><meta name="description" content="&quot;^13&quot; {&#x27;SQL Server 2016&#x27;;Break} &quot;^12&quot; {&#x27;SQL Server 2014&#x27;;Break} &quot;^11&quot; {&#x27;SQL Server 2012&#x27;;Break} &quot;^10\.5&quot; {&#x27;SQL Server 2008 R2&#x27;;Break} &quot;^10&quot; {&#x27;SQL Server 2008&#x27;;Break} &quot;^9&quot; {&#x27;SQL Ser…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>03 May 2017</time></div>
+<h1>Powershell Script to get SQL Server information of remote servers</h1><div class="chips"><a class="chip" href="../tags/powershell.html">powershell</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">Function Get-SQLInstance {
+    &lt;#
+        .EXAMPLE
+            Get-SQLInstance -Computername GD,GD
+
+        #&gt;
+    [OutputType(&#x27;SQLServer.Information&#x27;)]
+    [cmdletbinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True)]
+        [string[]]$Computername = &#x27;G13&#x27;
+    )
+    Process {
+        ForEach ($Computer in $Computername) {
+            # 1 = MSSQLSERVER
+            $Filter = &quot;SELECT * FROM SqlServiceAdvancedProperty WHERE SqlServiceType=1&quot;
+            $WMIParams=@{
+                Computername = $Computer
+                NameSpace=&#x27;root\Microsoft\SqlServer&#x27;
+                Query=&quot;SELECT name FROM __NAMESPACE WHERE name LIKE &#x27;ComputerManagement%&#x27;&quot;
+                Authentication = &#x27;PacketPrivacy&#x27;
+                ErrorAction = &#x27;Stop&#x27;
+            }
+            Write-Verbose &quot;[$Computer] Starting SQL Scan&quot;
+            $PropertyHash = [ordered]@{
+                Computername = $Computer
+                Instance = $Null
+                SqlServer = $Null
+                WmiNamespace = $Null
+                SQLSTATES = $Null
+                VERSION = $Null
+                SPLEVEL = $Null
+                CLUSTERED = $Null
+                INSTALLPATH = $Null
+                DATAPATH = $Null
+                LANGUAGE = $Null
+                FILEVERSION = $Null
+                VSNAME = $Null
+                REGROOT = $Null
+                SKU = $Null
+                SKUNAME = $Null
+                INSTANCEID = $Null
+                STARTUPPARAMETERS = $Null
+                ERRORREPORTING = $Null
+                DUMPDIR = $Null
+                SQMREPORTING = $Null
+                ISWOW64 = $Null
+                BackupDirectory = $Null
+                AlwaysOnName = $Null
+            }
+            Try {
+                Write-Verbose &quot;[$Computer] Performing Registry Query&quot;
+                $Registry = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(&#x27;LocalMachine&#x27;, $Computer)
+            }
+            Catch {
+                Write-Warning &quot;[$Computer] $_&quot;
+                Continue
+            }
+            $baseKeys = &quot;SOFTWARE\\Microsoft\\Microsoft SQL Server&quot;,
+            &quot;SOFTWARE\\Wow6432Node\\Microsoft\\Microsoft SQL Server&quot;
+            Try {
+                $ErrorActionPreference = &#x27;Stop&#x27;
+                If ($Registry.OpenSubKey($basekeys[0])) {
+                    $regPath = $basekeys[0]
+                }
+                ElseIf ($Registry.OpenSubKey($basekeys[1])) {
+                    $regPath = $basekeys[1]
+                }
+                Else {
+                    Continue
+                }
+            }
+            Catch {
+                Continue
+            }
+            Finally {
+                $ErrorActionPreference = &#x27;Continue&#x27;
+            }
+            $RegKey= $Registry.OpenSubKey(&quot;$regPath&quot;)
+            If ($RegKey.GetSubKeyNames() -contains &quot;Instance Names&quot;) {
+                $RegKey= $Registry.OpenSubKey(&quot;$regpath\\Instance Names\\SQL&quot; )
+                $instances = @($RegKey.GetValueNames())
+            }
+            ElseIf ($regKey.GetValueNames() -contains &#x27;InstalledInstances&#x27;) {
+                $isCluster = $False
+                $instances = $RegKey.GetValue(&#x27;InstalledInstances&#x27;)
+            }
+            Else {
+                Continue
+            }
+
+            If ($instances.count -gt 0) {
+                ForEach ($Instance in $Instances) {
+                    $PropertyHash[&#x27;Instance&#x27;]=$Instance
+                    $Nodes = New-Object System.Collections.Arraylist
+                    $clusterName = $Null
+                    $isCluster = $False
+                    $instanceValue = $regKey.GetValue($instance)
+                    $instanceReg = $Registry.OpenSubKey(&quot;$regpath\\$instanceValue&quot;)
+                    If ($instanceReg.GetSubKeyNames() -contains &quot;Cluster&quot;) {
+                        $isCluster = $True
+                        $instanceRegCluster = $instanceReg.OpenSubKey(&#x27;Cluster&#x27;)
+                        $clusterName = $instanceRegCluster.GetValue(&#x27;ClusterName&#x27;)
+                        $clusterReg = $Registry.OpenSubKey(&quot;Cluster\\Nodes&quot;)
+                        $clusterReg.GetSubKeyNames() | ForEach {
+                            $null = $Nodes.Add($clusterReg.OpenSubKey($_).GetValue(&#x27;NodeName&#x27;))
+                        }
+                    }
+                    $PropertyHash[&#x27;Nodes&#x27;] = $Nodes
+
+                    $instanceRegSetup = $instanceReg.OpenSubKey(&quot;Setup&quot;)
+                    Try {
+                        $edition = $instanceRegSetup.GetValue(&#x27;Edition&#x27;)
+                    } Catch {
+                        $edition = $Null
+                    }
+                    $PropertyHash[&#x27;Skuname&#x27;] = $edition
+                    Try {
+                        $ErrorActionPreference = &#x27;Stop&#x27;
+                        #Get from filename to determine version
+                        $servicesReg = $Registry.OpenSubKey(&quot;SYSTEM\\CurrentControlSet\\Services&quot;)
+                        $serviceKey = $servicesReg.GetSubKeyNames() | Where {
+                            $_ -match &quot;$instance&quot;
+                        } | Select -First 1
+                        $service = $servicesReg.OpenSubKey($serviceKey).GetValue(&#x27;ImagePath&#x27;)
+                        $file = $service -replace &#x27;^.*(\w:\\.*\\sqlservr.exe).*&#x27;,&#x27;$1&#x27;
+                        $PropertyHash[&#x27;version&#x27;] =(Get-Item (&quot;\\$Computer\$($file -replace &quot;:&quot;,&quot;$&quot;)&quot;)).VersionInfo.ProductVersion
+                    } Catch {
+                        #Use potentially less accurate version from registry
+                        $PropertyHash[&#x27;Version&#x27;] = $instanceRegSetup.GetValue(&#x27;Version&#x27;)
+                    } Finally {
+                        $ErrorActionPreference = &#x27;Continue&#x27;
+                    }
+
+                    Try {
+                        Write-Verbose &quot;[$Computer] Performing WMI Query&quot;
+                        $Namespace = $Namespace = (Get-WMIObject @WMIParams | Sort-Object -Descending | Select-Object -First 1).Name
+                        If ($Namespace) {
+                            $PropertyHash[&#x27;WMINamespace&#x27;] = $Namespace
+                            $WMIParams.NameSpace=&quot;root\Microsoft\SqlServer\$Namespace&quot;
+                            $WMIParams.Query=$Filter
+
+                            $WMIResults = Get-WMIObject @WMIParams
+                            $GroupResults = $WMIResults | Group ServiceName
+                            $PropertyHash[&#x27;Instance&#x27;] = $GroupResults.Name
+                            $WMIResults | ForEach {
+                                $Name = &quot;{0}{1}&quot; -f ($_.PropertyName.SubString(0,1),$_.PropertyName.SubString(1).ToLower())
+                                $Data = If ($_.PropertyStrValue) {
+                                    $_.PropertyStrValue
+                                }
+                                Else {
+                                    If ($Name -match &#x27;Clustered|ErrorReporting|SqmReporting|IsWow64&#x27;) {
+                                        [bool]$_.PropertyNumValue
+                                    }
+                                    Else {
+                                        $_.PropertyNumValue
+                                    }
+                                }
+                                $PropertyHash[$Name] = $Data
+                            }
+
+                            #region Always on availability group
+                            if ($PropertyHash[&#x27;Version&#x27;].Major -ge 11) {
+                                $splat.Query=&quot;SELECT WindowsFailoverClusterName FROM HADRServiceSettings WHERE InstanceName = &#x27;$($Group.Name)&#x27;&quot;
+                                $PropertyHash[&#x27;AlwaysOnName&#x27;] = (Get-WmiObject @WMIParams).WindowsFailoverClusterName
+                                if ($PropertyHash[&#x27;AlwaysOnName&#x27;]) {
+                                    $PropertyHash.SqlServer = $PropertyHash[&#x27;AlwaysOnName&#x27;]
+                                }
+                            }
+                            else {
+                                $PropertyHash[&#x27;AlwaysOnName&#x27;] = $null
+                            }
+                            #endregion Always on availability group
+
+                            #region Backup Directory
+                            $RegKey=$Registry.OpenSubKey(&quot;$($PropertyHash[&#x27;RegRoot&#x27;])\MSSQLServer&quot;)
+                            $PropertyHash[&#x27;BackupDirectory&#x27;] = $RegKey.GetValue(&#x27;BackupDirectory&#x27;)
+                            #endregion Backup Directory
+                        }#IF NAMESPACE
+                    }
+                    Catch {
+                    }
+                    #region Caption
+                    $Caption = {Switch -Regex ($PropertyHash[&#x27;version&#x27;]) {</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^13" {'SQL Server 2016';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^12" {'SQL Server 2014';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^11" {'SQL Server 2012';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^10\.5" {'SQL Server 2008 R2';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^10" {'SQL Server 2008';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^9"&nbsp; {'SQL Server 2005';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "^8"&nbsp; {'SQL Server 2000';Break}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Default {'Unknown'}</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">                    }}.InvokeReturnAsIs()
+                    $PropertyHash[&#x27;Caption&#x27;] = $Caption
+                    #endregion Caption
+
+                    #region Full SQL Name
+                    $Name = If ($clusterName) {
+                        $clusterName
+                        $PropertyHash[&#x27;SqlServer&#x27;] = $clusterName
+                    }
+                    Else {
+                        $Computer
+                        $PropertyHash[&#x27;SqlServer&#x27;] = $Computer
+                    }
+                    $PropertyHash[&#x27;FullName&#x27;] = (&quot;{0}\{1}&quot; -f $Name,$PropertyHash[&#x27;Instance&#x27;])
+                    #emdregion Full SQL Name
+                    $Object = [pscustomobject]$PropertyHash
+                    $Object.pstypenames.insert(0,&#x27;SQLServer.Information&#x27;)
+                    $Object
+                }#FOREACH INSTANCE
+            }#IF
+        }
+    }
+}</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/powershell-script-to-get-sql-server_3.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-get-disk-free-space-of-a-remote-system.html">← powershell script to get disk free space of a remote system</a><a href="different-scripts-tp-get-database-backup-hsitory.html">Different scripts tp get database backup hsitory →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

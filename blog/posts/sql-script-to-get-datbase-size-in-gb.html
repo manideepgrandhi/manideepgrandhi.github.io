@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sql Script to get datbase size in GB · Sqlservv.com</title><meta name="description" content="DATABASE_SIZE AS &#x27;(KB)&#x27;, ROUND(DATABASE_SIZE / 1024, 2) AS &#x27;(MB)&#x27;, ROUND((DATABASE_SIZE / 1024) / 1024, 2) AS &#x27;(GB)&#x27;,">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>22 August 2017</time></div>
+<h1>Sql Script to get datbase size in GB</h1><div class="chips"><a class="chip" href="../tags/space.html">Space</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">CREATE TABLE #databases
+(
+ DATABASE_NAME VARCHAR(50),
+ DATABASE_SIZE FLOAT,
+ REMARKS VARCHAR(100)
+)
+
+INSERT #Databases EXEC (&#x27;EXEC sp_databases&#x27;);
+
+SELECT @@SERVERNAME AS SERVER_NAME,
+       DATABASE_NAME,
+       SYSMFM.source_file_name_main,
+       SYSMFM.physical_name_main,
+       SYSMFL.source_file_name_log,
+       SYSMFL.physical_name_log,</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DATABASE_SIZE AS '(KB)',</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ROUND(DATABASE_SIZE / 1024, 2) AS '(MB)',</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ROUND((DATABASE_SIZE / 1024) / 1024, 2) AS '(GB)',</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">       SYSDB.compatibility_level,
+       SYSDB.create_date,
+       SYSDB.database_id,
+       SYSDB.collation_name,
+       SYSDB.recovery_model,
+       SYSDB.recovery_model_desc,
+       SYSDB.user_access,
+       SYSDB.user_access_desc,
+       SYSDB.state,
+       SYSDB.state_desc
+  FROM #databases AS DB
+       INNER JOIN sys.databases AS SYSDB ON DB.DATABASE_NAME = SYSDB.name
+       INNER JOIN (SELECT database_id,
+                          name AS source_file_name_main,
+                          physical_name AS physical_name_main
+                     FROM sys.master_files AS SYSMF
+                    WHERE SYSMF.file_id = 1) AS SYSMFM ON SYSMFM.database_id = SYSDB.database_id
+       INNER JOIN (SELECT database_id,
+                          name AS source_file_name_log,
+                          physical_name AS physical_name_log
+                     FROM sys.master_files AS SYSMF
+                    WHERE SYSMF.file_id = 2) AS SYSMFL ON SYSMFL.database_id = SYSDB.database_id
+ WHERE SYSDB.database_id &gt; 4
+ ORDER BY DATABASE_SIZE desc;
+
+DROP TABLE #databases;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/sql-script-to-get-datbase-size-in-gb_22.html">View original post on Blogger</a></p><nav class="pn"><a href="powershell-script-to-check-sql-jobs-remotely.html">← Powershell script to check sql jobs remotely</a><a href="automation-free-disk-space-report-using-powershell.html">Automation- Free disk space report using powershell →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

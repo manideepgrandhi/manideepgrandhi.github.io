@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>calculate no. of Modified rows · Sqlservv.com</title><meta name="description" content="SELECT stat.auto_created, stat.name as stats_name, STUFF((SELECT &#x27;, &#x27; + cols.name FROM sys.stats_columns AS statcols JOIN sys.columns AS cols ON statcols.column_id=cols.column_id A…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>23 November 2019</time></div>
+<h1>calculate no. of Modified rows</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT
+	stat.auto_created,
+	stat.name as stats_name,
+	STUFF((SELECT &#x27;, &#x27; + cols.name
+		FROM sys.stats_columns AS statcols
+		JOIN sys.columns AS cols ON
+			statcols.column_id=cols.column_id
+			AND statcols.object_id=cols.object_id
+		WHERE statcols.stats_id = stat.stats_id and
+			statcols.object_id=stat.object_id
+		ORDER BY statcols.stats_column_id
+		FOR XML PATH(&#x27;&#x27;), TYPE
+	).value(&#x27;.&#x27;, &#x27;NVARCHAR(MAX)&#x27;), 1, 2, &#x27;&#x27;)  as stat_cols,
+	stat.filter_definition,
+	stat.is_temporary,
+	stat.no_recompute,
+	sp.last_updated,
+	sp.modification_counter,
+	sp.rows,
+	sp.rows_sampled
+FROM sys.stats as stat
+CROSS APPLY sys.dm_db_stats_properties (stat.object_id, stat.stats_id) AS sp
+JOIN sys.objects as so on
+	stat.object_id=so.object_id
+JOIN sys.schemas as sc on
+	so.schema_id=sc.schema_id
+WHERE
+	sc.name= &#x27;Warehouse&#x27;
+	and so.name=&#x27;StockItemTransactions&#x27;
+ORDER BY 1, 2;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2019/11/calculate-no-of-modified-rows.html">View original post on Blogger</a></p><nav class="pn"><a href="always-on-sync-script.html">← Always on sync script</a><a href="size-of-total-plan-cache-vs-adhoc-plan-cache.html">Size of total plan cache vs adhoc plan cache →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

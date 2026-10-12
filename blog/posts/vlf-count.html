@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vlf count · Sqlservv.com</title><meta name="description" content="COUNT(l.database_id) AS &#x27;VLF Count&#x27;, SUM(CAST(vlf_active AS INT)) AS &#x27;Active VLF&#x27;, COUNT(l.database_id)-SUM(CAST(vlf_active AS INT)) AS &#x27;Inactive VLF&#x27;, SUM(vlf_size_mb) AS &#x27;VLF Siz…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>24 September 2021</time></div>
+<h1>Vlf count</h1><div class="chips"><a class="chip" href="../tags/performance.html">performance</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT [name] AS &#x27;Database Name&#x27;,</code></pre></div>
+<p>COUNT(l.database_id) AS 'VLF Count',</p>
+<p>SUM(CAST(vlf_active AS INT)) AS 'Active VLF',</p>
+<p>COUNT(l.database_id)-SUM(CAST(vlf_active AS INT)) AS 'Inactive VLF',</p>
+<p>SUM(vlf_size_mb) AS 'VLF Size (MB)',</p>
+<p>SUM(vlf_active*vlf_size_mb) AS 'Active VLF Size (MB)',</p>
+<p>SUM(vlf_size_mb)-SUM(vlf_active*vlf_size_mb) AS 'Inactive VLF Size (MB)'</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM sys.databases s
+CROSS APPLY sys.dm_db_log_info(s.database_id) l
+GROUP BY [name]
+ORDER BY COUNT(l.database_id)</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2021/09/vlf-count.html">View original post on Blogger</a></p><nav class="pn"><a href="high-cpu-queries-active.html">← High CPU queries - Active</a><a href="database-users-without-login.html">Database users without login →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

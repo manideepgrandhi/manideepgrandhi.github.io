@@ -1,0 +1,100 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Steps to configure replication in rds postgres · Sqlservv.com</title><meta name="description" content="Steps to Configure Replication in RDS PostgreSQL Configuring replication in Amazon RDS for PostgreSQL typically involves different steps depending on whether you&#x27;re setting up Read…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>28 May 2025</time></div>
+<h1>Steps to configure replication in rds postgres</h1><div class="chips"><a class="chip" href="../tags/postgresql.html">postgresql</a><a class="chip" href="../tags/replication.html">Replication</a></div><div class="content"><p>Steps to Configure Replication in RDS PostgreSQL</p>
+<p>Configuring replication in Amazon RDS for PostgreSQL typically involves different steps depending on whether you're setting up <strong>Read Replicas (Streaming Replication)</strong> or <strong>Logical Replication</strong>.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">1. Configuring Read Replicas (Streaming Replication)</code></pre></div>
+<p><strong>Purpose:</strong> Read scaling and disaster recovery.</p>
+<p><strong>Prerequisites:</strong></p>
+<p>Existing RDS PostgreSQL DB instance (primary).</p>
+<p><strong>Steps:</strong></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">Open the Amazon RDS Console
+Go to AWS Management Console → RDS service.
+Select Your Primary DB Instance
+In &quot;Databases,&quot; select your PostgreSQL DB instance.
+Create Read Replica</code></pre></div>
+<p>Click "Actions" dropdown.</p>
+<p>Choose "Create Read Replica."</p>
+<p><strong>Configure Replica Options</strong></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">DB Instance Identifier: Unique name (e.g., my-postgres-replica-1)
+Instance Class: Choose type (e.g., db.t3.medium)</code></pre></div>
+<p><strong>Storage</strong>: Match or adjust</p>
+<p><strong>Multi-AZ Deployment</strong>: Optional, only if replica is critical</p>
+<p><strong>Networking</strong>: Match VPC, subnet, security groups with primary</p>
+<p><strong>Port</strong>: Usually 5432</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Parameter/Option Groups: Default or custom
+Encryption: Must match if primary is encrypted
+Backup Retention: Set independently
+Monitoring: Configure if needed
+Create Replica
+Review settings and click Create Read Replica.
+What Happens Next
+AWS provisions a new RDS instance, restores a snapshot from primary, starts WAL streaming.</code></pre></div>
+<p>Replica status shifts from <strong>Creating</strong> to <strong>Available</strong>.</p>
+<p><strong>Connecting</strong></p>
+<p>Find the new endpoint in RDS console for read operations.</p>
+<p>Monitor <code>ReplicationLag</code> metric in CloudWatch.</p>
+<p>2. Configuring Logical Replication</p>
+<p><strong>Purpose:</strong> Replicate specific tables or databases, ideal for cross-version upgrades or external replication.</p>
+<p><strong>Prerequisites:</strong></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">RDS PostgreSQL DB instance (publisher)
+PostgreSQL v10+
+Target PostgreSQL instance (subscriber): RDS, EC2, or on-prem
+A. Configure Publisher (Source RDS Instance)
+DB Parameter Group Modification
+In RDS console: Parameter groups → Create/modify group
+Set params:
+rds.logical_replication = 1
+wal_sender_timeout = 60s
+max_replication_slots, max_wal_senders (increase as needed)
+Associate Parameter Group</code></pre></div>
+<p>In "Databases," select instance → Modify → Set to new parameter group → Apply and reboot.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Create Replication User
+sql
+CREATE USER my_replication_user WITH REPLICATION ENCRYPTED PASSWORD &#x27;your_strong_password&#x27;;
+GRANT rds_replication TO my_replication_user;
+Grant SELECT on published tables.
+Create Publication
+To publish all tables:
+sql
+CREATE PUBLICATION my_all_tables_pub FOR ALL TABLES;
+Or for specific tables:
+sql
+CREATE PUBLICATION my_specific_tables_pub FOR TABLE table1, schema.table2;
+B. Configure Subscriber (Target Instance)
+Provision and Prepare Instance
+Create target RDS/EC2 if needed.</code></pre></div>
+<p>Ensure schema and primary keys exist (logical replication does not replicate DDL).</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">Create Subscription
+sql
+CREATE SUBSCRIPTION my_subscription
+  CONNECTION &#x27;host=your_publisher_rds_endpoint.amazonaws.com dbname=your_database user=my_replication_user password=your_strong_password&#x27;
+  PUBLICATION my_all_tables_pub;</code></pre></div>
+<p><strong>Next Steps</strong></p>
+<p>Subscriber connects to publisher, performs initial sync, then streams and applies changes.</p>
+<p><strong>Monitoring</strong></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">On publisher:
+pg_replication_slots for slot status
+pg_stat_replication for connection status
+On subscriber:
+pg_stat_subscription for subscription status
+Use CloudWatch for metrics.</code></pre></div>
+<p><strong>Important Notes:</strong></p>
+<p><strong>DDL changes</strong>: Not automatically replicated. Apply to both sides.</p>
+<p><strong>Primary Keys</strong>: Required for updates and deletes.</p>
+<p><strong>Conflicts</strong>: Bi-directional/inserts require manual conflict management.</p>
+<p><strong>Permissions</strong>: Replication user needs correct grants.</p>
+<p><strong>Networking</strong>: Security groups must allow relevant port (5432) connectivity.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2025/05/steps-to-configure-replication-in-rds.html">View original post on Blogger</a></p><nav class="pn"><a href="postgresql-links.html">← postgresql links</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,460 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script : Database specific queries(20 Queries inside) · Sqlservv.com</title><meta name="description" content="qs.total_worker_time/qs.execution_count AS [AvgWorkerTime], qs.total_worker_time AS [TotalWorkerTime], qs.total_logical_reads/qs.execution_count AS [AvgLogicalReads],qs.execution_c…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 November 2017</time></div>
+<h1>Script : Database specific queries(20 Queries inside)</h1><div class="chips"><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">*****************************************************************
+
+-- **** Please switch to a user database that you are interested in! *****
+--USE YourDatabaseName; -- make sure to change to an actual database on your instance, not the master system database
+--GO
+
+-- Individual File Sizes and space available for current database  (Query 44) (File Sizes and Space)
+
+SELECT f.name AS [File Name] , f.physical_name AS [Physical Name],
+CAST((f.size/128.0) AS DECIMAL(15,2)) AS [Total Size in MB],
+CAST(f.size/128.0 - CAST(FILEPROPERTY(f.name, &#x27;SpaceUsed&#x27;) AS int)/128.0 AS DECIMAL(15,2))
+AS [Available Space In MB], f.[file_id], fg.name AS [Filegroup Name],
+f.is_percent_growth, f.growth, fg.is_default, fg.is_read_only
+FROM sys.database_files AS f WITH (NOLOCK)
+LEFT OUTER JOIN sys.filegroups AS fg WITH (NOLOCK)
+ON f.data_space_id = fg.data_space_id
+ORDER BY f.[file_id] OPTION (RECOMPILE);
+------
+
+-- Look at how large and how full the files are and where they are located
+-- Make sure the transaction log is not full!!
+
+-- I/O Statistics by file for the current database  (Query 45) (IO Stats By File)
+
+SELECT DB_NAME(DB_ID()) AS [Database Name], df.name AS [Logical Name], vfs.[file_id], df.type_desc,
+df.physical_name AS [Physical Name], CAST(vfs.size_on_disk_bytes/1048576.0 AS DECIMAL(10, 2)) AS [Size on Disk (MB)],
+vfs.num_of_reads, vfs.num_of_writes, vfs.io_stall_read_ms, vfs.io_stall_write_ms,
+CAST(100. * vfs.io_stall_read_ms/(vfs.io_stall_read_ms + vfs.io_stall_write_ms) AS DECIMAL(10,1)) AS [IO Stall Reads Pct],
+CAST(100. * vfs.io_stall_write_ms/(vfs.io_stall_write_ms + vfs.io_stall_read_ms) AS DECIMAL(10,1)) AS [IO Stall Writes Pct],
+(vfs.num_of_reads + vfs.num_of_writes) AS [Writes + Reads],
+CAST(vfs.num_of_bytes_read/1048576.0 AS DECIMAL(10, 2)) AS [MB Read],
+CAST(vfs.num_of_bytes_written/1048576.0 AS DECIMAL(10, 2)) AS [MB Written],
+CAST(100. * vfs.num_of_reads/(vfs.num_of_reads + vfs.num_of_writes) AS DECIMAL(10,1)) AS [# Reads Pct],
+CAST(100. * vfs.num_of_writes/(vfs.num_of_reads + vfs.num_of_writes) AS DECIMAL(10,1)) AS [# Write Pct],
+CAST(100. * vfs.num_of_bytes_read/(vfs.num_of_bytes_read + vfs.num_of_bytes_written) AS DECIMAL(10,1)) AS [Read Bytes Pct],
+CAST(100. * vfs.num_of_bytes_written/(vfs.num_of_bytes_read + vfs.num_of_bytes_written) AS DECIMAL(10,1)) AS [Written Bytes Pct]
+FROM sys.dm_io_virtual_file_stats(DB_ID(), NULL) AS vfs
+INNER JOIN sys.database_files AS df WITH (NOLOCK)
+ON vfs.[file_id]= df.[file_id] OPTION (RECOMPILE);
+------
+
+-- This helps you characterize your workload better from an I/O perspective for this database
+-- It helps you determine whether you has an OLTP or DW/DSS type of workload
+
+-- Get most frequently executed queries for this database (Query 46) (Query Execution Counts)
+
+SELECT TOP(50) LEFT(t.[text], 50) AS [Short Query Text], qs.execution_count AS [Execution Count],
+qs.total_logical_reads AS [Total Logical Reads],
+qs.total_logical_reads/qs.execution_count AS [Avg Logical Reads],
+qs.total_worker_time AS [Total Worker Time],
+qs.total_worker_time/qs.execution_count AS [Avg Worker Time],
+qs.total_elapsed_time AS [Total Elapsed Time],
+qs.total_elapsed_time/qs.execution_count AS [Avg Elapsed Time],
+qs.creation_time AS [Creation Time]
+--,t.[text] AS [Complete Query Text], qp.query_plan AS [Query Plan] -- uncomment out these columns if not copying results to Excel
+FROM sys.dm_exec_query_stats AS qs WITH (NOLOCK)
+CROSS APPLY sys.dm_exec_sql_text(plan_handle) AS t
+CROSS APPLY sys.dm_exec_query_plan(plan_handle) AS qp
+WHERE t.dbid = DB_ID()
+ORDER BY qs.execution_count DESC OPTION (RECOMPILE);
+------
+
+-- Queries 47 through 52 are the &quot;Bad Man List&quot; for stored procedures
+
+-- Top Cached SPs By Execution Count (Query 47) (SP Execution Counts)
+SELECT TOP(100) p.name AS [SP Name], qs.execution_count,
+ISNULL(qs.execution_count/DATEDIFF(Minute, qs.cached_time, GETDATE()), 0) AS [Calls/Minute],</code></pre></div>
+<p>qs.total_worker_time/qs.execution_count AS [AvgWorkerTime], qs.total_worker_time AS [TotalWorkerTime],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">qs.total_elapsed_time, qs.total_elapsed_time/qs.execution_count AS [avg_elapsed_time],
+qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND DATEDIFF(Minute, qs.cached_time, GETDATE()) &gt; 0
+ORDER BY qs.execution_count DESC OPTION (RECOMPILE);
+------
+
+-- Tells you which cached stored procedures are called the most often
+-- This helps you characterize and baseline your workload
+
+-- Top Cached SPs By Avg Elapsed Time (Query 48) (SP Avg Elapsed Time)
+
+SELECT TOP(25) p.name AS [SP Name], qs.min_elapsed_time, qs.total_elapsed_time/qs.execution_count AS [avg_elapsed_time],
+qs.max_elapsed_time, qs.last_elapsed_time, qs.total_elapsed_time, qs.execution_count,
+ISNULL(qs.execution_count/DATEDIFF(Minute, qs.cached_time, GETDATE()), 0) AS [Calls/Minute],
+qs.total_worker_time/qs.execution_count AS [AvgWorkerTime],
+qs.total_worker_time AS [TotalWorkerTime], qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND DATEDIFF(Minute, qs.cached_time, GETDATE()) &gt; 0
+ORDER BY avg_elapsed_time DESC OPTION (RECOMPILE);
+------
+
+-- This helps you find high average elapsed time cached stored procedures that
+-- may be easy to optimize with standard query tuning techniques
+
+-- Top Cached SPs By Total Worker time. Worker time relates to CPU cost  (Query 49) (SP Worker Time)
+SELECT TOP(25) p.name AS [SP Name], qs.total_worker_time AS [TotalWorkerTime],
+qs.total_worker_time/qs.execution_count AS [AvgWorkerTime], qs.execution_count,
+ISNULL(qs.execution_count/DATEDIFF(Minute, qs.cached_time, GETDATE()), 0) AS [Calls/Minute],
+qs.total_elapsed_time, qs.total_elapsed_time/qs.execution_count
+AS [avg_elapsed_time], qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND DATEDIFF(Minute, qs.cached_time, GETDATE()) &gt; 0
+ORDER BY qs.total_worker_time DESC OPTION (RECOMPILE);
+------
+
+-- This helps you find the most expensive cached stored procedures from a CPU perspective
+-- You should look at this if you see signs of CPU pressure
+
+-- Top Cached SPs By Total Logical Reads. Logical reads relate to memory pressure  (Query 50) (SP Logical Reads)
+
+SELECT TOP(25) p.name AS [SP Name], qs.total_logical_reads AS [TotalLogicalReads],</code></pre></div>
+<p>qs.total_logical_reads/qs.execution_count AS [AvgLogicalReads],qs.execution_count,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">ISNULL(qs.execution_count/DATEDIFF(Minute, qs.cached_time, GETDATE()), 0) AS [Calls/Minute],
+qs.total_elapsed_time, qs.total_elapsed_time/qs.execution_count
+AS [avg_elapsed_time], qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND DATEDIFF(Minute, qs.cached_time, GETDATE()) &gt; 0
+ORDER BY qs.total_logical_reads DESC OPTION (RECOMPILE);
+------
+
+-- This helps you find the most expensive cached stored procedures from a memory perspective
+-- You should look at this if you see signs of memory pressure
+
+-- Top Cached SPs By Total Physical Reads. Physical reads relate to disk read I/O pressure  (Query 51) (SP Physical Reads)
+SELECT TOP(25) p.name AS [SP Name],qs.total_physical_reads AS [TotalPhysicalReads],</code></pre></div>
+<p>qs.total_physical_reads/qs.execution_count AS [AvgPhysicalReads], qs.execution_count,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">qs.total_logical_reads,qs.total_elapsed_time, qs.total_elapsed_time/qs.execution_count
+AS [avg_elapsed_time], qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND qs.total_physical_reads &gt; 0
+ORDER BY qs.total_physical_reads DESC, qs.total_logical_reads DESC OPTION (RECOMPILE);
+------
+
+-- This helps you find the most expensive cached stored procedures from a read I/O perspective
+-- You should look at this if you see signs of I/O pressure or of memory pressure
+
+-- Top Cached SPs By Total Logical Writes (Query 52) (SP Logical Writes)
+-- Logical writes relate to both memory and disk I/O pressure
+SELECT TOP(25) p.name AS [SP Name], qs.total_logical_writes AS [TotalLogicalWrites],</code></pre></div>
+<p>qs.total_logical_writes/qs.execution_count AS [AvgLogicalWrites], qs.execution_count,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">ISNULL(qs.execution_count/DATEDIFF(Minute, qs.cached_time, GETDATE()), 0) AS [Calls/Minute],
+qs.total_elapsed_time, qs.total_elapsed_time/qs.execution_count AS [avg_elapsed_time],
+qs.cached_time
+FROM sys.procedures AS p WITH (NOLOCK)
+INNER JOIN sys.dm_exec_procedure_stats AS qs WITH (NOLOCK)
+ON p.[object_id] = qs.[object_id]
+WHERE qs.database_id = DB_ID()
+AND qs.total_logical_writes &gt; 0
+AND DATEDIFF(Minute, qs.cached_time, GETDATE()) &gt; 0
+ORDER BY qs.total_logical_writes DESC OPTION (RECOMPILE);
+------
+
+-- This helps you find the most expensive cached stored procedures from a write I/O perspective
+-- You should look at this if you see signs of I/O pressure or of memory pressure
+
+-- Lists the top statements by average input/output usage for the current database  (Query 53) (Top IO Statements)
+
+SELECT TOP(50) OBJECT_NAME(qt.objectid, dbid) AS [SP Name],
+(qs.total_logical_reads + qs.total_logical_writes) /qs.execution_count AS [Avg IO], qs.execution_count AS [Execution Count],
+SUBSTRING(qt.[text],qs.statement_start_offset/2,
+ (CASE
+  WHEN qs.statement_end_offset = -1
+  THEN LEN(CONVERT(nvarchar(max), qt.[text])) * 2
+  ELSE qs.statement_end_offset
+  END - qs.statement_start_offset)/2) AS [Query Text]
+FROM sys.dm_exec_query_stats AS qs WITH (NOLOCK)
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS qt
+WHERE qt.[dbid] = DB_ID()
+ORDER BY [Avg IO] DESC OPTION (RECOMPILE);
+------
+
+-- Helps you find the most expensive statements for I/O by SP
+
+-- Possible Bad NC Indexes (writes &gt; reads)  (Query 54) (Bad NC Indexes)
+
+SELECT OBJECT_NAME(s.[object_id]) AS [Table Name], i.name AS [Index Name], i.index_id,
+i.is_disabled, i.is_hypothetical, i.has_filter, i.fill_factor,
+user_updates AS [Total Writes], user_seeks + user_scans + user_lookups AS [Total Reads],
+user_updates - (user_seeks + user_scans + user_lookups) AS [Difference]
+FROM sys.dm_db_index_usage_stats AS s WITH (NOLOCK)
+INNER JOIN sys.indexes AS i WITH (NOLOCK)
+ON s.[object_id] = i.[object_id]
+AND i.index_id = s.index_id
+WHERE OBJECTPROPERTY(s.[object_id],&#x27;IsUserTable&#x27;) = 1
+AND s.database_id = DB_ID()
+AND user_updates &gt; (user_seeks + user_scans + user_lookups)
+AND i.index_id &gt; 1
+ORDER BY [Difference] DESC, [Total Writes] DESC, [Total Reads] ASC OPTION (RECOMPILE);
+------
+
+-- Look for indexes with high numbers of writes and zero or very low numbers of reads
+-- Consider your complete workload, and how long your instance has been running
+-- Investigate further before dropping an index!
+
+-- Missing Indexes for current database by Index Advantage  (Query 55) (Missing Indexes)
+
+SELECT DISTINCT CONVERT(decimal(18,2), user_seeks * avg_total_user_cost * (avg_user_impact * 0.01)) AS [index_advantage],
+migs.last_user_seek, mid.[statement] AS [Database.Schema.Table],
+mid.equality_columns, mid.inequality_columns, mid.included_columns,
+migs.unique_compiles, migs.user_seeks, migs.avg_total_user_cost, migs.avg_user_impact,
+OBJECT_NAME(mid.[object_id]) AS [Table Name], p.rows AS [Table Rows]
+FROM sys.dm_db_missing_index_group_stats AS migs WITH (NOLOCK)
+INNER JOIN sys.dm_db_missing_index_groups AS mig WITH (NOLOCK)
+ON migs.group_handle = mig.index_group_handle
+INNER JOIN sys.dm_db_missing_index_details AS mid WITH (NOLOCK)
+ON mig.index_handle = mid.index_handle
+INNER JOIN sys.partitions AS p WITH (NOLOCK)
+ON p.[object_id] = mid.[object_id]
+WHERE mid.database_id = DB_ID()
+AND p.index_id &lt; 2
+ORDER BY index_advantage DESC OPTION (RECOMPILE);
+------
+
+-- Look at index advantage, last user seek time, number of user seeks to help determine source and importance
+-- SQL Server is overly eager to add included columns, so beware
+-- Do not just blindly add indexes that show up from this query!!!
+
+-- Find missing index warnings for cached plans in the current database  (Query 56) (Missing Index Warnings)
+
+-- Note: This query could take some time on a busy instance
+SELECT TOP(25) OBJECT_NAME(objectid) AS [ObjectName],
+               cp.objtype, cp.usecounts, cp.size_in_bytes, query_plan
+FROM sys.dm_exec_cached_plans AS cp WITH (NOLOCK)
+CROSS APPLY sys.dm_exec_query_plan(cp.plan_handle) AS qp
+WHERE CAST(query_plan AS NVARCHAR(MAX)) LIKE N&#x27;%MissingIndex%&#x27;
+AND dbid = DB_ID()
+ORDER BY cp.usecounts DESC OPTION (RECOMPILE);
+------
+
+-- Helps you connect missing indexes to specific stored procedures or queries
+-- This can help you decide whether to add them or not
+
+-- Breaks down buffers used by current database by object (table, index) in the buffer cache  (Query 57) (Buffer Usage)
+
+-- Note: This query could take some time on a busy instance
+SELECT OBJECT_NAME(p.[object_id]) AS [Object Name], p.index_id,
+CAST(COUNT(*)/128.0 AS DECIMAL(10, 2)) AS [Buffer size(MB)],
+COUNT(*) AS [BufferCount], p.[Rows] AS [Row Count],
+p.data_compression_desc AS [Compression Type]
+FROM sys.allocation_units AS a WITH (NOLOCK)
+INNER JOIN sys.dm_os_buffer_descriptors AS b WITH (NOLOCK)
+ON a.allocation_unit_id = b.allocation_unit_id
+INNER JOIN sys.partitions AS p WITH (NOLOCK)
+ON a.container_id = p.hobt_id
+WHERE b.database_id = CONVERT(int, DB_ID())
+AND p.[object_id] &gt; 100
+AND OBJECT_NAME(p.[object_id]) NOT LIKE N&#x27;plan_%&#x27;
+AND OBJECT_NAME(p.[object_id]) NOT LIKE N&#x27;sys%&#x27;
+AND OBJECT_NAME(p.[object_id]) NOT LIKE N&#x27;xml_index_nodes%&#x27;
+GROUP BY p.[object_id], p.index_id, p.data_compression_desc, p.[Rows]
+ORDER BY [BufferCount] DESC OPTION (RECOMPILE);
+------
+
+-- Tells you what tables and indexes are using the most memory in the buffer cache
+-- It can help identify possible candidates for data compression
+
+-- Get Table names, row counts, and compression status for clustered index or heap  (Query 58) (Table Sizes)
+
+SELECT OBJECT_NAME(object_id) AS [ObjectName],
+SUM(Rows) AS [RowCount], data_compression_desc AS [CompressionType]
+FROM sys.partitions WITH (NOLOCK)
+WHERE index_id &lt; 2 --ignore the partitions from the non-clustered index if any
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;sys%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;queue_%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;filestream_tombstone%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;fulltext%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;ifts_comp_fragment%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;filetable_updates%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;xml_index_nodes%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;sqlagent_job%&#x27;
+AND OBJECT_NAME(object_id) NOT LIKE N&#x27;plan_persist%&#x27;
+GROUP BY object_id, data_compression_desc
+ORDER BY SUM(Rows) DESC OPTION (RECOMPILE);
+------
+
+-- Gives you an idea of table sizes, and possible data compression opportunities
+
+-- Get some key table properties (Query 59) (Table Properties)
+
+SELECT OBJECT_NAME(t.[object_id]) AS [ObjectName], p.[rows] AS [Table Rows], p.index_id,
+       p.data_compression_desc AS [Index Data Compression],
+       t.create_date, t.lock_on_bulk_load, t.is_replicated, t.has_replication_filter,
+       t.is_tracked_by_cdc, t.lock_escalation_desc, t.is_filetable
+FROM sys.tables AS t WITH (NOLOCK)
+INNER JOIN sys.partitions AS p WITH (NOLOCK)
+ON t.[object_id] = p.[object_id]
+WHERE OBJECT_NAME(t.[object_id]) NOT LIKE N&#x27;sys%&#x27;
+ORDER BY OBJECT_NAME(t.[object_id]), p.index_id OPTION (RECOMPILE);
+------
+
+-- Gives you some good information about your tables
+
+-- When were Statistics last updated on all indexes?  (Query 60) (Statistics Update)
+
+SELECT SCHEMA_NAME(o.Schema_ID) + N&#x27;.&#x27; + o.NAME AS [Object Name], o.type_desc AS [Object Type],
+      i.name AS [Index Name], STATS_DATE(i.[object_id], i.index_id) AS [Statistics Date],
+      s.auto_created, s.no_recompute, s.user_created, s.is_temporary,
+   st.row_count, st.used_page_count
+FROM sys.objects AS o WITH (NOLOCK)
+INNER JOIN sys.indexes AS i WITH (NOLOCK)
+ON o.[object_id] = i.[object_id]
+INNER JOIN sys.stats AS s WITH (NOLOCK)
+ON i.[object_id] = s.[object_id]
+AND i.index_id = s.stats_id
+INNER JOIN sys.dm_db_partition_stats AS st WITH (NOLOCK)
+ON o.[object_id] = st.[object_id]
+AND i.[index_id] = st.[index_id]
+WHERE o.[type] IN (&#x27;U&#x27;, &#x27;V&#x27;)
+AND st.row_count &gt; 0
+ORDER BY STATS_DATE(i.[object_id], i.index_id) DESC OPTION (RECOMPILE);
+------
+
+-- Helps discover possible problems with out-of-date statistics
+-- Also gives you an idea which indexes are the most active
+
+-- sys.stats (Transact-SQL)
+-- https://msdn.microsoft.com/en-us/library/ms177623.aspx
+
+-- Look at most frequently modified indexes and statistics (Query 61) (Volatile Indexes)
+
+SELECT o.[name] AS [Object Name], o.[object_id], o.[type_desc], s.[name] AS [Statistics Name],
+       s.stats_id, s.no_recompute, s.auto_created, s.is_temporary,
+    sp.modification_counter, sp.[rows], sp.rows_sampled, sp.last_updated
+FROM sys.objects AS o WITH (NOLOCK)
+INNER JOIN sys.stats AS s WITH (NOLOCK)
+ON s.object_id = o.object_id
+CROSS APPLY sys.dm_db_stats_properties(s.object_id, s.stats_id) AS sp
+WHERE o.[type_desc] NOT IN (N&#x27;SYSTEM_TABLE&#x27;, N&#x27;INTERNAL_TABLE&#x27;)
+AND sp.modification_counter &gt; 0
+ORDER BY sp.modification_counter DESC, o.name OPTION (RECOMPILE);
+------
+
+-- This helps you understand your workload and make better decisions about
+-- things like data compression and adding new indexes to a table
+
+-- Get fragmentation info for all indexes above a certain size in the current database  (Query 62) (Index Fragmentation)
+
+-- Note: This query could take some time on a very large database
+SELECT DB_NAME(ps.database_id) AS [Database Name], SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
+OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], i.[name] AS [Index Name], ps.index_id,
+ps.index_type_desc, ps.avg_fragmentation_in_percent,
+ps.fragment_count, ps.page_count, i.fill_factor, i.has_filter,
+i.filter_definition, i.[allow_page_locks]
+FROM sys.dm_db_index_physical_stats(DB_ID(),NULL, NULL, NULL , N&#x27;LIMITED&#x27;) AS ps
+INNER JOIN sys.indexes AS i WITH (NOLOCK)
+ON ps.[object_id] = i.[object_id]
+AND ps.index_id = i.index_id
+INNER JOIN sys.objects AS o WITH (NOLOCK)
+ON i.[object_id] = o.[object_id]
+WHERE ps.database_id = DB_ID()
+AND ps.page_count &gt; 2500
+ORDER BY ps.avg_fragmentation_in_percent DESC OPTION (RECOMPILE);
+------
+
+-- Helps determine whether you have framentation in your relational indexes
+-- and how effective your index maintenance strategy is
+
+--- Index Read/Write stats (all tables in current DB) ordered by Reads  (Query 63) (Overall Index Usage - Reads)
+
+SELECT OBJECT_NAME(i.[object_id]) AS [ObjectName], i.[name] AS [IndexName], i.index_id,
+       s.user_seeks, s.user_scans, s.user_lookups,
+    s.user_seeks + s.user_scans + s.user_lookups AS [Total Reads],
+    s.user_updates AS [Writes],</code></pre></div>
+<p>&nbsp; &nbsp;i.[type_desc] AS [Index Type], i.fill_factor AS [Fill Factor], i.has_filter, i.filter_definition,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">    s.last_user_scan, s.last_user_lookup, s.last_user_seek
+FROM sys.indexes AS i WITH (NOLOCK)
+LEFT OUTER JOIN sys.dm_db_index_usage_stats AS s WITH (NOLOCK)
+ON i.[object_id] = s.[object_id]
+AND i.index_id = s.index_id
+AND s.database_id = DB_ID()
+WHERE OBJECTPROPERTY(i.[object_id],&#x27;IsUserTable&#x27;) = 1
+ORDER BY s.user_seeks + s.user_scans + s.user_lookups DESC OPTION (RECOMPILE); -- Order by reads
+------
+
+-- Show which indexes in the current database are most active for Reads
+
+--- Index Read/Write stats (all tables in current DB) ordered by Writes  (Query 64) (Overall Index Usage - Writes)
+
+SELECT OBJECT_NAME(i.[object_id]) AS [ObjectName], i.[name] AS [IndexName], i.index_id,
+    s.user_updates AS [Writes], s.user_seeks + s.user_scans + s.user_lookups AS [Total Reads],</code></pre></div>
+<p>&nbsp; &nbsp;i.[type_desc] AS [Index Type], i.fill_factor AS [Fill Factor], i.has_filter, i.filter_definition,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">    s.last_system_update, s.last_user_update
+FROM sys.indexes AS i WITH (NOLOCK)
+LEFT OUTER JOIN sys.dm_db_index_usage_stats AS s WITH (NOLOCK)
+ON i.[object_id] = s.[object_id]
+AND i.index_id = s.index_id
+AND s.database_id = DB_ID()
+WHERE OBJECTPROPERTY(i.[object_id],&#x27;IsUserTable&#x27;) = 1
+ORDER BY s.user_updates DESC OPTION (RECOMPILE);       -- Order by writes
+------
+
+-- Show which indexes in the current database are most active for Writes
+
+-- Get lock waits for current database (Query 65) (Lock Waits)
+
+SELECT o.name AS [table_name], i.name AS [index_name], ios.index_id, ios.partition_number,</code></pre></div>
+<p>SUM(ios.row_lock_wait_count) AS [total_row_lock_waits],</p>
+<p>SUM(ios.row_lock_wait_in_ms) AS [total_row_lock_wait_in_ms],</p>
+<p>SUM(ios.page_lock_wait_count) AS [total_page_lock_waits],</p>
+<p>SUM(ios.page_lock_wait_in_ms) AS [total_page_lock_wait_in_ms],</p>
+<p>SUM(ios.page_lock_wait_in_ms)+ SUM(row_lock_wait_in_ms) AS [total_lock_wait_in_ms]</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM sys.dm_db_index_operational_stats(DB_ID(), NULL, NULL, NULL) AS ios
+INNER JOIN sys.objects AS o WITH (NOLOCK)
+ON ios.[object_id] = o.[object_id]
+INNER JOIN sys.indexes AS i WITH (NOLOCK)
+ON ios.[object_id] = i.[object_id]
+AND ios.index_id = i.index_id
+WHERE o.[object_id] &gt; 100
+GROUP BY o.name, i.name, ios.index_id, ios.partition_number
+HAVING SUM(ios.page_lock_wait_in_ms)+ SUM(row_lock_wait_in_ms) &gt; 0
+ORDER BY total_lock_wait_in_ms DESC OPTION (RECOMPILE);
+------
+
+-- This query is helpful for troubleshooting blocking and deadlocking issues
+
+-- Look at recent Full backups for the current database (Query 66) (Recent Full Backups)
+
+SELECT TOP (30) bs.machine_name, bs.server_name, bs.database_name AS [Database Name], bs.recovery_model,
+CONVERT (BIGINT, bs.backup_size / 1048576 ) AS [Uncompressed Backup Size (MB)],
+CONVERT (BIGINT, bs.compressed_backup_size / 1048576 ) AS [Compressed Backup Size (MB)],
+CONVERT (NUMERIC (20,2), (CONVERT (FLOAT, bs.backup_size) /
+CONVERT (FLOAT, bs.compressed_backup_size))) AS [Compression Ratio], bs.has_backup_checksums, bs.is_copy_only,</code></pre></div>
+<p>DATEDIFF (SECOND, bs.backup_start_date, bs.backup_finish_date) AS [Backup Elapsed Time (sec)],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">bs.backup_finish_date AS [Backup Finish Date], bmf.physical_device_name AS [Backup Location], bmf.physical_block_size
+FROM msdb.dbo.backupset AS bs WITH (NOLOCK)
+INNER JOIN msdb.dbo.backupmediafamily AS bmf WITH (NOLOCK)
+ON bs.media_set_id = bmf.media_set_id
+WHERE bs.database_name = DB_NAME(DB_ID())
+AND bs.[type] = &#x27;D&#x27; -- Change to L if you want Log backups
+ORDER BY bs.backup_finish_date DESC OPTION (RECOMPILE);</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/script-database-specific-queries20_18.html">View original post on Blogger</a></p><nav class="pn"><a href="script-get-top-total-logical-reads-queries-for-entire-instance.html">← Script:Get top total logical reads queries for entire instance</a><a href="sys-dm-db-database-page-allocations.html">sys.dm_db_database_page_allocations →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alwayson failover &amp; failback steps · Sqlservv.com</title><meta name="description" content="Planned Manual Failover Steps/DR Failover Testing 1. Connect to Primary Instance Name (Not to AlwaysON Listener) and execute below script 2. Verify DR database is in “Synchronized”…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>12 September 2017</time></div>
+<h1>Alwayson failover &amp; failback steps</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p><b>Planned Manual </b><b>Failover</b><b> Steps/</b><b>DR</b><b> </b><b>Failover</b><b> Testing&#13;</b></p>
+<p>1. Connect to Primary Instance Name (Not to AlwaysON Listener) and execute below script</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [master]
+GO
+ALTER AVAILABILITY GROUP [IADB-P1AG1]
+MODIFY REPLICA ON N&#x27;IADB-PO-P01V1\POV1&#x27; WITH (AVAILABILITY_MODE = SYNCHRONOUS_COMMIT)
+GO
+ALTER AVAILABILITY GROUP [IADB-P1AG1]
+MODIFY REPLICA ON N&#x27;IADB-AS-P01V1\ASV1&#x27; WITH (AVAILABILITY_MODE = SYNCHRONOUS_COMMIT)
+GO</code></pre></div>
+<p>2. Verify DR database is in &#8220;Synchronized&#8221; state instead of &#8220;Synchronizing&#8221; State</p>
+<p>3. Connect to DR instance and execute below script</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE [master]
+ALTER AVAILABILITY GROUP [IADB-P1AG1] FAILOVER
+GO
+ALTER AVAILABILITY GROUP [IADB-P1AG1]
+MODIFY REPLICA ON N&#x27;IADB-PO-P01V1\POV1&#x27; WITH (AVAILABILITY_MODE = ASYNCHRONOUS_COMMIT)
+GO
+ALTER AVAILABILITY GROUP [IADB-P1AG1]
+MODIFY REPLICA ON N&#x27;IADB-AS-P01V1\ASV1&#x27; WITH (AVAILABILITY_MODE = ASYNCHRONOUS_COMMIT)
+GO</code></pre></div>
+<p>Unplanned Failover/ Primary instance becomes inaccessible due to network or disk related issues</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">If cluster is online:</code></pre></div>
+<p>1. Connect to DR instance (Not to AlwaysOn listener) and Execute below script in DR instance to bring the Listener and db online</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">ALTER AVAILABILITY GROUP [IADB-P1AG1] FORCE_FAILOVER_ALLOW_DATA_LOSS;
+
+2. When primary instance comes online, execute below script on
+ALTER DATABASE [TC8_External] SET HADR RESUME; TC8_External is the database name
+
+If cluster is not online:</code></pre></div>
+<p>1. Connect to an accessible node.</p>
+<p>2. Confirm that any mount points/disks that should be present on the node are there.</p>
+<p>a. If they are not present, reboot the accessible node(s) and check to confirm that the disks come online.</p>
+<p>3. Open Failover Cluster manager and try to connect to the cluster on that machine.</p>
+<p>4. If it does not load, attempt to execute this code from powershell. Replace AlwaysOnSrv02 with the node of your RDP session.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">Import-Module FailoverClusters
+$node = &quot;AlwaysOnSrv02&quot;Stop-ClusterNode –Name $nodeStart-ClusterNode –Name $node -FixQuorum
+(Get-ClusterNode $node).NodeWeight = 1
+$nodes = Get-ClusterNode -Cluster $node$nodes | Format-Table -property NodeName, State, NodeWeight
+
+From &lt;https://msdn.microsoft.com/en-us/library/hh270275(v=SQL.110).aspx&gt;</code></pre></div>
+<p>5. Once the cluster is online, revert back to the steps under "if cluster is online" above.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/09/alwayson-failover-failback-steps_11.html">View original post on Blogger</a></p><nav class="pn"><a href="imp-links.html">← IMP Links</a><a href="azure-different-service-models-iaas-paas-saas.html">Azure - Different Service models (IaaS,PaaS,SaaS) →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

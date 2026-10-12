@@ -1,0 +1,67 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calculate MAXDOP setting!!! · Sqlservv.com</title><meta name="description" content="declare @hyperthreadingRatio bit declare @logicalCPUs int declare @HTEnabled int declare @physicalCPU int declare @SOCKET int declare @logicalCPUPerNuma int declare @NoOfNUMA int s…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 October 2018</time></div>
+<h1>Calculate MAXDOP setting!!!</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">declare @hyperthreadingRatio bit
+declare @logicalCPUs int
+declare @HTEnabled int
+declare @physicalCPU int
+declare @SOCKET int
+declare @logicalCPUPerNuma int
+declare @NoOfNUMA int
+select @logicalCPUs = cpu_count -- [Logical CPU Count]
+    ,@hyperthreadingRatio = hyperthread_ratio --  [Hyperthread Ratio]
+    ,@physicalCPU = cpu_count / hyperthread_ratio -- [Physical CPU Count]
+    ,@HTEnabled = case
+        when cpu_count &gt; hyperthread_ratio
+            then 1
+        else 0
+        end -- HTEnabled
+from sys.dm_os_sys_info
+option (recompile);
+select @logicalCPUPerNuma = COUNT(parent_node_id) -- [NumberOfLogicalProcessorsPerNuma]
+from sys.dm_os_schedulers
+where [status] = &#x27;VISIBLE ONLINE&#x27;
+    and parent_node_id &lt; 64
+group by parent_node_id
+option (recompile);
+select @NoOfNUMA = count(distinct parent_node_id)
+from sys.dm_os_schedulers -- find NO OF NUMA Nodes
+where [status] = &#x27;VISIBLE ONLINE&#x27;
+    and parent_node_id &lt; 64
+-- Report the recommendations ....
+select
+    --- 8 or less processors and NO HT enabled
+    case
+        when @logicalCPUs &lt; 8
+            and @HTEnabled = 0
+            then &#x27;MAXDOP setting should be : &#x27; + CAST(@logicalCPUs as varchar(3))
+                --- 8 or more processors and NO HT enabled
+        when @logicalCPUs &gt;= 8
+            and @HTEnabled = 0
+            then &#x27;MAXDOP setting should be : 8&#x27;
+                --- 8 or more processors and HT enabled and NO NUMA
+        when @logicalCPUs &gt;= 8
+            and @HTEnabled = 1
+            and @NoofNUMA = 1
+            then &#x27;MaxDop setting should be : &#x27; + CAST(@logicalCPUPerNuma / @physicalCPU as varchar(3))
+                --- 8 or more processors and HT enabled and NUMA
+        when @logicalCPUs &gt;= 8
+            and @HTEnabled = 1
+            and @NoofNUMA &gt; 1
+            then &#x27;MaxDop setting should be : &#x27; + CAST(@logicalCPUPerNuma / @physicalCPU as varchar(3))
+        else &#x27;&#x27;
+        end as Recommendations
+Once the above script has been executed, it will provide suggestions for MAXDOP value.</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2018/10/calculate-maxdop-setting.html">View original post on Blogger</a></p><nav class="pn"><a href="outdated-statistics.html">← Outdated statistics</a><a href="untitled.html">Untitled →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

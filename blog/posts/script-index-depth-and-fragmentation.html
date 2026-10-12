@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script :index depth and fragmentation.. · Sqlservv.com</title><meta name="description" content="DECLARE @db_id SMALLINT; DECLARE @object_id INT; SET @db_id = DB_ID(N&#x27;AdventureWorks2012&#x27;); SET @object_id = OBJECT_ID(N&#x27;AdventureWorks2012.Person.Address&#x27;); IF @db_id IS NULL BEGI…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 November 2017</time></div>
+<h1>Script :index depth and fragmentation..</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">DECLARE @db_id SMALLINT;
+DECLARE @object_id INT;
+SET @db_id = DB_ID(N&#x27;AdventureWorks2012&#x27;);
+SET @object_id = OBJECT_ID(N&#x27;AdventureWorks2012.Person.Address&#x27;);
+IF @db_id IS NULL
+BEGIN;
+PRINT N&#x27;Invalid database&#x27;;
+END;
+ELSE
+IF @object_id IS NULL
+BEGIN;
+PRINT N&#x27;Invalid object&#x27;;
+END;
+ELSE
+BEGIN;
+SELECT *
+FROM sys.dm_db_index_physical_stats(@db_id, @object_id, NULL, NULL , &#x27;LIMITED&#x27;);
+END;
+GO
+SELECT
+[index_depth],
+[index_level],
+[page_count],
+[record_count]
+FROM sys.dm_db_index_physical_stats (
+DB_ID (N’IndexDepthTest’),
+OBJECT_ID (N’DepthTest’),
+1,
+0,
+‘DETAILED’);
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/script-index-depth-and-fragmentation_10.html">View original post on Blogger</a></p><nav class="pn"><a href="script-sql-script-to-get-blocking-information.html">← Script :Sql Script to Get blocking information</a><a href="script-alwayson-events.html">Script - Alwayson events →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

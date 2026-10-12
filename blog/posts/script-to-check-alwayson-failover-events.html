@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script to check Alwayson failover events · Sqlservv.com</title><meta name="description" content="The below script provides AG failover events by reading extended events file of that server. There is already a Alwayson xe session should be configured and running otherwise this …">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>22 April 2017</time></div>
+<h1>Script to check Alwayson failover events</h1><div class="chips"><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><p>The below script provides AG failover events by reading extended events file of that server.&#160;</p>
+<p>There is already a Alwayson xe session should be configured and running otherwise this script won't work.&#160;</p>
+<p>&#8203;;WITH cte_HADR AS (SELECT object_name, CONVERT(XML, event_data) AS data</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM sys.fn_xe_file_target_read_file(&#x27;d:\MSSQL\Data\MSSQL12.MSSQLSERVER\MSSQL\Log\AlwaysOn*.xel&#x27;, null, null, null)
+WHERE object_name = &#x27;error_reported&#x27;
+)
+SELECT data.value(&#x27;(/event/@timestamp)[1]&#x27;,&#x27;datetime&#x27;) AS [timestamp],
+       data.value(&#x27;(/event/data[@name=&#x27;&#x27;error_number&#x27;&#x27;])[1]&#x27;,&#x27;int&#x27;) AS [error_number],
+       data.value(&#x27;(/event/data[@name=&#x27;&#x27;message&#x27;&#x27;])[1]&#x27;,&#x27;varchar(max)&#x27;) AS [message]
+FROM cte_HADR
+WHERE data.value(&#x27;(/event/data[@name=&#x27;&#x27;error_number&#x27;&#x27;])[1]&#x27;,&#x27;int&#x27;) = 1480</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/script-to-check-alwayson-failover-events_22.html">View original post on Blogger</a></p><nav class="pn"><a href="orphan-user-fix.html">← Orphan user fix</a><a href="script-to-disable-sql-agent-jobs.html">Script to disable SQL agent jobs →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

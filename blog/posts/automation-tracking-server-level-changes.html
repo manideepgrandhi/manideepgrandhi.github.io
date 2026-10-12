@@ -1,0 +1,131 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation -- Tracking Server Level Changes · Sqlservv.com</title><meta name="description" content="FOR CREATE_DATABASE, DROP_DATABASE, ALTER_DATABASE, CREATE_LOGIN, ALTER_LOGIN, DatabaseName, EventType, ObjectName, ObjectType, SqlCommand, LoginName, HostName,">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>09 May 2017</time></div>
+<h1>Automation -- Tracking Server Level Changes</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/****** Object:  Table [dbo].[DBA_Instance_DDL_Trigger_Event_Information]    Script Date: 5/1/2015 4:44:40 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[DBA_Instance_DDL_Trigger_Event_Information](
+    [LogId] [int] IDENTITY(1,1) NOT NULL,
+    [DatabaseName] [varchar](256) NOT NULL,
+    [EventType] [varchar](100) NOT NULL,
+    [ObjectName] [varchar](256) NULL,
+    [ObjectType] [varchar](256) NULL,
+    [SqlCommand] [varchar](8000) NOT NULL,
+    [EventDate] [datetime] NOT NULL,
+    [LoginName] [varchar](1000) NOT NULL,
+    [HostName] [varchar](256) NOT NULL,
+    [AppName] [varchar](128) NOT NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+ALTER TABLE [dbo].[DBA_Instance_DDL_Trigger_Event_Information] ADD  DEFAULT (getdate()) FOR [EventDate]
+GO
+
+--DROP THE TRIGGER
+/****** Object:  DdlTrigger [ddl_all_server_change]    Script Date: 05/21/2008 10:18:25 ******/
+IF  EXISTS (SELECT * FROM master.sys.server_triggers WHERE name = N&#x27;dba_trigger_log_instance_events&#x27; AND parent_class=100)
+DROP TRIGGER [dba_trigger_log_instance_events] ON ALL SERVER
+GO
+
+USE [master]
+GO
+
+/****** Object:  DdlTrigger [dba_trigger_log_instance_events]    Script Date: 5/1/2015 4:33:47 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+--create the trigger
+CREATE TRIGGER [dba_trigger_log_instance_events]
+ON ALL SERVER</code></pre></div>
+<p>FOR&nbsp;&nbsp; CREATE_DATABASE, DROP_DATABASE, ALTER_DATABASE, CREATE_LOGIN, ALTER_LOGIN,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">      DROP_LOGIN, GRANT_SERVER, DENY_SERVER, REVOKE_SERVER, CREATE_TRIGGER, DROP_TRIGGER, ADD_ROLE_MEMBER, DROP_ROLE_MEMBER, ADD_SERVER_ROLE_MEMBER, DROP_SERVER_ROLE_MEMBER, CREATE_USER, DROP_USER, ALTER_USER
+AS
+
+set ansi_padding on
+set ansi_warnings on
+set CONCAT_NULL_YIELDS_NULL on
+set ARITHABORT on
+
+set nocount on
+declare @data xml
+set @data = EVENTDATA()
+
+--pull free space from DBA DB
+declare @dba_db_available_space_mb decimal(18,2)
+
+EXEC sp_executesql N&#x27;USE DBA;
+SELECT    @dba_db_available_space_mb_output = CONVERT(DECIMAL(18,2),SUM(size/128.0 - CAST(FILEPROPERTY(name, &#x27;&#x27;SpaceUsed&#x27;&#x27;) AS int)/128.0))
+FROM sys.database_files
+WHERE type_desc = &#x27;&#x27;ROWS&#x27;&#x27;&#x27;,
+N&#x27;@dba_db_available_space_mb_output decimal(18,2) OUTPUT&#x27;,
+@dba_db_available_space_mb_output = @dba_db_available_space_mb OUTPUT
+
+/*
+SELECT @dba_db_available_space_mb,
+    @dba_db_available_space_mb*1024.0 [dba_db_available_space_kb]
+*/
+
+IF EXISTS (select [name] from DBA.sys.tables where name = &#x27;DBA_Instance_DDL_Trigger_Event_Information&#x27;)
+BEGIN
+    IF @dba_db_available_space_mb &gt; 0.02
+    BEGIN
+
+        INSERT INTO [DBA].[dbo].[DBA_Instance_DDL_Trigger_Event_Information](</code></pre></div>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; DatabaseName,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; EventType,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; ObjectName,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; ObjectType,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; SqlCommand,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; LoginName,</p>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; HostName,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">              AppName)
+        VALUES(
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/DatabaseName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;),
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/EventType)[1]&#x27;, &#x27;varchar(50)&#x27;), &#x27;N/A&#x27;),
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/ObjectName)[1]&#x27;, &#x27;varchar(256)&#x27;), &#x27;N/A&#x27;),
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/ObjectType)[1]&#x27;, &#x27;varchar(25)&#x27;), &#x27;N/A&#x27;),
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/TSQLCommand)[1]&#x27;, &#x27;varchar(8000)&#x27;), &#x27;N/A&#x27;),
+              ISNULL(@data.value(&#x27;(/EVENT_INSTANCE/LoginName)[1]&#x27;, &#x27;varchar(256)&#x27;),&#x27;N/A&#x27;),
+              ISNULL(Host_Name(), &#x27;N/A&#x27;),
+              ISNULL(App_Name(), &#x27;N/A&#x27;)
+              )
+    END
+END
+
+GO
+
+SET ANSI_NULLS OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+ENABLE TRIGGER [dba_trigger_log_instance_events] ON ALL SERVER
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/automation-tracking-server-level-changes_9.html">View original post on Blogger</a></p><nav class="pn"><a href="automation-activity-monitor.html">← Automation --Activity Monitor</a><a href="automation-track-database-level-changes.html">Automation -Track Database level changes →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

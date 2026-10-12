@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technical - Replication agents and jobs · Sqlservv.com</title><meta name="description" content="SQL Server uses various helper applications to assist in the replication process. These applications are called replication agents: Snapshot Agent (snapshot.exe): Merge Agent (repl…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>06 December 2017</time></div>
+<h1>Technical - Replication agents and jobs</h1><div class="chips"></div><div class="content"><p>SQL Server uses various helper applications to assist in the replication process. These applications are called&nbsp;replication agents:</p>
+<p>Snapshot Agent (snapshot.exe):</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql"> Creates a snapshot of data. The snapshot includes schema and data, which are stored for distribution. The Snapshot Agent is also responsible for updating status information in the distribution database. The Snapshot Agent runs on the distributor.   Each published database has its own Snapshot Agent that runs on the distributor and connects to the publisher. Snapshot Agents are used with all types of replication.
+Distribution Agent (distrib.exe) :
+Applies data
+from snapshot replication or transactions
+from transaction replication to subscribers. The Distribution Agent can run on the distributor or on subscribers. It runs on the distributor for push subscriptions and on the subscriber   for pull subscriptions. This agent is not used
+with merge replication. (Push and pull subscriptions are discussed in Subscribing to a Publication later in the chapter.)</code></pre></div>
+<p>Merge Agent (replmerg.exe)&nbsp;:</p>
+<p>Synchronizes changes that occur after the initial snapshot is created. If any conflicts occur when the changes are being synchronized, the conflicts are resolved using the rules set with the conflict resolver. Depending on the configuration,   Merge Agents run on the publisher or on subscribers. Merge Agents are used only with merge replication.</p>
+<p>Log Reader Agent (logread.exe):</p>
+<p>&nbsp;Moves transactions marked for replication from the transaction log on the publisher to the distributor. Each database that is published using transactional replication has its own Log Reader Agent that runs on the distributor and connects to   the publisher. Log Reader Agents are used only with transactional replication.</p>
+<p>Queue Reader Agent (qrdrsvc.exe):</p>
+<p>&nbsp;Stores database changes in a queue where the updates can be asynchronously propagated to the publisher. This allows subscribers to modify published data and synchronize those changes without having an active network connection to the publisher.   Queue Reader Agents are used only with transactional replication with the queued updating option.</p>
+<p>SQL Server 2008 does not have a separate cleanup agent. Instead, the following replication maintenance jobs are used to perform cleanup tasks:</p>
+<p>Agent History Clean Up:&nbsp;DistributionDBName&nbsp;Removes replication agent history from the&nbsp;distribution&nbsp;database. By default, this job runs every 10 minutes.</p>
+<p>Distribution Clean Up:&nbsp;DistributionDBName&nbsp;Deactivates subscriptions that have not been synchronized within the maximum distribution-retention period and removes replicated transactions from the&nbsp;distribution&nbsp;database. By default, this job runs   every 10 minutes.</p>
+<p>Expired Subscription Clean Up&nbsp;:</p>
+<p>Removes expired subscriptions from&nbsp;publication&nbsp;databases. By default, this job runs every day at 1:00 A.M.</p>
+<p>Reinitialize Subscriptions Having Data Validation Failures&nbsp;Flags all subscriptions that have data validation failures. The next time the Merge Agent or Distribution Agent runs, a new snapshot is applied at the subscriber. By default, this job   is not enabled.</p>
+<p>Replication Agents Checkup:</p>
+<p>&nbsp;Detects replication agents that are not actively logging history and writes an error to the Windows event logs if a job step fails. By default, this runs every 10 minutes.</p>
+<p>Replication Monitoring Refresher For&nbsp;DistributionDBName&nbsp;:</p>
+<p>Refreshes cached queries used by the Replication Monitor. By default, this starts automatically when SQL Server Agent starts and runs continuously.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/12/technical-replication-agents-and-jobs.html">View original post on Blogger</a></p><nav class="pn"><a href="technical-high-availability-and-disaster-recovery-in-sql-server.html">← Technical :: High Availability And Disaster Recovery In SQL Server</a><a href="oracle-concepts-oracle-shutdown-commands.html">Oracle Concepts - Oracle shutdown commands →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

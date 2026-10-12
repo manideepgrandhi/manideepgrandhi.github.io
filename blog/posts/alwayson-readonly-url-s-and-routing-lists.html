@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlwaysOn - Readonly url&#x27;s and routing lists · Sqlservv.com</title><meta name="description" content="SELECT replica_server_name , [ endpoint_url ] AS WSFC_NodeEndpointURL , availability_mode_desc AS AvailabilityMode , failover_mode_desc AS FailoverType , primary_role_allow_connect…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>10 February 2020</time></div>
+<h1>AlwaysOn - Readonly url&#x27;s and routing lists</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT replica_server_name
+      ,[endpoint_url]           AS WSFC_NodeEndpointURL
+      ,availability_mode_desc   AS AvailabilityMode
+      ,failover_mode_desc       AS FailoverType
+      ,primary_role_allow_connections_desc AS AllowedConnectionsWhenPrimary
+      ,secondary_role_allow_connections_desc AS AllowedConnectonsWhenSecondary
+      ,read_only_routing_url
+FROM sys.availability_replicas
+WHERE read_only_routing_url IS NOT NULL
+--https://blogs.msdn.microsoft.com/alwaysonpro/2014/01/22/modifying-alwayson-read-only-routing-lists/
+SELECT  ag.name AS [Availability Group]
+       ,ar.replica_server_name AS [When Primary Replica Is]
+       ,rl.routing_priority AS [Routing Priority]
+       ,CASE
+            WHEN ar.replica_server_name = ar2.replica_server_name
+                THEN &#x27;Read-Only on primary&#x27; + &#x27;(&#x27;+ ar.replica_server_name + &#x27;)&#x27;
+            ELSE ar2.replica_server_name
+        END AS [Read-Only Routed To]
+       ,ar.secondary_role_allow_connections_desc
+       ,ar2.read_only_routing_url
+FROM    sys.availability_read_only_routing_lists rl
+        INNER JOIN sys.availability_replicas ar
+            ON rl.replica_id = ar.replica_id
+        INNER JOIN sys.availability_replicas ar2
+            ON rl.read_only_replica_id = ar2.replica_id
+        INNER JOIN sys.availability_groups ag
+            ON ar.group_id = ag.group_id
+ORDER BY ag.name
+       ,ar.replica_server_name
+       ,rl.routing_priority</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/02/alwayson-readonly-urls-and-routing-lists.html">View original post on Blogger</a></p><nav class="pn"><a href="alwayson-listener-metadata.html">← AlwaysOn - Listener metadata</a><a href="clustered-instance-patch-failure-the-cluster-group-cannot-be-determine.html">Clustered Instance Patch Failure - The Cluster Group Cannot Be Determined →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

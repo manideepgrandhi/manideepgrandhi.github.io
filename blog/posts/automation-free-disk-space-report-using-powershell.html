@@ -1,0 +1,196 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation- Free disk space report using powershell · Sqlservv.com</title><meta name="description" content="&lt;/style&gt; &lt;/head&gt; &lt;body&gt; &lt;/td&gt; &lt;/tr&gt; &lt;/table&gt; &quot;">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>01 September 2017</time></div>
+<h1>Automation- Free disk space report using powershell</h1><div class="chips"><a class="chip" href="../tags/automation.html">Automation</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell"># Set your warning and critical thresholds
+$percentWarning = 31;
+$percentCritcal = 10;
+
+# EMAIL PROPERTIES
+ # Set the recipients of the report.
+  #$users = &quot;manideepgrandhi1989@gmail.com&quot;
+    #$users = &quot;You@company.com&quot; # I use this for testing by uing my email address.
+  #$users = &quot;you@company.com&quot;, &quot;manager@company.com&quot;, &quot;etc@company.com&quot;;  # can be sent to individuals.
+
+# REPORT PROPERTIES
+ # Path to the report
+  $reportPath = &quot;C:\temp\&quot;;
+
+ # Report name
+  $reportName = &quot;DiskSpaceRpt_$(get-date -format ddMMyyyy).html&quot;;
+
+# Path and Report name together
+$diskReport = $reportPath + $reportName
+
+#Set colors for table cell backgrounds
+$redColor = &quot;#FF0000&quot;
+$orangeColor = &quot;#FBB917&quot;
+$whiteColor = &quot;#FFFFFF&quot;
+
+# Count if any computers have low disk space.  Do not send report if less than 1.
+#$i = 0;
+
+# Get computer list to check disk space
+$computers = Get-Content &quot;C:\temp\all_servers_1.txt&quot;;
+$datetime = Get-Date -Format &quot;MM-dd-yyyy_HHmmss&quot;;
+
+# Remove the report if it has already been run today so it does not append to the existing report
+If (Test-Path $diskReport)
+    {
+        Remove-Item $diskReport
+    }
+
+# Cleanup old files..
+$Daysback = &quot;-7&quot;
+$CurrentDate = Get-Date;
+$DateToDelete = $CurrentDate.AddDays($Daysback);
+Get-ChildItem $reportPath | Where-Object { $_.LastWriteTime -lt $DatetoDelete } | Remove-Item;
+
+# Create and write HTML Header of report
+$titleDate = get-date -uformat &quot;%m-%d-%Y - %A&quot;
+$header = &quot;
+  &lt;html&gt;
+  &lt;head&gt;
+  &lt;meta http-equiv=&#x27;Content-Type&#x27; content=&#x27;text/html; charset=iso-8859-1&#x27;&gt;
+  &lt;title&gt;DiskSpace Report&lt;/title&gt;
+  &lt;STYLE TYPE=&#x27;text/css&#x27;&gt;
+  &lt;!--
+  td {
+   font-family: Tahoma;
+   font-size: 14px;
+   border-top: 1px solid #999999;
+   border-right: 1px solid #999999;
+   border-bottom: 1px solid #999999;
+   border-left: 1px solid #999999;
+   padding-top: 0px;
+   padding-right: 0px;
+   padding-bottom: 0px;
+   padding-left: 0px;
+  }
+  body {
+   margin-left: 5px;
+   margin-top: 5px;
+   margin-right: 0px;
+   margin-bottom: 10px;
+   table {
+   border: thin solid #000000;
+  }
+  --&gt;</code></pre></div>
+<p>&nbsp; &lt;/style&gt;</p>
+<p>&nbsp; &lt;/head&gt;</p>
+<p>&nbsp; &lt;body&gt;</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">  &lt;table width=&#x27;100%&#x27;&gt;
+  &lt;tr bgcolor=&#x27;#CCCCCC&#x27;&gt;
+  &lt;td colspan=&#x27;7&#x27; height=&#x27;25&#x27; align=&#x27;center&#x27;&gt;
+  &lt;font face=&#x27;tahoma&#x27; color=&#x27;#003399&#x27; size=&#x27;4&#x27;&gt;&lt;strong&gt;IE Servers Disk Space Report for $titledate&lt;/strong&gt;&lt;/font&gt;</code></pre></div>
+<p>&nbsp; &lt;/td&gt;</p>
+<p>&nbsp; &lt;/tr&gt;</p>
+<p>&nbsp; &lt;/table&gt;</p>
+<p>"</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell"> Add-Content $diskReport $header
+
+# Create and write Table header for report
+ $tableHeader = &quot;
+ &lt;table width=&#x27;100%&#x27;&gt;&lt;tbody&gt;
+ &lt;tr bgcolor=#CCCCCC&gt;
+    &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;Server&lt;/td&gt;
+ &lt;td width=&#x27;5%&#x27; align=&#x27;center&#x27;&gt;Drive&lt;/td&gt;
+ &lt;td width=&#x27;15%&#x27; align=&#x27;center&#x27;&gt;Drive Label&lt;/td&gt;
+ &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;Total Capacity(GB)&lt;/td&gt;
+ &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;Used Capacity(GB)&lt;/td&gt;
+ &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;Free Space(GB)&lt;/td&gt;
+ &lt;td width=&#x27;5%&#x27; align=&#x27;center&#x27;&gt;Freespace %&lt;/td&gt;
+ &lt;/tr&gt;
+&quot;
+Add-Content $diskReport $tableHeader
+
+# Start processing disk space reports against a list of servers
+  foreach($computer in $computers)
+ {
+ $disks = Get-WmiObject -ComputerName $computer -Class Win32_LogicalDisk -Filter &quot;DriveType = 3&quot;
+ $computer = $computer.toupper()
+  foreach($disk in $disks)
+ {
+  $deviceID = $disk.DeviceID;
+        $volName = $disk.VolumeName;
+  [float]$size = $disk.Size;
+  [float]$freespace = $disk.FreeSpace;
+  $percentFree = [Math]::Round(($freespace / $size) * 100, 2);
+  $sizeGB = [Math]::Round($size / 1073741824, 2);
+  $freeSpaceGB = [Math]::Round($freespace / 1073741824, 2);
+        $usedSpaceGB = $sizeGB - $freeSpaceGB;
+        $color = $whiteColor;
+
+# Set background color to Orange if just a warning
+ if($percentFree -lt $percentWarning)
+  {
+    $color = $orangeColor
+
+# Set background color to Orange if space is Critical
+      if($percentFree -lt $percentCritcal)
+        {
+        $color = $redColor
+       }
+
+ # Create table data rows
+    $dataRow = &quot;
+  &lt;tr&gt;
+        &lt;td width=&#x27;10%&#x27;&gt;$computer&lt;/td&gt;
+  &lt;td width=&#x27;5%&#x27; align=&#x27;center&#x27;&gt;$deviceID&lt;/td&gt;
+  &lt;td width=&#x27;15%&#x27; &gt;$volName&lt;/td&gt;
+  &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;$sizeGB&lt;/td&gt;
+  &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;$usedSpaceGB&lt;/td&gt;
+  &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27;&gt;$freeSpaceGB&lt;/td&gt;
+  &lt;td width=&#x27;5%&#x27; bgcolor=`&#x27;$color`&#x27; align=&#x27;center&#x27;&gt;$percentFree&lt;/td&gt;
+  &lt;/tr&gt;
+&quot;
+Add-Content $diskReport $dataRow;
+Write-Host -ForegroundColor DarkYellow &quot;$computer $deviceID percentage free space = $percentFree&quot;;
+    $i++
+  }
+ }
+}
+
+# Create table at end of report showing legend of colors for the critical and warning
+ $tableDescription = &quot;
+ &lt;/table&gt;&lt;br&gt;&lt;table width=&#x27;20%&#x27;&gt;
+ &lt;tr bgcolor=&#x27;White&#x27;&gt;
+    &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27; bgcolor=&#x27;#FBB917&#x27;&gt;Warning less than 70% free space&lt;/td&gt;
+ &lt;td width=&#x27;10%&#x27; align=&#x27;center&#x27; bgcolor=&#x27;#FF0000&#x27;&gt;Critical less than 50% free space&lt;/td&gt;
+ &lt;/tr&gt;
+&quot;
+  Add-Content $diskReport $tableDescription
+ Add-Content $diskReport &quot;&lt;/body&gt;&lt;/html&gt;&quot;
+
+&lt;# Send Notification if alert $i is greater then 0
+#if ($i -gt 0)
+#{
+    foreach ($user in $users)
+{
+        Write-Host &quot;Sending Email notification to $user&quot;
+
+  $smtpServer = &quot;smtp.gmail.com&quot;
+  $smtp = New-Object Net.Mail.SmtpClient($smtpServer)
+  $msg = New-Object Net.Mail.MailMessage
+  $msg.To.Add($user)
+        $msg.From = &quot;manideep_grandhi@cable.comcast.com&quot;
+  $msg.Subject = &quot;Environment DiskSpace Report for $titledate&quot;
+        $msg.IsBodyHTML = $true
+        $msg.Body = get-content $diskReport
+  $smtp.Send($msg)
+        $body = &quot;&quot;
+    }
+  #}
+  #&gt;</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/08/automation-free-disk-space-report-using_31.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-script-to-get-datbase-size-in-gb.html">← Sql Script to get datbase size in GB</a><a href="imp-links.html">IMP Links →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

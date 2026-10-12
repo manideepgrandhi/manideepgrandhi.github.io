@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Database and I/O details · Sqlservv.com</title><meta name="description" content="sum(vfs.num_of_writes) [totalNumOfWrites], sum(vfs.num_of_bytes_written) [totalNumOfBytesWritten], sum(vfs.num_of_reads) [totalNumOfReads], sum(vfs.num_of_bytes_read) [totalNumOfBy…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>13 July 2017</time></div>
+<h1>Database and I/O details</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">USE MASTER
+GO
+
+DECLARE @DML nvarchar(MAX)
+
+DECLARE @SQLShackIOStatistics TABLE
+(
+[I/ORank] [int] NULL,
+[DBName] [nvarchar](128) NULL,
+[driveLetter] [nvarchar](1) NULL,
+[totalNumOfWrites] [bigint] NULL,
+[totalNumOfBytesWritten] [bigint] NULL,
+[totalNumOfReads] [bigint] NULL,
+totalNumOfBytesRead [bigint] NULL,
+[totalI/O(MB)] [decimal](12,2) NULL,
+[I/O(%)] [decimal](5, 2) NULL,
+[SizeOfFile] [decimal](10,2) NULL
+)
+SET @DML=&#x27;
+WITH SQLShackIOStatistics
+AS
+(
+select
+db_name(mf.database_id) as dbname,
+left(mf.physical_name, 1) as driveLetter,</code></pre></div>
+<p>sum(vfs.num_of_writes) [totalNumOfWrites],</p>
+<p>sum(vfs.num_of_bytes_written) [totalNumOfBytesWritten],</p>
+<p>sum(vfs.num_of_reads) [totalNumOfReads],</p>
+<p>sum(vfs.num_of_bytes_read) [totalNumOfBytesRead],</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">cast(SUM(num_of_bytes_read + num_of_bytes_written)/1024 AS DECIMAL(12, 2)) AS [TotIO(MB)],
+MAX(cast(vfs.size_on_disk_bytes/1024/1024.00 as decimal(10,2))) SizeMB
+from sys.master_files mf
+join sys.dm_io_virtual_file_stats(NULL, NULL) vfs
+on mf.database_id=vfs.database_id and mf.file_id=vfs.file_id
+GROUP BY mf.database_id,left(mf.physical_name, 1))
+SELECT
+    ROW_NUMBER() OVER(ORDER BY [TotIO(MB)] DESC) AS [I/ORank],
+    [dbname],
+    driveLetter,
+    [totalNumOfWrites],</code></pre></div>
+<p>&nbsp;&nbsp;&nbsp; totalNumOfBytesWritten,</p>
+<p>&nbsp;&nbsp;&nbsp; totalNumOfReads,</p>
+<p>&nbsp;&nbsp;&nbsp; totalNumOfBytesRead,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">    [TotIO(MB)] AS [I/O(MB)],
+    CAST([TotIO(MB)]/ SUM([TotIO(MB)]) OVER() * 100.0 AS DECIMAL(5,2)) AS [I/O(%)],
+    SizeMB
+    FROM SQLShackIOStatistics
+    ORDER BY [I/ORank]
+OPTION (RECOMPILE)
+&#x27;
+INSERT INTO @SQLShackIOStatistics
+EXEC sp_executesql @DML
+
+--SELECT * FROM @SQLShackIOStatistics
+
+select [DBName],
+[I/O Rank] =
+   STUFF(
+(SELECT &#x27;,&#x27; + cast(s.[I/ORank] as varchar(3))
+FROM @SQLShackIOStatistics s
+WHERE s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+physicalName=STUFF(
+(SELECT &#x27;,&#x27; + s.driveLetter
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;) ,
+FileSizeMB=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.SizeOfFile as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;) ,
+total_num_of_writes=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.[totalNumOfWrites] as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+total_num_of_bytes_written=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.[totalNumOfBytesWritten] as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+total_num_of_reads=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.totalnumofreads as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+total_num_of_Bytes_reads=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.totalNumOfBytesRead as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+[Total I/O (MB)]=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.[TotalI/O(MB)] as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;),
+[I/O Percent]=STUFF(
+(SELECT &#x27;,&#x27; + cast(s.[I/O(%)] as varchar(20))
+FROM @SQLShackIOStatistics s
+WHERE  s.[DBName] = t.[DBName]
+FOR XML PATH(&#x27;&#x27;)),1,1,&#x27;&#x27;)
+from @SQLShackIOStatistics t
+group by [DBName]</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/07/database-and-io-details_13.html">View original post on Blogger</a></p><nav class="pn"><a href="script-no-of-connections-per-database-and-per-ip.html">← Script : no of connections per database and per IP</a><a href="powershell-script-to-find-disk-space.html">Powershell script to find disk space →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

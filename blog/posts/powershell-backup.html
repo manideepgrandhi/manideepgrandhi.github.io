@@ -1,0 +1,211 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>powershell-Backup · Sqlservv.com</title><meta name="description" content="#Setup HTML $Header = @&quot; &quot;@ $Pre = &quot; PD BACKUP REPORTS &quot; #Alternate Row Color Function Set -AlternatingRows { [CmdletBinding()] Param( [Parameter(Mandatory,ValueFromPipeline)] [str…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>13 June 2017</time></div>
+<h1>powershell-Backup</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#Setup HTML
+$Header = @&quot;
+&quot;@
+$Pre = &quot;
+PD BACKUP REPORTS
+&quot;
+#Alternate Row Color
+Function Set-AlternatingRows {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory,ValueFromPipeline)]
+        [string]$Line,
+        [Parameter(Mandatory)]
+        [string]$CSSEvenClass,
+        [Parameter(Mandatory)]
+        [string]$CSSOddClass
+    )
+    Begin {
+        $ClassName = $CSSEvenClass
+    }
+    Process {
+        If ($Line.Contains(&quot;
+&quot;
+))
+        {   $Line = $Line.Replace(&quot; &quot; ,&quot; &quot;$ClassName&quot; &quot;&amp;gt;&quot;)
+            If ($ClassName -eq $CSSEvenClass)
+            {   $ClassName = $CSSOddClass
+            }
+            Else
+            {   $ClassName = $CSSEvenClass
+            }
+        }
+        Return $Line
+    }
+}
+#Set Cell color
+Function Set-CellColor
+{
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory,Position=0)]
+        [string]$Property,
+        [Parameter(Mandatory,Position=1)]
+        [string]$Color,
+        [Parameter(Mandatory,ValueFromPipeline)]
+        [Object[]]$InputObject,
+        [Parameter(Mandatory)]
+        [string]$Filter,
+        [switch]$Row
+    )
+    Begin {
+        Write-Verbose &quot;$(Get-Date): Function Set-CellColor begins&quot;
+        If ($Filter)
+        {   If ($Filter.ToUpper().IndexOf($Property.ToUpper()) -ge 0)
+            {   $Filter = $Filter.ToUpper().Replace($Property.ToUpper(),&quot;`$Value&quot;)
+                Try {
+                    [scriptblock]$Filter = [scriptblock]::Create($Filter)
+                }
+                Catch {
+                    Write-Warning &quot;$(Get-Date): &quot;&quot;$Filter&quot;&quot; caused an error, stopping script!&quot;
+                    Write-Warning $Error[0]
+                    Exit
+                }
+            }
+            Else
+            {   Write-Warning &quot;Could not locate $Property in the Filter, which is required.  Filter: $Filter&quot;
+                Exit
+            }
+        }
+    }
+    Process {
+        ForEach ($Line in $InputObject)
+        {   If ($Line.IndexOf(&quot;
+) -ge 0)
+            {   Write-Verbose &quot;$(Get-Date): Processing headers...&quot;
+                $Search = $Line | Select-String -Pattern &#x27;
+(.*?)&amp;lt;\/th&amp;gt;&#x27;
+-AllMatches
+                $Index = 0
+                ForEach ($Match in $Search.Matches)
+                {   If ($Match.Groups[1].Value -eq $Property)
+                    {   Break
+                    }
+                    $Index ++
+                }
+                If ($Index -eq $Search.Matches.Count)
+                {   Write-Warning &quot;$(Get-Date): Unable to locate property: $Property in table header&quot;
+                    Exit
+                }
+                Write-Verbose &quot;$(Get-Date): $Property column found at index: $Index&quot;
+            }
+            If ($Line -match &quot; &quot;background-color:.+?&quot; &quot;)?&amp;gt;
+)
+            {   $Search = $Line | Select-String -Pattern &#x27;
+(.*?)&amp;lt;\/td&amp;gt;&#x27;
+-AllMatches
+                $Value = $Search.Matches[$Index].Groups[1].Value -as [double]
+                If (-not $Value)
+                {   $Value = $Search.Matches[$Index].Groups[1].Value
+                }
+                If (Invoke-Command $Filter)
+                {   If ($Row)
+                    {   Write-Verbose &quot;$(Get-Date): Criteria met!  Changing row to $Color...&quot;
+                        If ($Line -match &quot; &quot;background-color:(.+?)&quot; &quot;&amp;gt;&quot;)
+                        {   $Line = $Line -replace &quot; &quot;background-color:$($Matches[1])&quot; ,&quot; &quot;background-color:$Color&quot;
+                        }
+                        Else
+                        {   $Line = $Line.Replace(&quot; &quot; ,&quot; &quot;background-color:$Color&quot; &quot;&amp;gt;&quot;)
+                        }
+                    }
+                    Else
+                    {   Write-Verbose &quot;$(Get-Date): Criteria met!  Changing cell to $Color...&quot;
+                        $Line = $Line.Replace($Search.Matches[$Index].Value,&quot;
+&quot;background-color:$Color&quot;
+&quot;&amp;gt;$Value
+&quot;)
+                    }
+                }
+            }
+            Write-Output $Line
+        }
+    }
+    End {
+        Write-Verbose &quot;$(Get-Date): Function Set-CellColor completed&quot;
+    }
+}
+#import SQL Server module
+Import-Module SQLPS -DisableNameChecking
+function Get-DBBackup-Type{
+    #List of servers from text file
+    $serverlist = Get-Content -Path C:\PowerShell\PD.txt
+    #Loop through each server and create SMO object)
+foreach ($serverName in $serverlist){
+        #create smo object
+        $SQLServer = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Server -ArgumentList $ServerName
+            $Query = &quot;SELECT      [ServerName],
+            [DatabaseName],
+            [BackupSystem],
+            [FullBackup] = MAX([FullBackup]),
+            [DifferentialBackup] = MAX([DifferentialBackup]),
+            [LogBackup] = MAX([LogBackup]),
+            [DaysSinceLastFull] = DATEDIFF(DAY,MAX([FullBackup]),GETDATE())
+FROM
+(
+        SELECT      [ServerName]    = @@SERVERNAME,
+                    [DatabaseName]  = [A].[database_name],
+                    [BackupSystem]  = [A].[name],
+                    [FullBackup]    = MAX([A].[backup_finish_date]),
+                    [DifferentialBackup] = NULL,
+                    [LogBackup] = NULL
+        FROM        [msdb].[dbo].[backupset] A INNER JOIN
+                    [master].[dbo].[sysdatabases] B ON [A].[database_name] = [B].[name]
+        WHERE       [A].[type] = &#x27;D&#x27;
+        GROUP BY    [A].[database_name],
+                    [A].[name]
+        UNION ALL
+        SELECT      [ServerName]    = @@SERVERNAME,
+                    [DatabaseName]  = [A].[database_name],
+                    [BackupSystem]  = [A].[name],
+                    [FullBackup]    = NULL,
+                    [DifferentialBackup] = MAX([A].[backup_finish_date]),
+                    [LogBackup] = NULL
+        FROM        [msdb].[dbo].[backupset] A INNER JOIN
+                    [master].[dbo].[sysdatabases] B ON [A].[database_name] = [B].[name]
+        WHERE       [A].[type] = &#x27;I&#x27;
+        GROUP BY    [A].[database_name],
+                    [A].[name]
+        UNION ALL
+        SELECT      [ServerName]    = @@SERVERNAME,
+                    [DatabaseName]  = [A].[database_name],
+                    [BackupSystem]  = [A].[name],
+                    [FullBackup]    = NULL,
+                    [DifferentialBackup] = NULL,
+                    [LogBackup] = MAX([A].[backup_finish_date])
+        FROM        [msdb].[dbo].[backupset] A INNER JOIN
+                    [master].[dbo].[sysdatabases] B ON [A].[database_name] = [B].[name]
+        WHERE       [A].[type] = &#x27;L&#x27;
+        GROUP BY    [A].[database_name],
+                    [A].[name] ) B
+WHERE BackupSystem IN (&#x27;NetAppBackup&#x27;,&#x27;CommVault Galaxy Backup&#x27;,&#x27;SQL Native&#x27;)
+GROUP BY    [ServerName],
+            [DatabaseName],
+            [BackupSystem]
+ORDER BY    [DatabaseName],
+            [BackupSystem]
+&quot;
+#Use SQLCmd to execute the query on the server
+Invoke-Sqlcmd -ServerInstance $serverName -Query $Query
+    }
+}
+Get-DBBackup-Type |
+Select ServerName, DatabaseName, BackupSystem, FullBackup, DifferentialBackup, LogBackup, DaysSinceLastFull | ConvertTo-Html -Head $Header -PreContent $Pre |
+Set-CellColor -Property DaysSinceLastFull -Color red -Filter &quot;DaysSinceLastFull -ge 7&quot; |
+Set-AlternatingRows -CSSEvenClass even -CssOddClass Odd | Out-File C:\PowerShell\PD_BACKUP_REPORT.Html
+Send-MailMessage -to &quot;Aamir &quot;, &quot;Michael &quot;, &quot;Steve  -from &quot;SQLAdmin &quot; -Subject &quot;PD Database Backup Report&quot; -SmtpServer mail.commonhealth.com -Attachments &quot;C:\PowerShell\PD_BACKUP_REPORT.Html&quot; -BodyAsHtml (Get-Content C:\PowerShell\PD_BACKUP_REPORT.Html | Out-String)</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/powershell-backup_13.html">View original post on Blogger</a></p><nav class="pn"><a href="monitoring-ag-health.html">← Monitoring AG health.</a><a href="stop-multiple-running-sql-jobs-at-once.html">-- Stop Multiple running SQL Jobs at once: →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

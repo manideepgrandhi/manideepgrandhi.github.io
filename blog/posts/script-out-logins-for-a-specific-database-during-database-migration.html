@@ -1,0 +1,179 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script out logins for a specific database during database migration · Sqlservv.com</title><meta name="description" content="--Description: Scripts logins for one db --*****IMPORTANT replace YOURDBNAME with the name of the database that holds the users that you need scripted USE master GO IF OBJECT_ID (&#x27;…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>25 April 2017</time></div>
+<h1>Script out logins for a specific database during database migration</h1><div class="chips"><a class="chip" href="../tags/security.html">security</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">--Description: Scripts logins for one db
+--*****IMPORTANT replace YOURDBNAME with the name of the database that holds the users that you need scripted
+
+USE master
+GO
+IF OBJECT_ID (&#x27;sp_hexadecimal&#x27;) IS NOT NULL
+  DROP PROCEDURE sp_hexadecimal
+GO
+CREATE PROCEDURE sp_hexadecimal
+    @binvalue varbinary(256),
+    @hexvalue varchar (514) OUTPUT
+AS
+DECLARE @charvalue varchar (514)
+DECLARE @i int
+DECLARE @length int
+DECLARE @hexstring char(16)
+SELECT @charvalue = &#x27;0x&#x27;
+SELECT @i = 1
+SELECT @length = DATALENGTH (@binvalue)
+SELECT @hexstring = &#x27;0123456789ABCDEF&#x27;
+WHILE (@i &lt;= @length)
+BEGIN
+  DECLARE @tempint int
+  DECLARE @firstint int
+  DECLARE @secondint int
+  SELECT @tempint = CONVERT(int, SUBSTRING(@binvalue,@i,1))
+  SELECT @firstint = FLOOR(@tempint/16)
+  SELECT @secondint = @tempint - (@firstint*16)
+  SELECT @charvalue = @charvalue +
+    SUBSTRING(@hexstring, @firstint+1, 1) +
+    SUBSTRING(@hexstring, @secondint+1, 1)
+  SELECT @i = @i + 1
+END
+
+SELECT @hexvalue = @charvalue
+GO
+
+--DROP and CREATE sp_help_revlogin SP
+IF OBJECT_ID (&#x27;sp_help_revlogin&#x27;) IS NOT NULL
+  DROP PROCEDURE sp_help_revlogin
+GO
+
+CREATE PROCEDURE sp_help_YOURDBNAME_revlogin @login_name sysname = NULL AS
+DECLARE @name sysname
+DECLARE @type varchar (1)
+DECLARE @hasaccess int
+DECLARE @denylogin int
+DECLARE @is_disabled int
+DECLARE @PWD_varbinary  varbinary (256)
+DECLARE @PWD_string  varchar (514)
+DECLARE @SID_varbinary varbinary (85)
+DECLARE @SID_string varchar (514)
+DECLARE @tmpstr  varchar (1024)
+DECLARE @is_policy_checked varchar (3)
+DECLARE @is_expiration_checked varchar (3)
+
+DECLARE @defaultdb sysname
+
+IF (@login_name IS NULL)
+
+ DECLARE login_curs CURSOR FOR
+  SELECT p.sid, p.name, p.type, p.is_disabled, p.default_database_name, l.hasaccess, l.denylogin
+  FROM sys.server_principals p
+     LEFT JOIN
+    sys.syslogins l
+     ON
+    (l.name = p.name)
+     JOIN
+    YOURDBNAME.sys.sysusers YOURDBNAME on (l.sid = YOURDBNAME.sid)
+  WHERE p.type IN ( &#x27;S&#x27;, &#x27;G&#x27;, &#x27;U&#x27; )
+   AND
+    p.name NOT IN (&#x27;sa&#x27;, &#x27;##MS_PolicyTsqlExecutionLogin##&#x27;,&#x27;NT AUTHORITY\SYSTEM&#x27;,&#x27;NT SERVICE\MSSQLSERVER&#x27;,&#x27;NT SERVICE\ClusSvc&#x27;,&#x27;NT SERVICE\SQLSERVERAGENT&#x27;, &#x27;##MS_PolicyEventProcessingLogin##&#x27;)
+ELSE
+
+ DECLARE login_curs CURSOR FOR
+  SELECT p.sid, p.name, p.type, p.is_disabled, p.default_database_name, l.hasaccess, l.denylogin
+  FROM sys.server_principals p
+     LEFT JOIN
+    sys.syslogins l
+     ON (l.name = p.name)
+     JOIN
+    YOURDBNAME.sys.sysusers YOURDBNAME on (l.sid = YOURDBNAME.sid)
+  WHERE p.type IN ( &#x27;S&#x27;, &#x27;G&#x27;, &#x27;U&#x27; )
+   AND
+    p.name = @login_name
+
+OPEN login_curs
+
+FETCH NEXT FROM login_curs INTO @SID_varbinary, @name, @type, @is_disabled, @defaultdb, @hasaccess, @denylogin
+IF (@@fetch_status = -1)
+BEGIN
+  PRINT &#x27;No login(s) found.&#x27;
+  CLOSE login_curs
+  DEALLOCATE login_curs
+  RETURN -1
+END
+SET @tmpstr = &#x27;/* sp_help_revlogin script &#x27;
+PRINT @tmpstr
+SET @tmpstr = &#x27;** Generated &#x27; + CONVERT (varchar, GETDATE()) + &#x27; on &#x27; + @@SERVERNAME + &#x27; */&#x27;
+PRINT @tmpstr
+PRINT &#x27;&#x27;
+WHILE (@@fetch_status &lt;&gt; -1)
+BEGIN
+  IF (@@fetch_status &lt;&gt; -2)
+  BEGIN
+    PRINT &#x27;&#x27;
+    SET @tmpstr = &#x27;-- Login: &#x27; + @name
+    PRINT @tmpstr
+    IF (@type IN ( &#x27;G&#x27;, &#x27;U&#x27;))
+    BEGIN -- NT authenticated account/group
+
+      SET @tmpstr = &#x27;IF NOT EXISTS (SELECT [name] FROM sys.server_principals where [name] = &#x27;+CHAR(39) + @name+ char(39) + &#x27;) CREATE LOGIN &#x27; + QUOTENAME( @name ) + &#x27; FROM WINDOWS WITH DEFAULT_DATABASE = [&#x27; + @defaultdb + &#x27;]&#x27;
+    END
+    ELSE BEGIN -- SQL Server authentication
+        -- obtain password and sid
+            SET @PWD_varbinary = CAST( LOGINPROPERTY( @name, &#x27;PasswordHash&#x27; ) AS varbinary (256) )
+        EXEC sp_hexadecimal @PWD_varbinary, @PWD_string OUT
+        EXEC sp_hexadecimal @SID_varbinary,@SID_string OUT
+
+        -- obtain password policy state
+        SELECT @is_policy_checked = CASE is_policy_checked WHEN 1 THEN &#x27;ON&#x27; WHEN 0 THEN &#x27;OFF&#x27; ELSE NULL END FROM sys.sql_logins WHERE name = @name
+        SELECT @is_expiration_checked = CASE is_expiration_checked WHEN 1 THEN &#x27;ON&#x27; WHEN 0 THEN &#x27;OFF&#x27; ELSE NULL END FROM sys.sql_logins WHERE name = @name
+
+            SET @tmpstr = &#x27;IF NOT EXISTS (SELECT [name] FROM sys.server_principals where [name] = &#x27;+CHAR(39) + @name+ char(39) + &#x27;) CREATE LOGIN &#x27; + QUOTENAME( @name ) + &#x27; WITH PASSWORD = &#x27; + @PWD_string + &#x27; HASHED, SID = &#x27; + @SID_string + &#x27;, DEFAULT_DATABASE = [&#x27; + @defaultdb + &#x27;]&#x27;
+
+        IF ( @is_policy_checked IS NOT NULL )
+        BEGIN
+          SET @tmpstr = @tmpstr + &#x27;, CHECK_POLICY = &#x27; + @is_policy_checked
+        END
+        IF ( @is_expiration_checked IS NOT NULL )
+        BEGIN
+          SET @tmpstr = @tmpstr + &#x27;, CHECK_EXPIRATION = &#x27; + @is_expiration_checked
+        END
+    END
+    IF (@denylogin = 1)
+    BEGIN -- login is denied access
+      SET @tmpstr = @tmpstr + &#x27;; DENY CONNECT SQL TO &#x27; + QUOTENAME( @name )
+    END
+    ELSE IF (@hasaccess = 0)
+    BEGIN -- login exists but does not have access
+      SET @tmpstr = @tmpstr + &#x27;; REVOKE CONNECT SQL TO &#x27; + QUOTENAME( @name )
+    END
+    IF (@is_disabled = 1)
+    BEGIN -- login is disabled
+      SET @tmpstr = @tmpstr + &#x27;; ALTER LOGIN &#x27; + QUOTENAME( @name ) + &#x27; DISABLE&#x27;
+    END
+    PRINT @tmpstr
+  END
+
+  FETCH NEXT FROM login_curs INTO @SID_varbinary, @name, @type, @is_disabled, @defaultdb, @hasaccess, @denylogin
+   END
+CLOSE login_curs
+DEALLOCATE login_curs
+RETURN 0
+GO
+
+--execute the SP to get the scripts
+EXEC [dbo].[sp_help_YOURDBNAME_revlogin]
+GO
+
+--drop the SP after the scripts are printed (no longer necessary to keep)
+DROP PROCEDURE [dbo].[sp_help_YOURDBNAME_revlogin]
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/script-out-logins-for-specific-database_25.html">View original post on Blogger</a></p><nav class="pn"><a href="script-to-find-deadlock-graph-using-estended-events.html">← Script to find deadlock graph using estended events</a><a href="powershell-script-to-generate-database-backup-report-along-with-email.html">Powershell script to generate database backup report along with email →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

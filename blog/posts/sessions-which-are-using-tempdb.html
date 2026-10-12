@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sessions which are using tempdb · Sqlservv.com</title><meta name="description" content="SELECT st.dbid AS QueryExecutionContextDBID, DB_NAME(st.dbid) AS QueryExecContextDBNAME, st.objectid AS ModuleObjectId, SUBSTRING(st.TEXT, dmv_er.statement_start_offset/2 + 1, (CAS…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>16 June 2017</time></div>
+<h1>Sessions which are using tempdb</h1><div class="chips"><a class="chip" href="../tags/tempdb.html">tempdb</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT
+st.dbid AS QueryExecutionContextDBID,
+DB_NAME(st.dbid) AS QueryExecContextDBNAME,
+st.objectid AS ModuleObjectId,
+SUBSTRING(st.TEXT,
+dmv_er.statement_start_offset/2 + 1,
+(CASE WHEN dmv_er.statement_end_offset = -1
+THEN LEN(CONVERT(NVARCHAR(MAX),st.TEXT)) * 2
+ELSE dmv_er.statement_end_offset
+END - dmv_er.statement_start_offset)/2) ASQuery_Text,
+dmv_tsu.session_id ,
+dmv_tsu.request_id,
+dmv_tsu.exec_context_id,
+(dmv_tsu.user_objects_alloc_page_count -dmv_tsu.user_objects_dealloc_page_count) ASOutStanding_user_objects_page_counts,
+(dmv_tsu.internal_objects_alloc_page_count -dmv_tsu.internal_objects_dealloc_page_count)AS OutStanding_internal_objects_page_counts,
+dmv_er.start_time,
+dmv_er.command,
+dmv_er.open_transaction_count,
+dmv_er.percent_complete,
+dmv_er.estimated_completion_time,
+dmv_er.cpu_time,
+dmv_er.total_elapsed_time,
+dmv_er.reads,dmv_er.writes,
+dmv_er.logical_reads,
+dmv_er.granted_query_memory,
+dmv_es.HOST_NAME,
+dmv_es.login_name,
+dmv_es.program_name
+FROM sys.dm_db_task_space_usage dmv_tsu
+INNER JOIN sys.dm_exec_requests dmv_er
+ON (dmv_tsu.session_id = dmv_er.session_idAND dmv_tsu.request_id = dmv_er.request_id)
+INNER JOIN sys.dm_exec_sessions dmv_es
+ON (dmv_tsu.session_id = dmv_es.session_id)
+CROSS APPLY sys.dm_exec_sql_text(dmv_er.sql_handle) st
+WHERE(dmv_tsu.internal_objects_alloc_page_count +dmv_tsu.user_objects_alloc_page_count) &gt; 0
+ORDER BY(dmv_tsu.user_objects_alloc_page_count -dmv_tsu.user_objects_dealloc_page_count) + (dmv_tsu.internal_objects_alloc_page_count -dmv_tsu.internal_objects_dealloc_page_count)DESC</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/sessions-which-are-using-tempdb_16.html">View original post on Blogger</a></p><nav class="pn"><a href="tempdb-space.html">← Tempdb space</a><a href="get-driveinfo.html">Get-driveinfo →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

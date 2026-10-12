@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HADR Local Replica Overview · Sqlservv.com</title><meta name="description" content="Script: HADR Local Replica Overview.sql Description: This script will display a utilisation overview of the local Availability Group Replica Server. The overview will contain amoun…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>01 February 2020</time></div>
+<h1>HADR Local Replica Overview</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">/*==================================================================</code></pre></div>
+<p><code>Script: HADR Local Replica Overview.sql</code></p>
+<p><code>Description: This script will display a utilisation overview</code></p>
+<p><code>of the local Availability Group Replica Server.</code></p>
+<p><code>The overview will contain amount of databases as</code></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">well as total size of databases (DATA, LOG, FILESTREAM)
+
+and is group by ...
+1) ... Replica role (PRIMARY / SECONDARY)
+
+2) ... Availability Group
+Date created: 05.09.2018 (Dominic Wirth)</code></pre></div>
+<p><code>Last change: -</code></p>
+<p><code>Script Version: 1.0</code></p>
+<p><code>SQL Version: SQL Server 2014 or higher</code></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">====================================================================*/
+-- Load size of databases which are part of an Availability Group
+DECLARE @dbSizes TABLE (DatabaseId INT, DbTotalSizeMB INT, DbTotalSizeGB DECIMAL(10,2));
+DECLARE @dbId INT, @stmt NVARCHAR(MAX);
+SELECT @dbId = MIN(database_id) FROM sys.databases WHERE group_database_id IS NOT NULL;
+WHILE @dbId IS NOT NULL
+BEGIN
+SELECT @stmt = &#x27;USE [&#x27; + DB_NAME(@dbId) + &#x27;]; SELECT &#x27; + CAST(@dbId AS NVARCHAR) + &#x27;, (SUM([size]) / 128.0), (SUM([size]) / 128.0 / 1024.0) FROM sys.database_files;&#x27;;
+INSERT INTO @dbSizes (DatabaseId, DbTotalSizeMB, DbTotalSizeGB) EXEC (@stmt);
+SELECT @dbId = MIN(database_id) FROM sys.databases WHERE group_database_id IS NOT NULL AND database_id &gt; @dbId;
+END;
+-- Show utilisation overview grouped by replica role
+SELECT AR.replica_server_name, DRS.is_primary_replica AS IsPrimaryReplica, COUNT(DB.database_id) AS [Databases]
+,SUM(DBS.DbTotalSizeMB) AS SizeOfAllDatabasesMB, SUM(DBS.DbTotalSizeGB) AS SizeOfAllDatabasesGB
+FROM sys.dm_hadr_database_replica_states AS DRS
+INNER JOIN sys.availability_replicas AS AR ON DRS.replica_id = AR.replica_id
+LEFT JOIN sys.databases AS DB ON DRS.group_database_id = DB.group_database_id
+LEFT JOIN @dbSizes AS DBS ON DB.database_id = DBS.DatabaseId
+WHERE DRS.is_local = 1
+GROUP BY DRS.is_primary_replica, AR.replica_server_name
+ORDER BY AR.replica_server_name ASC, DRS.is_primary_replica DESC;
+-- Show utilisation overview grouped by Availability Group
+SELECT AR.replica_server_name, DRS.is_primary_replica AS IsPrimaryReplica, AG.[name] AS AvailabilityGroup, COUNT(DB.database_id) AS [Databases]
+,SUM(DBS.DbTotalSizeMB) AS SizeOfAllDatabasesMB, SUM(DBS.DbTotalSizeGB) AS SizeOfAllDatabasesGB
+FROM sys.dm_hadr_database_replica_states AS DRS
+INNER JOIN sys.availability_groups AS AG ON DRS.group_id = AG.group_id
+INNER JOIN sys.availability_replicas AS AR ON DRS.replica_id = AR.replica_id
+LEFT JOIN sys.databases AS DB ON DRS.group_database_id = DB.group_database_id
+LEFT JOIN @dbSizes AS DBS ON DB.database_id = DBS.DatabaseId
+WHERE DRS.is_local = 1
+GROUP BY AG.[name], DRS.is_primary_replica, AR.replica_server_name
+ORDER BY AG.[name] ASC, AR.replica_server_name ASC;
+GO</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2020/02/hadr-local-replica-overview.html">View original post on Blogger</a></p><nav class="pn"><a href="check-database-status-in-ag-and-verify-undo-queue.html">← Check database status in AG and verify undo queue.</a><a href="monitor-backup-restore-dbcc-status.html">monitor backup restore dbcc status →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

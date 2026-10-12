@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technical :How to identify and fix the Orphaned Users in SQL Server? · Sqlservv.com</title><meta name="description" content="Who are Orphan User? An user in a database is called orphaned when the associated login does not exists in the server or because the SID of the login and user in the database is no…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 November 2017</time></div>
+<h1>Technical :How to identify and fix the Orphaned Users in SQL Server?</h1><div class="chips"><a class="chip" href="../tags/technical.html">technical</a></div><div class="content"><p><img loading="lazy" src="https://tr.cloudmagic.com/h/v6/emailtag/tag/2.0/1494569273/e02d2aa3040863f8fa6a3bb7157c0189/4/9176d5d101e5163d4784b5fc25f60630/32271b9fe88849ea2b3282e51ce3005a/3f8049b82ac425b0774519b29f734b9c/newton.gif" alt=""></p>
+<p><b>Who are Orphan User?</b></p>
+<p>An user in a database is called orphaned when the associated login does not exists in the server or&nbsp;because the SID of the login and user in the database is not matching. You can check this by examining the catalog views &nbsp;<b><i>sys.server_principals</i></b><i>&nbsp;</i>and&nbsp;<b><i>sys.database_principals</i></b><i>.</i></p>
+<p><u><b>Scenarios</b></u></p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">When you delete a login from the server.When you restore the database from one environment (production instance) to  another (development instance).</code></pre></div>
+<p><u><b>Identifying the orphaned users</b></u></p>
+<p>To keep the database environment clean and safe, it is important to delete/fix the orphan users. In general, the orphaned users created by the first scenario (login deleted) should be deleted and orphaned users created by second scenario should   be fixed. The easiest way to identify the orphaned users is, use the system procedure&nbsp;<b><i>sp_change_users_login</i></b>&nbsp;with report option as given below.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">EXEC SP_CHANGE_USER_LOGIN &#x27;Report&#x27;</code></pre></div>
+<p>But interestingly, this procedure will list only the orphaned users associated with the SQL login. If the login associated with windows login, the above procedure will not return the desired result.</p>
+<p>Below script will&nbsp;list the orphaned users from the all databases of an instance.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">DECLARE @statement1 VARCHAR(MAX)
+  DECLARE @statement2 VARCHAR(MAX)
+  IF EXISTS (SELECT object_id FROM tempdb.sys.objects WHERE name like &#x27;#OUsers%&#x27;)
+
+DROP TABLE #OUsers
+  CREATE TABLE #OUsers
+        (
+   UserName VARCHAR(50) NULL,
+          userSID  VARBINARY(85) NULL,
+          dbName  VARCHAR(50) NULL
+        )  ON [PRIMARY]
+  SET @statement2 = &#x27; sp_change_users_login &#x27;&#x27;&#x27;&#x27;Report&#x27;&#x27;&#x27;&#x27;&#x27;
+  SET @statement1 = &#x27;USE [?]
+      INSERT INTO #OUsers(UserName,userSID)
+      exec (&#x27;&#x27;&#x27;+@statement2+&#x27;&#x27;&#x27;)
+      UPDATE #OUsers SET dbName = &#x27;&#x27;?&#x27;&#x27;
+      WHERE DBName is NUll&#x27;
+  EXEC sp_MSforeachdb @command1=@statement1
+
+SET @statement1 =&#x27;USE [?] ;
+  insert into #OUsers
+  select name ,sid,&#x27;&#x27;?&#x27;&#x27; from sys.database_principals where sid not in
+  (select sid from sys.server_principals ) and type&lt;&gt;&#x27;&#x27;r&#x27;&#x27;
+  and type_desc=&#x27;&#x27;WINDOWS_USER&#x27;&#x27;&#x27;
+  EXEC sp_MSforeachdb @command1=@statement1
+
+select * from #OUsers</code></pre></div>
+<p><u><b>Fixing the Orphaned users</b></u></p>
+<p>In the scenario where the login is got deleted , the orphan users can be fixed by dropping the user from the databases using the below script.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">DROP USER &lt;username&gt;</code></pre></div>
+<p>Some time the above script may throw an error saying that the users owns a schema. Find out the schema owned by this login by querying the catalog view&nbsp;<b>sys.schemas</b>&nbsp;and mapping the principal_id to&nbsp;<b>sys.database_principals</b>. Either drop   these schemas or change the ownership based on your environment.&nbsp;</p>
+<p>To change the ownership of the schema, use the below command</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-pgsql">ALTER AUTHORIZATION ON SCHEMA::SchemaName TO NewUserName;</code></pre></div>
+<p>In the scenario where &nbsp;database restored in a different&nbsp;environment, we can fix the SID mismatch between the&nbsp;<b><i>sys.server_principals</i></b>&nbsp;and&nbsp;<b><i>sys.database_principals</i></b><i>&nbsp;</i>by using the system stored procedure&nbsp;<b>sp_change_users_login</b>.</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">If need to link the SIDs of the users to the SIDs of the valid logins in the master database
+Exec sp_change_users_login &#x27;update_one&#x27;, &#x27;username&#x27;, &#x27;loginname&#x27;
+Or if you are sure that SQL Server login name is the same as the orphaned user of database being mapped, then you may use a shorter command such as this for username.
+EXEC sp_change_users_login &#x27;Auto_Fix&#x27;, &#x27;username&#x27;
+If a login name does not exists, you would have to create it first before doing the mapping. A quick way to do this is to use the following command which will create the login and then map the login to the user.
+EXEC sp_change_users_login &#x27;Auto_Fix&#x27;, &#x27;username&#x27;, null,&#x27;pwd&#x27;</code></pre></div>
+<p>Note: This is a&nbsp;deprecated feature in SQL server 2008 and you can use alter user as given below</p>
+<p>You need to first add the login using the below command</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">sp_addlogin &#x27;loginname&#x27;, &#x27;password&#x27;
+
+then associate the user with the login you the command.
+ALTER USER TestWindowsUser WITH LOGIN [Mydomain\Lastname.Firstname]</code></pre></div>
+<p>This will resolve the Orphan Users issues.</p></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/technical-how-to-identify-and-fix_18.html">View original post on Blogger</a></p><nav class="pn"><a href="script-cpu-i-o-and-memory-usage-by-databases.html">← script:CPU,I/O and memory usage by databases</a><a href="script-get-top-total-logical-reads-queries-for-entire-instance.html">Script:Get top total logical reads queries for entire instance →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>

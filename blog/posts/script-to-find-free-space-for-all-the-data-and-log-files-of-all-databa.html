@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script to find free space for all the data and log files of all databases on the server · Sqlservv.com</title><meta name="description" content="DatabaseName VARCHAR(100), FileSizeMB INT, LogicalFileName sysname, PhysicalFileName NVARCHAR(520), DiskDrive CHAR(2), Status sysname, RecoveryMode sysname, FreeSpaceMB INT, Databa…">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
+<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>25 April 2017</time><span class="badge">★ Top script</span></div>
+<h1>Script to find free space for all the data and log files of all databases on the server</h1><div class="chips"><a class="chip star" href="../tags/5star.html">5star</a><a class="chip" href="../tags/space.html">Space</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">create table #DBInfo (</code></pre></div>
+<p>DatabaseName VARCHAR(100),</p>
+<p>FileSizeMB INT,</p>
+<p>LogicalFileName sysname,</p>
+<p>PhysicalFileName NVARCHAR(520),</p>
+<p>DiskDrive CHAR(2),</p>
+<p>Status sysname,</p>
+<p>RecoveryMode sysname,</p>
+<p>FreeSpaceMB INT,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FreeSpacePct VARCHAR(7)
+)
+DECLARE @command VARCHAR(5000)
+SELECT @command = &#x27;Use [&#x27; + &#x27;?&#x27; + &#x27;] SELECT
+&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27;?&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27; AS DatabaseName,
+CAST(sysfiles.size/128.0 AS int) AS FileSize,
+sysfiles.name AS LogicalFileName, sysfiles.filename AS PhysicalFileName,  substring(sysfiles.filename,1,2) as DiskDrive,
+CONVERT(sysname,DatabasePropertyEx(&#x27;&#x27;?&#x27;&#x27;,&#x27;&#x27;Status&#x27;&#x27;)) AS Status,
+CONVERT(sysname,DatabasePropertyEx(&#x27;&#x27;?&#x27;&#x27;,&#x27;&#x27;Recovery&#x27;&#x27;)) AS RecoveryMode,CAST(sysfiles.size/128.0 - CAST(FILEPROPERTY(sysfiles.name, &#x27; + &#x27;&#x27;&#x27;&#x27; +
+       &#x27;SpaceUsed&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27; ) AS int)/128.0 AS int) AS FreeSpaceMB,
+CAST(100 * (CAST (((sysfiles.size/128.0 -CAST(FILEPROPERTY(sysfiles.name,
+&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27;SpaceUsed&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27; ) AS int)/128.0)/(sysfiles.size/128.0))
+AS decimal(4,2))) AS varchar(8)) + &#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27;%&#x27; + &#x27;&#x27;&#x27;&#x27; + &#x27; AS FreeSpacePct FROM dbo.sysfiles&#x27;
+INSERT INTO #DBInfo
+   (</code></pre></div>
+<p>&nbsp; &nbsp;DatabaseName,</p>
+<p>&nbsp; &nbsp;FileSizeMB,</p>
+<p>&nbsp; &nbsp;LogicalFileName,</p>
+<p>&nbsp; &nbsp;PhysicalFileName,</p>
+<p>&nbsp; &nbsp;DiskDrive,</p>
+<p>&nbsp; &nbsp;Status, &nbsp;</p>
+<p>&nbsp; &nbsp;RecoveryMode,</p>
+<p>&nbsp; &nbsp;FreeSpaceMB,</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">   FreeSpacePct)
+EXEC sp_MSForEachDB @command
+SELECT</code></pre></div>
+<p>&nbsp; &nbsp;DatabaseName,</p>
+<p>&nbsp; &nbsp;FileSizeMB,</p>
+<p>&nbsp; &nbsp;LogicalFileName,</p>
+<p>&nbsp; &nbsp;PhysicalFileName,</p>
+<p>&nbsp; &nbsp;DiskDrive,</p>
+<p>&nbsp; &nbsp;Status, &nbsp;</p>
+<p>&nbsp; &nbsp;RecoveryMode,</p>
+<p>&nbsp; &nbsp;FreeSpaceMB,</p>
+<p>&nbsp; &nbsp;FreeSpacePct</p>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">FROM #DBInfo
+ORDER BY
+   DiskDrive, FileSizeMB desc
+drop table #DBInfo</code></pre></div></div>
+<p class="orig"><a href="https://sqlservv.blogspot.com/2017/04/script-to-find-free-space-for-all-data_24.html">View original post on Blogger</a></p><nav class="pn"><a href="script-to-kill-connections-to-a-specific-database-when-the-number-of-c.html">← script to kill connections to a specific database when the number  of connections to that database are greater than @max_conn.</a><a href="script-to-modify-tempdb-file-locations.html">Script to modify TEMPDB file locations →</a></nav></article></main>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
+<script src="../assets/app.js"></script></body></html>
