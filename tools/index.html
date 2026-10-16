@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f6fde%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Arial,sans-serif%27 font-size=%2738%27 font-weight=%27700%27 fill=%27%23fff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tools | Manideep Grandhi</title>
 <meta name="description" content="Free in-browser tools: password generator, case converter, epoch converter, JSON and SQL formatters, cron helper, Base64/hash/UUID, text diff and unit converter. Runs offline; nothing is stored or sent.">
@@ -92,6 +93,9 @@ table.data td.mono{word-break:break-all}
 .diffwrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}
 @media (max-width:820px){.grid2{grid-template-columns:1fr}}
 @media (max-width:640px){.toolnav{top:60px}.diff td.ln{width:32px;padding:1px 4px}}
+.clocks th[scope=row]{text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink)}.clocks td.mono{white-space:nowrap}
+.clocks .big{font-size:1.15rem;font-weight:700;color:var(--ink);white-space:nowrap}
+@media (max-width:640px){.clocks thead{display:none}.clocks tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}.clocks th,.clocks td{border:0!important;padding:2px 0}.clocks td.mono{white-space:normal}.clocks td:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -108,7 +112,17 @@ table.data td.mono{word-break:break-all}
 
 <nav class="toolnav" aria-label="Tools"><div class="wrap" role="tablist" id="toolnav-list"></div></nav>
 <main>
-<section id="password" class="panel" role="tabpanel" aria-labelledby="tab-password"><div class="wrap">
+<section id="now" class="panel" role="tabpanel" aria-labelledby="tab-now" hidden><div class="wrap">
+ <h2>Time now</h2>
+ <p class="lead">Live clocks. Time zones come from your browser's IANA database, so daylight saving time is handled automatically.</p>
+ <div class="bar"><label class="inline" style="font-weight:500"><input type="checkbox" id="nw-12"> 12-hour clock</label>
+  <label class="inline" style="font-weight:500"><input type="checkbox" id="nw-az"> Show Arizona (Phoenix)</label>
+  <button type="button" class="btn btn-sm btn-primary" id="nw-copy">Copy all</button></div>
+ <div class="card" style="padding:8px 14px"><table class="data clocks"><thead><tr><th>Zone</th><th>Date</th><th>Time</th><th>Abbr / offset</th><th>DST</th></tr></thead><tbody id="nw-out"></tbody></table></div>
+ <p class="note" id="nw-az-note" hidden>Most of Arizona (America/Phoenix) stays on MST (UTC−07:00) all year with no daylight saving time. In summer it matches Pacific time; in winter it matches Mountain time. The Navajo Nation in Arizona does observe DST.</p>
+ <p class="note">Next change = the next time that zone's UTC offset changes, found by scanning ahead in your browser's time zone data (not a fixed list).</p>
+</div></section>
+<section id="password" class="panel" role="tabpanel" aria-labelledby="tab-password" hidden><div class="wrap">
  <h2 id="pw-h">Random password generator</h2>
  <p class="lead">Uses the browser's cryptographic random generator (<code>crypto.getRandomValues</code>) with rejection sampling, so every character is equally likely.</p>
  <div class="cols">
@@ -500,6 +514,18 @@ const UNITS=[["B",1],["KB",1e3],["MB",1e6],["GB",1e9],["TB",1e12],["PB",1e15],["
 function convertBytes(v,unit){const f=UNITS.find(u=>u[0]===unit);if(!f)throw new Error("Unknown unit");const n=Number(v);if(!isFinite(n)||n<0)throw new Error("Enter a non-negative number");const bytes=n*f[1];return UNITS.map(([u,k])=>[u,bytes/k]);}
 function iopsSolve(solve,{iops,kib,mibs}){if(solve==="mibs")return iops*kib/1024;if(solve==="iops")return mibs*1024/kib;return mibs*1024/iops;}
 
+/* ---------- time now ---------- */
+const NOW_ZONES=[["UTC","UTC"],["India","Asia/Kolkata"],["US Eastern","America/New_York"],["US Mountain","America/Denver"],["US Pacific","America/Los_Angeles"]];
+const _abf={};
+function zAbbr(ms,tz){if(tz==="UTC")return"UTC";if(tz==="Asia/Kolkata")return"IST";const f=_abf[tz]||(_abf[tz]=new Intl.DateTimeFormat("en-US",{timeZone:tz,timeZoneName:"short"}));
+ const p=f.formatToParts(new Date(ms)).find(x=>x.type==="timeZoneName");return p?p.value:"";}
+function zStdOffset(ms,tz){const y=new Date(ms).getUTCFullYear();return Math.min(zoffset(Date.UTC(y,0,1),tz),zoffset(Date.UTC(y,6,1),tz));}
+function zIsDst(ms,tz){return zoffset(ms,tz)>zStdOffset(ms,tz);}
+function zNextChange(ms,tz,days=400){const o=zoffset(ms,tz);let lo=ms,step=86400000;
+ for(let t=ms+step;t<=ms+days*step;t+=step){if(zoffset(t,tz)!==o){let a=t-step,b=t;while(b-a>1000){const m=Math.floor((a+b)/2000)*1000;if(zoffset(m,tz)===o)a=m;else b=m;}return{at:b,from:o,to:zoffset(b,tz)};}}
+ return null;}
+function zClock(ms,tz,h12){const p=zparts(ms,tz),off=zoffset(ms,tz);const hh=h12?((p.h+11)%12+1):p.h;
+ return{date:`${p.wd} ${pad(p.y,4)}-${pad(p.mo)}-${pad(p.d)}`,time:`${h12?hh:pad(hh)}:${pad(p.mi)}:${pad(p.s)}${h12?(p.h<12?" AM":" PM"):""}`,abbr:zAbbr(ms,tz),off:"UTC"+offStr(off),dst:zIsDst(ms,tz)};}
 if(typeof document!=="undefined"){
  const $=id=>document.getElementById(id);let tt;
  const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1600);};
@@ -522,10 +548,10 @@ if(typeof document!=="undefined"){
  $("cs-copy").onclick=()=>{if(ta.value)copy(ta.value,"Text");else toast("Nothing to copy");};
  $("cs-clear").onclick=()=>{ta.value="";upd();ta.focus();};
  /* ----- tool tabs ----- */
- const TABS=[["password","Password"],["case","Case"],["epoch","Epoch / time"],["json","JSON"],["sql","SQL"],["cron","Cron"],["encode","Encode & hash"],["diff","Diff"],["units","Units"]];
+ const TABS=[["now","Time now"],["password","Password"],["case","Case"],["epoch","Epoch / time"],["json","JSON"],["sql","SQL"],["cron","Cron"],["encode","Encode & hash"],["diff","Diff"],["units","Units"]];
  const tl=$("toolnav-list");
  TABS.forEach(([id,label])=>{const b=document.createElement("button");b.type="button";b.id="tab-"+id;b.setAttribute("role","tab");b.setAttribute("aria-controls",id);b.textContent=label;b.onclick=()=>show(id,true);tl.append(b);});
- function show(id,focus){if(!TABS.some(t=>t[0]===id))id="password";TABS.forEach(([t])=>{const on=t===id;$(t).hidden=!on;const b=$("tab-"+t);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
+ function show(id,focus){if(!TABS.some(t=>t[0]===id))id="now";TABS.forEach(([t])=>{const on=t===id;$(t).hidden=!on;const b=$("tab-"+t);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
   if(focus){history.replaceState(null,"","#"+id);$("tab-"+id).focus();}$("tab-"+id).scrollIntoView({block:"nearest",inline:"nearest"});}
  tl.addEventListener("keydown",e=>{const i=TABS.findIndex(t=>"tab-"+t[0]===document.activeElement.id);if(i<0)return;let k=null;
   if(e.key==="ArrowRight")k=(i+1)%TABS.length;else if(e.key==="ArrowLeft")k=(i-1+TABS.length)%TABS.length;else if(e.key==="Home")k=0;else if(e.key==="End")k=TABS.length-1;if(k!==null){e.preventDefault();show(TABS[k][0],true);}});
@@ -605,6 +631,17 @@ if(typeof document!=="undefined"){
   const r=iopsSolve(s,v);$("io-"+s).value=+r.toFixed(3);
   $("io-out").textContent=s==="mibs"?`≈ ${fmtN(r)} MiB/s (${fmtN(r*1.048576)} MB/s)`:s==="iops"?`≈ ${fmtN(r)} IOPS needed`:`≈ ${fmtN(r)} KiB average IO size`;}
  $("units").addEventListener("input",e=>{if(e.target.id.startsWith("io-"))ioRun()});$("io-solve").onchange=ioRun;ioRun();
+ /* ----- time now ----- */
+ let nwTimer=null,nwRows=[];
+ function nwRender(){const ms=Date.now(),h12=$("nw-12").checked,zones=NOW_ZONES.concat($("nw-az").checked?[["Arizona","America/Phoenix"]]:[]);
+  nwRows=zones.map(([l,tz])=>{const c=zClock(ms,tz,h12);let nx="";if(tz.startsWith("America/")){const n=zNextChange(ms,tz);if(n){const f=zClock(n.at,tz,h12),pb=zClock(n.at-1000,tz,h12),bd=new Date(n.at+n.from),bh=bd.getUTCHours(),bt=h12?`${(bh+11)%12+1}:${pad(bd.getUTCMinutes())} ${bh<12?"AM":"PM"}`:`${pad(bh)}:${pad(bd.getUTCMinutes())}`;nx=`${n.to>n.from?"DST starts":"DST ends"} ${f.date}: ${bt} ${pb.abbr} → ${f.time.replace(/:00( |$)/,"$1")} ${f.abbr}`;}else nx="No DST changes";}
+   return{l,tz,...c,nx};});
+  $("nw-out").innerHTML=nwRows.map(r=>`<tr><th scope="row">${escH(r.l)}<br><small class="counts">${escH(r.tz)}</small></th><td class="mono">${r.date}</td><td class="mono big">${r.time}</td><td class="mono">${escH(r.abbr)}<br><small class="counts">${r.off}</small></td><td>${r.tz==="UTC"?"—":r.dst?'<span class="ok">In effect</span>':"No"}${r.nx?`<br><small class="counts">${escH(r.nx)}</small>`:""}</td></tr>`).join("");}
+ function nwTick(){clearTimeout(nwTimer);if(document.hidden||$("now").hidden)return;nwRender();nwTimer=setTimeout(nwTick,1000-Date.now()%1000+5);}
+ document.addEventListener("visibilitychange",nwTick);window.addEventListener("hashchange",nwTick);document.getElementById("toolnav-list").addEventListener("click",()=>setTimeout(nwTick));
+ $("nw-12").onchange=nwRender;$("nw-az").onchange=()=>{$("nw-az-note").hidden=!$("nw-az").checked;nwRender();};
+ $("nw-copy").onclick=()=>{nwRender();copy(nwRows.map(r=>`${r.l} (${r.tz}): ${r.date} ${r.time} ${r.abbr} ${r.off}${r.tz!=="UTC"?(r.dst?" DST":""):""}${r.nx&&r.nx!=="No DST changes"?" | next: "+r.nx:""}`).join("\n"),"Times");};
+ nwTick();
 }
 </script>
 </body>
