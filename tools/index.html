@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tools | Manideep Grandhi</title>
-<meta name="description" content="Free in-browser tools: random password generator and text case converter. Runs offline; nothing is stored or sent.">
+<meta name="description" content="Free in-browser tools: password generator, case converter, epoch converter, JSON and SQL formatters, cron helper, Base64/hash/UUID, text diff and unit converter. Runs offline; nothing is stored or sent.">
 <meta name="referrer" content="no-referrer">
 <style>
 :root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff;--ok:#127a3a;--warn:#b25e00;--bad:#c0262d}
@@ -62,22 +62,53 @@ textarea{width:100%;min-height:200px;padding:14px;border:1.5px solid var(--line)
 footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
 @media (max-width:820px){.cols{grid-template-columns:1fr}}
 @media (max-width:640px){.links{gap:14px}.links a.hide-m{display:none}header.hero{padding:36px 0 16px}section{padding:32px 0}.card{padding:18px}.bar .btn{flex:1 1 calc(50% - 8px)}}
+.toolnav{position:sticky;top:60px;z-index:9;background:rgba(247,249,252,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.toolnav .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:thin}
+.toolnav button{flex:none;border:1.5px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px;cursor:pointer}
+.toolnav button:hover{color:var(--accent);border-color:var(--accent)}
+.toolnav button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel[hidden]{display:none}
+section.panel+section.panel{border-top:0}
+.mono,textarea.mono,.pre{font:500 .9rem/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.pre{white-space:pre;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:60px;max-height:520px;tab-size:4}
+.pre.wrapit{white-space:pre-wrap;word-break:break-all}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field input[type=text],.field select,select,input.txt{padding:9px 11px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+.inline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inline>input.txt{flex:1 1 200px}
+table.data{width:100%;border-collapse:collapse;font-size:.92rem}
+table.data th,table.data td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.data th{color:var(--muted);font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em}
+table.data td.mono{word-break:break-all}
+.ok{color:var(--ok);font-weight:600}
+.sub{font-size:1.05rem;font-weight:700;margin:22px 0 10px}
+.card+.card{margin-top:16px}
+.diff{width:100%;border-collapse:collapse;font:500 .85rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;table-layout:fixed}
+.diff td{padding:1px 8px;white-space:pre-wrap;word-break:break-all;vertical-align:top}
+.diff td.ln{width:44px;color:var(--muted);text-align:right;user-select:none}
+.diff .del{background:#fde8e8}.diff .add{background:#e5f6ea}.diff .emp{background:#f1f3f7}
+.uni .d{background:#fde8e8;display:block}.uni .a{background:#e5f6ea;display:block}.uni .h{color:var(--accent);display:block}
+.diffwrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+@media (max-width:640px){.toolnav{top:60px}.diff td.ln{width:32px;padding:1px 4px}}
 </style>
 </head>
 <body>
 <nav aria-label="Main"><div class="wrap">
  <a href="/" class="logo">Manideep<span>.</span></a>
- <div class="links"><a class="hide-m" href="/#skills">Skills</a><a class="hide-m" href="/#experience">Experience</a><a href="#password" aria-current="page">Tools</a><a href="/blog/">Blog</a></div>
+ <div class="links"><a class="hide-m" href="/#skills">Skills</a><a class="hide-m" href="/#experience">Experience</a><a href="/tools/" aria-current="page">Tools</a><a href="/blog/">Blog</a></div>
 </div></nav>
 
 <header class="hero"><div class="wrap">
  <span class="eyebrow">Runs in your browser · works offline</span>
  <h1>Tools</h1>
- <p class="summary">A password generator and a text case converter. Everything happens on this page: nothing is saved, logged or sent anywhere.</p>
+ <p class="summary">Small everyday tools for DBAs and developers. Everything runs on this page: nothing you type is saved, logged or sent anywhere.</p>
 </div></header>
 
+<nav class="toolnav" aria-label="Tools"><div class="wrap" role="tablist" id="toolnav-list"></div></nav>
 <main>
-<section id="password" aria-labelledby="pw-h"><div class="wrap">
+<section id="password" class="panel" role="tabpanel" aria-labelledby="tab-password"><div class="wrap">
  <h2 id="pw-h">Random password generator</h2>
  <p class="lead">Uses the browser's cryptographic random generator (<code>crypto.getRandomValues</code>) with rejection sampling, so every character is equally likely.</p>
  <div class="cols">
@@ -106,7 +137,7 @@ footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
  </div>
 </div></section>
 
-<section id="case" aria-labelledby="case-h"><div class="wrap">
+<section id="case" class="panel" role="tabpanel" aria-labelledby="tab-case" hidden><div class="wrap">
  <h2 id="case-h">Case converter</h2>
  <p class="lead">Switch text between capital (block) letters and small letters, and more.</p>
  <div class="card">
@@ -121,6 +152,130 @@ footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
   </div>
   <div class="row" style="margin:0"><span class="counts" id="cs-count" aria-live="polite">0 characters · 0 words</span>
    <span><button type="button" class="btn btn-sm btn-primary" id="cs-copy">Copy</button> <button type="button" class="btn btn-sm" id="cs-clear">Clear</button></span></div>
+ </div>
+</div></section>
+<section id="epoch" class="panel" role="tabpanel" aria-labelledby="tab-epoch" hidden><div class="wrap">
+ <h2>Epoch &amp; time zone converter</h2>
+ <p class="lead">Unix time (seconds, milliseconds, µs, ns) to dates in UTC, IST, US Eastern, US Pacific and your local zone, and back.</p>
+ <div class="grid2">
+  <div class="card">
+   <div class="field"><label for="ep-epoch">Epoch</label><div class="inline"><input class="txt mono" type="text" id="ep-epoch" inputmode="numeric" autocomplete="off" spellcheck="false"><select id="ep-unit" aria-label="Epoch unit"><option value="auto">auto</option><option value="s">seconds</option><option value="ms">milliseconds</option><option value="us">microseconds</option><option value="ns">nanoseconds</option></select></div></div>
+   <div class="inline"><button type="button" class="btn btn-primary btn-sm" id="ep-now">Now</button><button type="button" class="btn btn-sm" id="ep-go">Convert epoch</button></div>
+  </div>
+  <div class="card">
+   <div class="field"><label for="ep-date">Date / time (ISO 8601)</label><input class="txt mono" type="text" id="ep-date" placeholder="2026-10-17 04:08:00 or 2026-10-16T22:38:00Z" autocomplete="off" spellcheck="false"></div>
+   <div class="inline"><label for="ep-tz" style="font-weight:500">Interpret in</label><select id="ep-tz"></select><button type="button" class="btn btn-sm" id="ep-go2">Convert date</button></div>
+  </div>
+ </div>
+ <div class="card" style="margin-top:16px"><p class="err" id="ep-err" role="alert"></p><div id="ep-out" aria-live="polite"></div></div>
+</div></section>
+
+<section id="json" class="panel" role="tabpanel" aria-labelledby="tab-json" hidden><div class="wrap">
+ <h2>JSON formatter &amp; validator</h2>
+ <p class="lead">Pretty-print, minify or sort keys. Errors show the line and column.</p>
+ <div class="card">
+  <label for="js-in" class="sr">JSON input</label><textarea id="js-in" class="mono" spellcheck="false" placeholder='{"paste":"JSON here"}'></textarea>
+  <div class="bar"><select id="js-ind" aria-label="Indent"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option></select>
+   <label class="inline" style="font-weight:500"><input type="checkbox" id="js-sort"> Sort keys</label>
+   <button type="button" class="btn btn-primary btn-sm" id="js-pretty">Format</button><button type="button" class="btn btn-sm" id="js-min">Minify</button><button type="button" class="btn btn-sm" id="js-copy">Copy result</button></div>
+  <p id="js-msg" role="status" aria-live="polite"></p>
+  <pre class="pre" id="js-out" tabindex="0" aria-label="Result"></pre>
+ </div>
+</div></section>
+
+<section id="sql" class="panel" role="tabpanel" aria-labelledby="tab-sql" hidden><div class="wrap">
+ <h2>SQL formatter</h2>
+ <p class="lead">A lightweight formatter for PostgreSQL-style SQL. Strings, quoted names, comments, dollar-quoted bodies and psql backslash commands are copied exactly as written.</p>
+ <div class="card">
+  <label for="sq-in" class="sr">SQL input</label><textarea id="sq-in" class="mono" spellcheck="false" placeholder="select id, name from users u join orders o on o.user_id = u.id where o.total > 100 and u.active order by name;"></textarea>
+  <div class="bar"><select id="sq-case" aria-label="Keyword case"><option value="upper">KEYWORDS UPPER</option><option value="lower">keywords lower</option><option value="keep">keep case</option></select>
+   <select id="sq-ind" aria-label="Indent"><option value="2">indent 2</option><option value="4">indent 4</option></select>
+   <button type="button" class="btn btn-primary btn-sm" id="sq-go">Format</button><button type="button" class="btn btn-sm" id="sq-copy">Copy result</button></div>
+  <pre class="pre" id="sq-out" tabindex="0" aria-label="Formatted SQL"></pre>
+  <p class="note">Formatting only changes whitespace and keyword case. Review before running it in production.</p>
+ </div>
+</div></section>
+
+<section id="cron" class="panel" role="tabpanel" aria-labelledby="tab-cron" hidden><div class="wrap">
+ <h2>Cron helper</h2>
+ <p class="lead">Explains a 5-field cron expression and lists the next 5 runs.</p>
+ <div class="card">
+  <div class="field"><label for="cr-in">Expression <small style="font-weight:400;color:var(--muted)">minute · hour · day-of-month · month · day-of-week</small></label><input class="txt mono" type="text" id="cr-in" value="*/15 9-17 * * MON-FRI" autocomplete="off" spellcheck="false"></div>
+  <div class="inline"><label for="cr-tz" style="font-weight:500">Time zone</label><select id="cr-tz"></select>
+   <span class="inline" role="group" aria-label="Examples"><button type="button" class="btn btn-sm" data-cron="0 2 * * *">0 2 * * *</button><button type="button" class="btn btn-sm" data-cron="30 1 1,15 * *">30 1 1,15 * *</button><button type="button" class="btn btn-sm" data-cron="0 0 13 * FRI">0 0 13 * FRI</button><button type="button" class="btn btn-sm" data-cron="@weekly">@weekly</button></span></div>
+  <p class="err" id="cr-err" role="alert"></p>
+  <p id="cr-desc" class="sub" aria-live="polite"></p>
+  <div id="cr-out"></div>
+  <p class="note">Supports <code>*</code>, lists <code>1,15</code>, ranges <code>9-17</code>, steps <code>*/5</code> <code>10-50/10</code>, month and day names, <code>7</code> = Sunday, and @yearly @monthly @weekly @daily @hourly @reboot.
+  If <b>both</b> day-of-month and day-of-week are restricted (neither starts with <code>*</code>), a day matches when <b>either</b> one matches (classic Vixie cron OR rule): <code>0 0 13 * FRI</code> runs on every 13th and every Friday. Runs inside a DST gap are skipped here; real cron daemons differ on this.</p>
+ </div>
+</div></section>
+
+<section id="encode" class="panel" role="tabpanel" aria-labelledby="tab-encode" hidden><div class="wrap">
+ <h2>Encode, hash &amp; UUID</h2>
+ <p class="lead">Base64, URL encoding, MD5 / SHA hashes and UUIDs.</p>
+ <div class="card">
+  <h3 class="sub" style="margin-top:0">Base64 &amp; URL encoding</h3>
+  <label for="en-in" class="sr">Input text</label><textarea id="en-in" class="mono" spellcheck="false" placeholder="Text to encode or decode" style="min-height:120px"></textarea>
+  <div class="bar"><button type="button" class="btn btn-sm btn-primary" id="en-b64e">Base64 encode</button><button type="button" class="btn btn-sm" id="en-b64d">Base64 decode</button>
+   <label class="inline" style="font-weight:500"><input type="checkbox" id="en-url"> URL-safe</label>
+   <button type="button" class="btn btn-sm" id="en-ue">URL encode</button><button type="button" class="btn btn-sm" id="en-ud">URL decode</button>
+   <label class="inline" style="font-weight:500"><input type="checkbox" id="en-full"> Whole URL (keep :/?&amp;=)</label></div>
+  <p class="err" id="en-err" role="alert"></p>
+  <div class="inline" style="justify-content:space-between"><span class="counts">Result</span><button type="button" class="btn btn-sm" id="en-copy">Copy result</button></div>
+  <pre class="pre wrapit" id="en-out" tabindex="0" aria-label="Encoding result"></pre>
+ </div>
+ <div class="card">
+  <h3 class="sub" style="margin-top:0">Hash generator</h3>
+  <label for="hs-in" class="sr">Text to hash</label><textarea id="hs-in" class="mono" spellcheck="false" placeholder="Text to hash (UTF-8)" style="min-height:100px"></textarea>
+  <div class="bar"><label for="hs-file" class="btn btn-sm">Hash a file…</label><input type="file" id="hs-file" class="sr"><span class="counts" id="hs-src">Hashing the text above</span></div>
+  <table class="data"><tbody id="hs-out"></tbody></table>
+  <p class="note">MD5 and SHA-1 are broken for security purposes; use them only for checksums. Files are read locally and never uploaded.</p>
+ </div>
+ <div class="card">
+  <h3 class="sub" style="margin-top:0">UUID generator</h3>
+  <div class="bar"><select id="uu-ver" aria-label="UUID version"><option value="4">v4 (random)</option><option value="7">v7 (time-ordered)</option></select>
+   <label for="uu-n" style="font-weight:500">How many</label><input type="number" id="uu-n" min="1" max="1000" value="5">
+   <label class="inline" style="font-weight:500"><input type="checkbox" id="uu-up"> Uppercase</label>
+   <button type="button" class="btn btn-sm btn-primary" id="uu-go">Generate</button><button type="button" class="btn btn-sm" id="uu-copy">Copy all</button></div>
+  <pre class="pre" id="uu-out" tabindex="0" aria-label="UUIDs"></pre>
+ </div>
+</div></section>
+
+<section id="diff" class="panel" role="tabpanel" aria-labelledby="tab-diff" hidden><div class="wrap">
+ <h2>Text diff</h2>
+ <p class="lead">Line-by-line comparison (longest common subsequence).</p>
+ <div class="grid2">
+  <div class="field"><label for="df-a">Original</label><textarea id="df-a" class="mono" spellcheck="false"></textarea></div>
+  <div class="field"><label for="df-b">Changed</label><textarea id="df-b" class="mono" spellcheck="false"></textarea></div>
+ </div>
+ <div class="bar"><select id="df-view" aria-label="View"><option value="side">Side by side</option><option value="uni">Unified</option></select>
+  <label class="inline" style="font-weight:500"><input type="checkbox" id="df-ws"> Ignore whitespace</label>
+  <label class="inline" style="font-weight:500"><input type="checkbox" id="df-case"> Ignore case</label>
+  <button type="button" class="btn btn-sm btn-primary" id="df-go">Compare</button><button type="button" class="btn btn-sm" id="df-copy">Copy unified diff</button></div>
+ <p id="df-msg" role="status" aria-live="polite"></p>
+ <div id="df-out"></div>
+</div></section>
+
+<section id="units" class="panel" role="tabpanel" aria-labelledby="tab-units" hidden><div class="wrap">
+ <h2>Size &amp; throughput converter</h2>
+ <p class="lead">Decimal (KB = 1000) and binary (KiB = 1024) units, and an IOPS / IO size / throughput calculator.</p>
+ <div class="grid2">
+  <div class="card">
+   <h3 class="sub" style="margin-top:0">Data size</h3>
+   <div class="inline"><label for="un-v" class="sr">Value</label><input class="txt mono" type="text" id="un-v" value="1" inputmode="decimal" autocomplete="off"><select id="un-u" aria-label="Unit"></select></div>
+   <p class="err" id="un-err" role="alert"></p>
+   <table class="data"><thead><tr><th>Decimal</th><th></th><th>Binary</th><th></th></tr></thead><tbody id="un-out"></tbody></table>
+  </div>
+  <div class="card">
+   <h3 class="sub" style="margin-top:0">IOPS × IO size = throughput</h3>
+   <div class="field"><label for="io-solve">Solve for</label><select id="io-solve"><option value="mibs">Throughput</option><option value="iops">IOPS</option><option value="kib">IO size</option></select></div>
+   <div class="field"><label for="io-iops">IOPS</label><input class="txt mono" type="text" id="io-iops" value="3000" inputmode="decimal"></div>
+   <div class="field"><label for="io-kib">IO size (KiB)</label><input class="txt mono" type="text" id="io-kib" value="16" inputmode="decimal"></div>
+   <div class="field"><label for="io-mibs">Throughput (MiB/s)</label><input class="txt mono" type="text" id="io-mibs" value="125" inputmode="decimal"></div>
+   <p id="io-out" class="sub" aria-live="polite"></p>
+   <p class="note">Formula only: throughput (MiB/s) = IOPS × IO size (KiB) ÷ 1024. Results are approximate. A volume is limited by whichever of its IOPS or throughput cap is reached first. Cloud providers count IO size in their own way (some split or merge IOs), and instance limits also apply, so check your provider's current documentation for real limits.</p>
+  </div>
  </div>
 </div></section>
 </main>
@@ -149,6 +304,202 @@ const toSentence=s=>s.toLowerCase().replace(/(^\s*|[.!?]\s+|\n\s*)(\p{L})/gu,(m,
 const toToggle=s=>[...s].map(c=>{const u=c.toUpperCase(),l=c.toLowerCase();return c===u?l:u;}).join("");
 const CASES={upper:toUpper,lower:toLower,title:toTitle,sentence:toSentence,toggle:toToggle};
 function counts(s){const w=s.trim()?s.trim().split(/\s+/).length:0;return{chars:[...s].length,words:w};}
+/* ---------- time zones ---------- */
+const ZONES=[["UTC","UTC"],["IST (India)","Asia/Kolkata"],["US Eastern","America/New_York"],["US Pacific","America/Los_Angeles"]];
+const _dtf={};
+function zparts(ms,tz){const f=_dtf[tz]||(_dtf[tz]=new Intl.DateTimeFormat("en-US",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",weekday:"short"}));
+ const o={};for(const p of f.formatToParts(new Date(ms)))o[p.type]=p.value;return{y:+o.year,mo:+o.month,d:+o.day,h:+o.hour%24,mi:+o.minute,s:+o.second,wd:o.weekday};}
+function wallUTC(y,mo,d,h,mi,s){const t=new Date(Date.UTC(2000,mo-1,d,h,mi,s));t.setUTCFullYear(y,mo-1,d);return t.getTime();}
+function zoffset(ms,tz){const p=zparts(ms,tz);return wallUTC(p.y,p.mo,p.d,p.h,p.mi,p.s)-Math.floor(ms/1000)*1000;}
+function wallToEpoch(y,mo,d,h,mi,s,tz){const g=wallUTC(y,mo,d,h,mi,s);const o=zoffset(g,tz);let t=g-o;const o2=zoffset(t,tz);
+ if(o2!==o){const t2=g-o2;if(zoffset(t2,tz)===o2)t=t2;}return t;}
+const pad=(n,w=2)=>String(n).padStart(w,"0");
+function offStr(off){const m=Math.round(off/60000),a=Math.abs(m);return(m<0?"-":"+")+pad(Math.floor(a/60))+":"+pad(a%60);}
+function zfmt(ms,tz){const p=zparts(ms,tz),off=zoffset(ms,tz),frac=((ms%1000)+1000)%1000;
+ const date=`${pad(p.y,4)}-${pad(p.mo)}-${pad(p.d)}`,time=`${pad(p.h)}:${pad(p.mi)}:${pad(p.s)}${frac?"."+pad(frac,3):""}`;
+ return{date,time,wd:p.wd,off:offStr(off),iso:`${date}T${time}${off===0?"Z":offStr(off)}`};}
+function parseEpoch(str,unit){const s=String(str).trim().replace(/[_,\s]/g,"");if(!/^-?\d+(\.\d+)?$/.test(s))throw new Error("Epoch must be a number");
+ const n=Number(s),a=Math.abs(n);let u=unit;if(!u||u==="auto")u=a>=1e17?"ns":a>=1e14?"us":a>=1e11?"ms":"s";
+ const ms=u==="s"?n*1000:u==="ms"?n:u==="us"?n/1000:n/1e6;if(!isFinite(ms)||Math.abs(ms)>8.64e15)throw new Error("Out of range");return{ms:Math.floor(ms),unit:u};}
+function parseDateTime(str,tz){const m=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d{1,9}))?)?)?\s*(Z|[+-]\d{2}(?::?\d{2})?)?$/i.exec(String(str).trim());
+ if(!m)throw new Error("Use ISO 8601, e.g. 2026-10-17T04:08:00Z or 2026-10-17 04:08");
+ const[y,mo,d,h,mi,s]=[1,2,3,4,5,6].map(i=>+(m[i]||0)),ms=m[7]?+(m[7]+"00").slice(0,3):0;
+ if(mo<1||mo>12||d<1||d>31||h>23||mi>59||s>59)throw new Error("Date or time field out of range");
+ if(new Date(Date.UTC(2000,mo-1,d)).getUTCDate()!==d&&!(mo===2&&d===29))throw new Error("No such day");
+ if(mo===2&&d===29&&!(y%4===0&&(y%100!==0||y%400===0)))throw new Error("Not a leap year");
+ if(m[8]){const z=m[8].toUpperCase();let off=0;if(z!=="Z"){const zz=z.replace(":","");off=(zz[0]==="-"?-1:1)*(+zz.slice(1,3)*60+ +(zz.slice(3,5)||0))*60000;}return wallUTC(y,mo,d,h,mi,s)+ms-off;}
+ return wallToEpoch(y,mo,d,h,mi,s,tz)+ms;}
+function relTime(ms,now){const d=(ms-now)/1000,a=Math.abs(d);const u=[[31557600,"year"],[2629800,"month"],[86400,"day"],[3600,"hour"],[60,"minute"],[1,"second"]];
+ for(const[sec,n]of u)if(a>=sec){const v=Math.round(a/sec);return d<0?`${v} ${n}${v>1?"s":""} ago`:`in ${v} ${n}${v>1?"s":""}`;}return"now";}
+
+/* ---------- JSON ---------- */
+function jsonScan(s){let i=0,big=false;const n=s.length;const fail=m=>{throw{pos:i,msg:m}};
+ const ws=()=>{while(i<n&&" \t\n\r".includes(s[i]))i++;};
+ const str=()=>{i++;for(;;){if(i>=n)fail("Unterminated string");const c=s[i];if(c==='"'){i++;return}
+  if(c==="\\"){const e=s[i+1];if(e!==undefined&&'"\\/bfnrt'.includes(e))i+=2;else if(e==="u"&&/^[0-9a-fA-F]{4}$/.test(s.substr(i+2,4)))i+=6;else fail("Bad escape sequence")}
+  else if(c<" ")fail("Control character inside string (escape it, e.g. \\n)");else i++;}};
+ const NUM=/-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/y;
+ const val=d=>{if(d>5000)fail("Nested too deeply");ws();const c=s[i];
+  if(c==="{"){i++;ws();if(s[i]==="}"){i++;return}for(;;){ws();if(s[i]!=='"')fail("Expected a double-quoted property name");str();ws();if(s[i]!==":")fail("Expected ':' after property name");i++;val(d+1);ws();
+   if(s[i]===","){i++;ws();if(s[i]==="}")fail("Trailing comma before '}'");continue}if(s[i]==="}"){i++;return}fail("Expected ',' or '}'");}}
+  if(c==="["){i++;ws();if(s[i]==="]"){i++;return}for(;;){val(d+1);ws();if(s[i]===","){i++;ws();if(s[i]==="]")fail("Trailing comma before ']'");continue}if(s[i]==="]"){i++;return}fail("Expected ',' or ']'");}}
+  if(c==='"')return str();
+  if(c==="-"||(c>="0"&&c<="9")){NUM.lastIndex=i;const m=NUM.exec(s);if(!m||m.index!==i)fail("Invalid number");if(!m[2]&&!m[3]&&Math.abs(Number(m[0]))>Number.MAX_SAFE_INTEGER)big=true;i=NUM.lastIndex;return}
+  for(const w of["true","false","null"])if(s.startsWith(w,i)){i+=w.length;return}
+  fail(c===undefined?"Unexpected end of input":c==="'"?"Strings must use double quotes":"Unexpected character "+JSON.stringify(c));};
+ try{val(0);ws();if(i<n)fail("Unexpected text after the JSON value");return{ok:true,big}}catch(e){if(e&&typeof e.pos==="number"){const pre=s.slice(0,e.pos).split("\n");return{ok:false,pos:e.pos,msg:e.msg,line:pre.length,col:pre[pre.length-1].length+1}}throw e}}
+function sortKeys(v){if(Array.isArray(v))return v.map(sortKeys);if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v).sort())o[k]=sortKeys(v[k]);return o}return v;}
+function jsonFormat(text,{indent=2,sort=false,minify=false}={}){if(!text.trim())throw{msg:"Empty input",line:1,col:1};const sc=jsonScan(text);if(!sc.ok)throw sc;
+ let v=JSON.parse(text);if(sort)v=sortKeys(v);return{out:minify?JSON.stringify(v):JSON.stringify(v,null,indent==="tab"?"\t":+indent),big:sc.big};}
+
+/* ---------- SQL formatter ---------- */
+const SQL_KW=new Set(("select from where and or not in is null as on join left right inner outer full cross natural lateral using group by order having limit offset fetch first next rows row only union all distinct intersect except insert into values update set delete returning with recursive create alter drop table view index sequence schema database function procedure trigger extension role user grant revoke to public primary key foreign references unique check default constraint cascade restrict if exists case when then else end between like ilike similar asc desc nulls last begin commit rollback transaction true false cast over partition window range preceding following unbounded current conflict do nothing any some array truncate add column rename owner temp temporary unlogged materialized refresh concurrently analyze vacuum explain returns language filter within collate interval escape for each execute no action").split(" "));
+function sqlTokens(s){const t=[],n=s.length;let i=0;const push=(k,j)=>{t.push({k,v:s.slice(i,j)});i=j;};
+ const quoted=(q,j,bs)=>{while(j<n){if(bs&&s[j]==="\\"){j+=2;continue}if(s[j]===q){if(s[j+1]===q){j+=2;continue}return j+1}j++}return n;};
+ while(i<n){const c=s[i],c2=s[i+1];let j,m;
+  if(/\s/.test(c)){j=i;while(j<n&&/\s/.test(s[j]))j++;push("ws",j);continue}
+  if(c==="-"&&c2==="-"){j=s.indexOf("\n",i);push("lc",j<0?n:j);continue}
+  if(c==="/"&&c2==="*"){let d=1;j=i+2;while(j<n&&d){if(s[j]==="/"&&s[j+1]==="*"){d++;j+=2}else if(s[j]==="*"&&s[j+1]==="/"){d--;j+=2}else j++}push("bc",j);continue}
+  if(c==="\\"){j=s.indexOf("\n",i);push("meta",j<0?n:j);continue}
+  if((c==="e"||c==="E")&&c2==="'"){push("str",quoted("'",i+2,true));continue}
+  if(/[bBxXnN]/.test(c)&&c2==="'"&&!/[\w$]/.test(s[i-1]||"")){push("str",quoted("'",i+2,false));continue}
+  if((c==="u"||c==="U")&&c2==="&"&&(s[i+2]==="'"||s[i+2]==='"')){push(s[i+2]==="'"?"str":"qid",quoted(s[i+2],i+3,false));continue}
+  if(c==="'"){push("str",quoted("'",i+1,false));continue}
+  if(c==='"'){push("qid",quoted('"',i+1,false));continue}
+  if(c==="$"&&(m=/^\$([A-Za-z_\u0080-\uffff][\w\u0080-\uffff]*)?\$/.exec(s.slice(i,i+128)))){const e=s.indexOf(m[0],i+m[0].length);push("dq",e<0?n:e+m[0].length);continue}
+  if(c==="$"&&(m=/^\$\d+/.exec(s.slice(i,i+20)))){push("word",i+m[0].length);continue}
+  if(/[A-Za-z_\u0080-\uffff]/.test(c)){j=i+1;while(j<n&&/[\w$\u0080-\uffff]/.test(s[j]))j++;push("word",j);continue}
+  if((m=/^(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?/.exec(s.slice(i,i+80)))){push("num",i+m[0].length);continue}
+  m=/^(::|<>|<=|>=|!=|\|\||->>|->|#>>|#>|@>|<@|:=|=>|&&)/.exec(s.slice(i,i+3));push("op",i+(m?m[0].length:1));}
+ return t;}
+function sqlFormat(src,{kwCase="upper",indent=2}={}){const toks=sqlTokens(src),IND=" ".repeat(indent);
+ const sig=toks.map((t,i)=>i).filter(i=>toks[i].k!=="ws");const U=t=>t&&t.k==="word"?t.v.toUpperCase():null;
+ const MAJOR=new Set(["SELECT","FROM","WHERE","GROUP","ORDER","HAVING","LIMIT","OFFSET","FETCH","UNION","INTERSECT","EXCEPT","VALUES","SET","RETURNING","INSERT","UPDATE","DELETE","WINDOW"]);
+ const JPRE=new Set(["LEFT","RIGHT","INNER","FULL","CROSS","NATURAL"]);const LISTC=new Set(["SELECT","GROUP","ORDER","SET","RETURNING","VALUES","PARTITION","CREATE_BLOCK"]);
+ const NOBREAK_AFTER={FROM:["DELETE","DISTINCT"],UPDATE:["FOR","ON","DO","KEY"],SET:["DELETE","UPDATE","ON","DO"],DELETE:["ON"],VALUES:["DEFAULT"],ORDER:["WITHIN"],SELECT:["UNION","ALL","INTERSECT","EXCEPT","DISTINCT"],INSERT:["DO"]};
+ const lines=[];let cur="",last=null,lastWordU=null;
+ const st=[{block:true,lvl:0,clause:null,between:0}];const top=()=>st[st.length-1];
+ const nl=lvl=>{cur=cur.replace(/\s+$/,"");if(cur.trim())lines.push(cur);cur=IND.repeat(lvl);last=null;};
+ const put=(v,space=true)=>{const ls=cur.trim()==="";if(!ls&&space&&last!==null&&!/^[,;)\].]$|^::$/.test(v)&&!/^[(\[.]$|^::$/.test(last))cur+=" ";cur+=v;last=v;};
+ let stmtFirst=null,parenCount=0;
+ for(let x=0;x<sig.length;x++){const t=toks[sig[x]],prevTok=toks[sig[x]-1],nxt=toks[sig[x+1]],u=U(t),f=top();
+  const hadNL=prevTok&&prevTok.k==="ws"&&prevTok.v.includes("\n");
+  if(t.k==="lc"||t.k==="bc"||t.k==="meta"){if(hadNL||t.k==="meta")nl(f.lvl);put(t.v);if(t.k!=="bc")nl(f.lvl);continue}
+  if(t.k==="op"&&t.v===";"){put(";");nl(0);lines.push("");st.length=1;Object.assign(st[0],{clause:null,between:0});stmtFirst=null;parenCount=0;lastWordU=null;continue}
+  if(stmtFirst===null)stmtFirst=u||"";
+  let v=t.v;if(t.k==="word"&&SQL_KW.has(t.v.toLowerCase())&&last!=="."&&kwCase!=="keep")v=kwCase==="upper"?t.v.toUpperCase():t.v.toLowerCase();
+  if(t.k==="word"&&f.block){let brk=false;
+   if(MAJOR.has(u)&&!(NOBREAK_AFTER[u]||[]).includes(lastWordU))brk=true;
+   if(u==="JOIN"&&!JPRE.has(lastWordU)&&lastWordU!=="OUTER")brk=true;
+   if(JPRE.has(u)&&!JPRE.has(lastWordU)){for(let y=x+1;y<sig.length&&y<x+4;y++){const w=U(toks[sig[y]]);if(w==="JOIN"){brk=true;break}if(!JPRE.has(w)&&w!=="OUTER")break}}
+   if(brk){nl(f.lvl);f.clause=u==="JOIN"||JPRE.has(u)?"JOIN":u;f.between=0}
+   else if((u==="AND"||u==="OR")&&["WHERE","HAVING","JOIN"].includes(f.clause)){if(u==="AND"&&f.between>0)f.between--;else nl(f.lvl+1)}
+   if(u==="BETWEEN")f.between++;
+   if(u==="ON"&&f.clause==="JOIN"){}
+  }else if(t.k==="word"&&u==="BETWEEN")f.between++;else if(t.k==="word"&&u==="AND"&&f.between>0)f.between--;
+  if(t.k==="op"&&t.v==="("){const nu=U(nxt);const sub=nu==="SELECT"||nu==="WITH"||(nu==="VALUES"&&lastWordU!=="VALUES");
+   const cblock=!sub&&stmtFirst==="CREATE"&&parenCount===0&&st.length===1&&toks.slice(0,sig[x]).some(q=>U(q)==="TABLE");
+   parenCount++;const fn=last!==null&&/[\w"]$/.test(last)&&!SQL_KW.has(last.toLowerCase());put("(",!fn);
+   if(sub||cblock){const now=Math.floor(cur.match(/^ */)[0].length/indent);st.push({block:!!sub,lvl:now+1,ret:now,clause:cblock?"CREATE_BLOCK":null,between:0,list:cblock});nl(now+1)}else st.push({block:false,lvl:f.lvl,clause:null,between:0,inline:true});
+   continue}
+  if(t.k==="op"&&t.v===")"){if(st.length>1){const p=st.pop();if(!p.inline)nl(p.ret)}put(")");continue}
+  if(t.k==="op"&&t.v===","){put(",");if((f.block||f.list)&&LISTC.has(f.clause))nl(f.lvl+1);continue}
+  if(t.k==="op"&&t.v==="."){put(".",false);continue}
+  put(v);if(t.k==="word")lastWordU=u;}
+ nl(0);while(lines.length&&lines[lines.length-1]==="")lines.pop();return lines.join("\n");}
+
+/* ---------- cron ---------- */
+const CRON_FIELDS=[["minute",0,59],["hour",0,23],["day-of-month",1,31],["month",1,12],["day-of-week",0,7]];
+const MON_N=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"],DOW_N=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+const MON_L=["January","February","March","April","May","June","July","August","September","October","November","December"],DOW_L=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const CRON_MACROS={"@yearly":"0 0 1 1 *","@annually":"0 0 1 1 *","@monthly":"0 0 1 * *","@weekly":"0 0 * * 0","@daily":"0 0 * * *","@midnight":"0 0 * * *","@hourly":"0 * * * *"};
+function cronField(txt,fi){const[name,lo,hi]=CRON_FIELDS[fi];const names=fi===3?MON_N:fi===4?DOW_N:null;const set=new Set(),parts=[];
+ const num=x=>{let v;if(/^\d+$/.test(x))v=+x;else if(names&&names.includes(x.toUpperCase()))v=names.indexOf(x.toUpperCase())+(fi===3?1:0);else throw new Error(`${name}: "${x}" is not a valid value`);
+  if(v<lo||v>hi)throw new Error(`${name}: ${v} is outside ${lo}-${hi}`);return v;};
+ for(const p of txt.split(",")){const m=/^(\*|\?|[A-Za-z0-9]+(?:-[A-Za-z0-9]+)?)(?:\/(\d+))?$/.exec(p);if(!m)throw new Error(`${name}: cannot parse "${p}"`);
+  if(m[1]==="?"&&fi!==2&&fi!==4)throw new Error(`${name}: "?" is only allowed in day fields`);
+  let a,b;if(m[1]==="*"||m[1]==="?"){a=lo;b=fi===4?6:hi}else if(m[1].includes("-")){[a,b]=m[1].split("-").map(num);if(a>b)throw new Error(`${name}: range ${m[1]} goes backwards`)}else{a=num(m[1]);b=m[2]?(fi===4?6:hi):a}
+  const step=m[2]?+m[2]:1;if(step<1)throw new Error(`${name}: step must be at least 1`);for(let v=a;v<=b;v+=step)set.add(fi===4&&v===7?0:v);
+  parts.push({star:m[1]==="*"||m[1]==="?",a,b,step,single:!m[2]&&!m[1].includes("-")&&m[1]!=="*"&&m[1]!=="?"});}
+ return{set,star:txt[0]==="*"||txt[0]==="?",txt,parts};}
+function cronParse(expr){let e=String(expr).trim().replace(/\s+/g," ");const lc=e.toLowerCase();if(lc==="@reboot")return{reboot:true,expr:e};
+ let macro=null;if(lc.startsWith("@")){if(!CRON_MACROS[lc])throw new Error(`Unknown macro ${e}. Use @yearly, @monthly, @weekly, @daily, @hourly or @reboot`);macro=lc;e=CRON_MACROS[lc];}
+ const f=e.split(" ");if(f.length!==5)throw new Error(`Expected 5 fields (minute hour day-of-month month day-of-week), got ${f.length}`+(f.length===6?". Seconds or year fields are not supported":""));
+ const F=f.map(cronField);return{macro,expr:e,min:F[0],hour:F[1],dom:F[2],mon:F[3],dow:F[4]};}
+function cronDayMatch(c,dom,wd){return(c.dom.star||c.dow.star)?(c.dom.set.has(dom)&&c.dow.set.has(wd)):(c.dom.set.has(dom)||c.dow.set.has(wd));}
+function cronNext(expr,fromMs,tz,count=5){const c=typeof expr==="string"?cronParse(expr):expr;if(c.reboot)return[];
+ const p=zparts(fromMs,tz),H=[...c.hour.set].sort((a,b)=>a-b),M=[...c.min.set].sort((a,b)=>a-b),out=[];
+ for(let k=0;k<3000&&out.length<count;k++){const dt=new Date(wallUTC(p.y,p.mo,p.d+k,0,0,0));const Y=dt.getUTCFullYear(),Mo=dt.getUTCMonth()+1,D=dt.getUTCDate(),wd=dt.getUTCDay();
+  if(!c.mon.set.has(Mo)||!cronDayMatch(c,D,wd))continue;
+  for(const h of H){for(const mi of M){const t=wallToEpoch(Y,Mo,D,h,mi,0,tz);if(t<=fromMs)continue;const q=zparts(t,tz);if(q.y!==Y||q.mo!==Mo||q.d!==D||q.h!==h||q.mi!==mi)continue;
+    if(!out.includes(t))out.push(t);if(out.length>=count)break}if(out.length>=count)break}}
+ return out.sort((a,b)=>a-b);}
+function cronDescribe(expr){const c=typeof expr==="string"?cronParse(expr):expr;if(c.reboot)return"Once, when the cron daemon starts (@reboot). No schedule.";
+ const list=(f,fmt,unit)=>f.parts.map(p=>p.star&&p.step>1?`every ${p.step} ${unit}s`:p.star?`every ${unit}`:p.single?fmt(p.a):p.step>1?`every ${p.step} ${unit}s from ${fmt(p.a)} to ${fmt(p.b)}`:`${fmt(p.a)} through ${fmt(p.b)}`);
+ const join=a=>a.length<=1?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+ const hh=v=>pad(v),mon=v=>MON_L[v-1],dow=v=>DOW_L[v];let s;
+ const simpleT=c.min.parts.every(p=>p.single)&&c.hour.parts.every(p=>p.single);
+ if(simpleT){const ts=[];for(const h of[...c.hour.set].sort((a,b)=>a-b))for(const m of[...c.min.set].sort((a,b)=>a-b))ts.push(`${pad(h)}:${pad(m)}`);s="At "+join(ts.length>8?ts.slice(0,8).concat([`${ts.length-8} more`]):ts);}
+ else{s=c.min.txt==="*"?"Every minute":c.min.parts.length===1&&c.min.parts[0].star?`Every ${c.min.parts[0].step} minutes`:`At minute ${join(list(c.min,String,"minute"))}`;
+  if(c.hour.parts.length===1&&c.hour.parts[0].star&&c.hour.parts[0].step>1)s+=`, every ${c.hour.parts[0].step} hours`;else if(c.hour.txt!=="*")s+=c.hour.parts.every(p=>p.single)?`, during hour ${join(list(c.hour,hh,"hour"))}`:`, during hours ${join(list(c.hour,hh,"hour"))}`;}
+ const d=[];if(!c.dom.star)d.push("on day-of-month "+join(list(c.dom,String,"day")));
+ if(!c.dow.star)d.push("on "+join(list(c.dow,dow,"day")));
+ if(d.length===2)s+=`, ${d[0]} or ${d[1]} (either one matches)`;else if(d.length)s+=", "+d[0];else if(c.dom.txt!=="*"&&c.dom.txt!=="?")s+=", "+"on day-of-month "+join(list(c.dom,String,"day"));else if(c.dow.txt!=="*"&&c.dow.txt!=="?")s+=", on "+join(list(c.dow,dow,"day"));
+ if(c.mon.txt!=="*")s+=", in "+join(list(c.mon,mon,"month"));return s+(c.macro?` (${c.macro})`:"")+".";}
+
+/* ---------- encoding / hashing ---------- */
+const utf8=s=>new TextEncoder().encode(s);
+function bytesToB64(b){let bin="";for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin);}
+function b64Encode(str,urlSafe){const s=bytesToB64(utf8(str));return urlSafe?s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""):s;}
+function b64DecodeBytes(s){s=String(s).replace(/\s+/g,"");if(!/^[A-Za-z0-9+/_-]*={0,2}$/.test(s))throw new Error("Not valid Base64: unexpected character");
+ s=s.replace(/-/g,"+").replace(/_/g,"/").replace(/=+$/,"");if(s.length%4===1)throw new Error("Not valid Base64: wrong length");s+="=".repeat((4-s.length%4)%4);
+ const bin=atob(s),b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;}
+const toHex=b=>Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");
+function b64Decode(s){const b=b64DecodeBytes(s);try{return{text:new TextDecoder("utf-8",{fatal:true}).decode(b)}}catch(e){return{hex:toHex(b),bytes:b.length}}}
+function md5(input){const msg=typeof input==="string"?utf8(input):input;const K=new Uint32Array(64),S=[7,12,17,22,5,9,14,20,4,11,16,23,6,10,15,21];
+ for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296);
+ const n=msg.length,total=((n+8>>>6)+1)*64,buf=new Uint8Array(total);buf.set(msg);buf[n]=0x80;const dv=new DataView(buf.buffer);
+ dv.setUint32(total-8,(n*8)>>>0,true);dv.setUint32(total-4,Math.floor(n/0x20000000),true);
+ let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;const M=new Uint32Array(16);
+ for(let off=0;off<total;off+=64){for(let i=0;i<16;i++)M[i]=dv.getUint32(off+i*4,true);let A=a0,B=b0,C=c0,D=d0;
+  for(let i=0;i<64;i++){let F,g;if(i<16){F=(B&C)|(~B&D);g=i}else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}else if(i<48){F=B^C^D;g=(3*i+5)%16}else{F=C^(B|~D);g=(7*i)%16}
+   F=(F+A+K[i]+M[g])>>>0;A=D;D=C;C=B;const sh=S[(i>>4)*4+(i&3)];B=(B+((F<<sh)|(F>>>(32-sh))))>>>0;}
+  a0=(a0+A)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;}
+ const out=new Uint8Array(16),ov=new DataView(out.buffer);[a0,b0,c0,d0].forEach((v,i)=>ov.setUint32(i*4,v,true));return toHex(out);}
+async function hashAll(input){const b=typeof input==="string"?utf8(input):input;const r={MD5:md5(b)};
+ if(typeof crypto!=="undefined"&&crypto.subtle){for(const a of["SHA-1","SHA-256","SHA-384","SHA-512"])r[a]=toHex(new Uint8Array(await crypto.subtle.digest(a,b)));}
+ else for(const a of["SHA-1","SHA-256","SHA-384","SHA-512"])r[a]="(WebCrypto unavailable: open the page over https)";return r;}
+function uuidFmt(b){const h=toHex(b);return`${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;}
+function uuidV4(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=b[6]&0x0f|0x40;b[8]=b[8]&0x3f|0x80;return uuidFmt(b);}
+function uuidV7(ms=Date.now()){const b=crypto.getRandomValues(new Uint8Array(16));let t=ms;for(let i=5;i>=0;i--){b[i]=t%256;t=Math.floor(t/256)}b[6]=b[6]&0x0f|0x70;b[8]=b[8]&0x3f|0x80;return uuidFmt(b);}
+
+/* ---------- diff ---------- */
+function diffLines(a,b,{ignoreWs=false,ignoreCase=false}={}){const A=a.replace(/\r\n?/g,"\n").split("\n"),B=b.replace(/\r\n?/g,"\n").split("\n");
+ const key=s=>{if(ignoreWs)s=s.replace(/\s+/g," ").trim();if(ignoreCase)s=s.toLowerCase();return s};const KA=A.map(key),KB=B.map(key);
+ let p=0;while(p<A.length&&p<B.length&&KA[p]===KB[p])p++;let sfx=0;while(sfx<A.length-p&&sfx<B.length-p&&KA[A.length-1-sfx]===KB[B.length-1-sfx])sfx++;
+ const n=A.length-p-sfx,m=B.length-p-sfx;if((n+1)*(m+1)>16e6)throw new Error("Texts differ in too many lines to compare in the browser (limit about 4,000 x 4,000 changed lines)");
+ const W=m+1,L=new Uint32Array((n+1)*W);for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i*W+j]=KA[p+i]===KB[p+j]?L[(i+1)*W+j+1]+1:Math.max(L[(i+1)*W+j],L[i*W+j+1]);
+ const ops=[];for(let i=0;i<p;i++)ops.push({t:"=",a:i,b:i});let i=0,j=0;
+ while(i<n||j<m){if(i<n&&j<m&&KA[p+i]===KB[p+j]){ops.push({t:"=",a:p+i,b:p+j});i++;j++}else if(j<m&&(i>=n||L[i*W+j+1]>=L[(i+1)*W+j])){ops.push({t:"+",b:p+j});j++}else{ops.push({t:"-",a:p+i});i++}}
+ for(let k=0;k<sfx;k++)ops.push({t:"=",a:A.length-sfx+k,b:B.length-sfx+k});
+ // keep deletions before insertions inside each change block
+ const out=[];let blk=[];const flush=()=>{out.push(...blk.filter(o=>o.t==="-"),...blk.filter(o=>o.t==="+"));blk=[]};
+ for(const o of ops){if(o.t==="=")flush(),out.push(o);else blk.push(o)}flush();return{ops:out,A,B};}
+function unifiedDiff(d,ctx=3,na="a",nb="b"){const{ops,A,B}=d;const ch=ops.map((o,i)=>o.t!=="="?i:-1).filter(i=>i>=0);if(!ch.length)return"";
+ const hunks=[];let s=Math.max(0,ch[0]-ctx),e=Math.min(ops.length-1,ch[0]+ctx);for(const c of ch.slice(1)){if(c-ctx<=e+1)e=Math.min(ops.length-1,c+ctx);else{hunks.push([s,e]);s=Math.max(0,c-ctx);e=Math.min(ops.length-1,c+ctx)}}hunks.push([s,e]);
+ const L=[`--- ${na}`,`+++ ${nb}`];for(const[s,e]of hunks){const seg=ops.slice(s,e+1);let as=null,bs=null,ac=0,bc=0;
+  let ai=0,bi=0;for(let k=0;k<s;k++){if(ops[k].t!=="+")ai++;if(ops[k].t!=="-")bi++}
+  for(const o of seg){if(o.t!=="+")ac++;if(o.t!=="-")bc++}
+  as=ac?ai+1:ai;bs=bc?bi+1:bi;L.push(`@@ -${as}${ac===1?"":","+ac} +${bs}${bc===1?"":","+bc} @@`);
+  for(const o of seg)L.push(o.t==="="?" "+A[o.a]:o.t==="-"?"-"+A[o.a]:"+"+B[o.b]);}
+ return L.join("\n");}
+function diffStats(d){let add=0,del=0;for(const o of d.ops){if(o.t==="+")add++;else if(o.t==="-")del++}return{add,del};}
+
+/* ---------- units ---------- */
+const UNITS=[["B",1],["KB",1e3],["MB",1e6],["GB",1e9],["TB",1e12],["PB",1e15],["KiB",1024],["MiB",1024**2],["GiB",1024**3],["TiB",1024**4],["PiB",1024**5]];
+function convertBytes(v,unit){const f=UNITS.find(u=>u[0]===unit);if(!f)throw new Error("Unknown unit");const n=Number(v);if(!isFinite(n)||n<0)throw new Error("Enter a non-negative number");const bytes=n*f[1];return UNITS.map(([u,k])=>[u,bytes/k]);}
+function iopsSolve(solve,{iops,kib,mibs}){if(solve==="mibs")return iops*kib/1024;if(solve==="iops")return mibs*1024/kib;return mibs*1024/iops;}
+
 if(typeof document!=="undefined"){
  const $=id=>document.getElementById(id);let tt;
  const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1600);};
@@ -170,6 +521,90 @@ if(typeof document!=="undefined"){
  document.querySelectorAll("[data-case]").forEach(b=>b.onclick=()=>{ta.value=CASES[b.dataset.case](ta.value);upd();});
  $("cs-copy").onclick=()=>{if(ta.value)copy(ta.value,"Text");else toast("Nothing to copy");};
  $("cs-clear").onclick=()=>{ta.value="";upd();ta.focus();};
+ /* ----- tool tabs ----- */
+ const TABS=[["password","Password"],["case","Case"],["epoch","Epoch / time"],["json","JSON"],["sql","SQL"],["cron","Cron"],["encode","Encode & hash"],["diff","Diff"],["units","Units"]];
+ const tl=$("toolnav-list");
+ TABS.forEach(([id,label])=>{const b=document.createElement("button");b.type="button";b.id="tab-"+id;b.setAttribute("role","tab");b.setAttribute("aria-controls",id);b.textContent=label;b.onclick=()=>show(id,true);tl.append(b);});
+ function show(id,focus){if(!TABS.some(t=>t[0]===id))id="password";TABS.forEach(([t])=>{const on=t===id;$(t).hidden=!on;const b=$("tab-"+t);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
+  if(focus){history.replaceState(null,"","#"+id);$("tab-"+id).focus();}$("tab-"+id).scrollIntoView({block:"nearest",inline:"nearest"});}
+ tl.addEventListener("keydown",e=>{const i=TABS.findIndex(t=>"tab-"+t[0]===document.activeElement.id);if(i<0)return;let k=null;
+  if(e.key==="ArrowRight")k=(i+1)%TABS.length;else if(e.key==="ArrowLeft")k=(i-1+TABS.length)%TABS.length;else if(e.key==="Home")k=0;else if(e.key==="End")k=TABS.length-1;if(k!==null){e.preventDefault();show(TABS[k][0],true);}});
+ window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+ show(location.hash.slice(1));
+ const escH=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ const localTz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
+ const zoneOpts=sel=>{const z=ZONES.concat([["Local ("+localTz+")",localTz]]);sel.innerHTML=z.map(([l,t])=>`<option value="${escH(t)}">${escH(l)}</option>`).join("");};
+ /* ----- epoch ----- */
+ zoneOpts($("ep-tz"));$("ep-tz").value="Asia/Kolkata";
+ function epShow(ms,note){$("ep-err").textContent="";const rows=ZONES.concat([["Local",localTz]]).map(([l,tz])=>{const f=zfmt(ms,tz);return`<tr><td>${escH(l)}<br><small class="counts">${escH(tz)}</small></td><td class="mono">${f.wd} ${f.date} ${f.time}</td><td class="mono">${f.off}</td><td class="mono">${f.iso}</td></tr>`}).join("");
+  $("ep-out").innerHTML=`<p class="counts">${escH(note)}</p><table class="data"><thead><tr><th>Zone</th><th>Date &amp; time</th><th>Offset</th><th>ISO 8601</th></tr></thead><tbody>${rows}</tbody></table>
+  <table class="data" style="margin-top:12px"><tbody><tr><th>Epoch seconds</th><td class="mono">${Math.floor(ms/1000)}</td></tr><tr><th>Epoch milliseconds</th><td class="mono">${ms}</td></tr><tr><th>ISO 8601 (UTC)</th><td class="mono">${escH(new Date(ms).toISOString())}</td></tr><tr><th>Relative</th><td>${relTime(ms,Date.now())}</td></tr></tbody></table>`;}
+ function epFromEpoch(){try{const r=parseEpoch($("ep-epoch").value,$("ep-unit").value);epShow(r.ms,"Read as "+{s:"seconds",ms:"milliseconds",us:"microseconds",ns:"nanoseconds"}[r.unit]);}catch(e){$("ep-err").textContent=e.message;$("ep-out").textContent="";}}
+ function epFromDate(){try{const ms=parseDateTime($("ep-date").value,$("ep-tz").value);$("ep-epoch").value=Math.floor(ms/1000);epShow(ms,"Date interpreted in "+$("ep-tz").value+" (unless it carried its own offset)");}catch(e){$("ep-err").textContent=e.message;$("ep-out").textContent="";}}
+ $("ep-now").onclick=()=>{$("ep-epoch").value=Math.floor(Date.now()/1000);$("ep-unit").value="auto";epFromEpoch();};
+ $("ep-go").onclick=epFromEpoch;$("ep-go2").onclick=epFromDate;
+ $("ep-epoch").addEventListener("keydown",e=>{if(e.key==="Enter")epFromEpoch()});$("ep-date").addEventListener("keydown",e=>{if(e.key==="Enter")epFromDate()});
+ $("ep-epoch").value=Math.floor(Date.now()/1000);epFromEpoch();
+ /* ----- JSON ----- */
+ function jsRun(minify){const t=$("js-in").value,msg=$("js-msg");try{const r=jsonFormat(t,{indent:$("js-ind").value,sort:$("js-sort").checked,minify});$("js-out").textContent=r.out;
+   msg.className="ok";msg.textContent="Valid JSON"+(r.big?" · warning: some integers are larger than 2^53 and lose precision in JavaScript":"");}
+  catch(e){$("js-out").textContent="";msg.className="err";if(e&&e.line){const ln=t.split("\n")[e.line-1]||"";msg.textContent=`Line ${e.line}, column ${e.col}: ${e.msg}`;$("js-out").textContent=ln+"\n"+" ".repeat(Math.max(0,e.col-1))+"^";}else msg.textContent=String(e&&e.message||e);}}
+ $("js-pretty").onclick=()=>jsRun(false);$("js-min").onclick=()=>jsRun(true);
+ $("js-copy").onclick=()=>{const v=$("js-out").textContent;if(v&&$("js-msg").className==="ok")copy(v,"JSON");else toast("Nothing to copy");};
+ /* ----- SQL ----- */
+ const sqRun=()=>{$("sq-out").textContent=sqlFormat($("sq-in").value,{kwCase:$("sq-case").value,indent:+$("sq-ind").value});};
+ $("sq-go").onclick=sqRun;$("sq-case").onchange=sqRun;$("sq-ind").onchange=sqRun;
+ $("sq-copy").onclick=()=>{const v=$("sq-out").textContent;if(v)copy(v,"SQL");else toast("Nothing to copy");};
+ /* ----- cron ----- */
+ zoneOpts($("cr-tz"));$("cr-tz").value="Asia/Kolkata";
+ function crRun(){const tz=$("cr-tz").value;$("cr-err").textContent="";try{const c=cronParse($("cr-in").value);$("cr-desc").textContent=cronDescribe(c);
+   if(c.reboot){$("cr-out").textContent="";return}const n=cronNext(c,Date.now(),tz,5);
+   $("cr-out").innerHTML=n.length?`<table class="data"><thead><tr><th>#</th><th>${escH(tz)}</th><th>UTC</th><th>In</th></tr></thead><tbody>${n.map((t,i)=>{const a=zfmt(t,tz),u=zfmt(t,"UTC");return`<tr><td>${i+1}</td><td class="mono">${a.wd} ${a.date} ${a.time.slice(0,5)} (${a.off})</td><td class="mono">${u.date} ${u.time.slice(0,5)}</td><td>${relTime(t,Date.now())}</td></tr>`}).join("")}</tbody></table>`:"<p>No run in the next 8 years (impossible date such as 31 February?).</p>";}
+  catch(e){$("cr-err").textContent=e.message;$("cr-desc").textContent="";$("cr-out").textContent="";}}
+ $("cr-in").addEventListener("input",crRun);$("cr-tz").onchange=crRun;document.querySelectorAll("[data-cron]").forEach(b=>b.onclick=()=>{$("cr-in").value=b.dataset.cron;crRun();});crRun();
+ /* ----- encode ----- */
+ const enSet=(v,err)=>{$("en-out").textContent=v;$("en-err").textContent=err||"";};
+ const enTry=f=>{try{f()}catch(e){enSet("",e.message.replace(/^URIError: /,""));}};
+ $("en-b64e").onclick=()=>enTry(()=>enSet(b64Encode($("en-in").value,$("en-url").checked)));
+ $("en-b64d").onclick=()=>enTry(()=>{const r=b64Decode($("en-in").value);r.text!==undefined?enSet(r.text):enSet(r.hex,`Decoded ${r.bytes} bytes that are not UTF-8 text; showing hex.`);});
+ $("en-ue").onclick=()=>enTry(()=>enSet(($("en-full").checked?encodeURI:encodeURIComponent)($("en-in").value)));
+ $("en-ud").onclick=()=>enTry(()=>{try{enSet(($("en-full").checked?decodeURI:decodeURIComponent)($("en-in").value.replace(/\+/g,"%20")))}catch(e){throw new Error("Malformed percent-encoding")}});
+ $("en-copy").onclick=()=>{const v=$("en-out").textContent;if(v)copy(v,"Result");else toast("Nothing to copy");};
+ let hsSeq=0;async function hsShow(input,label){const my=++hsSeq;const r=await hashAll(input);if(my!==hsSeq)return;$("hs-src").textContent=label;
+  $("hs-out").innerHTML=Object.entries(r).map(([k,v])=>`<tr><th scope="row">${k}</th><td class="mono">${escH(v)}</td><td><button type="button" class="btn btn-sm" data-h="${escH(v)}" aria-label="Copy ${k}">Copy</button></td></tr>`).join("");}
+ $("hs-out").addEventListener("click",e=>{const b=e.target.closest("[data-h]");if(b)copy(b.dataset.h,"Hash");});
+ $("hs-in").addEventListener("input",()=>{$("hs-file").value="";hsShow($("hs-in").value,"Hashing the text above");});
+ $("hs-file").addEventListener("change",async()=>{const f=$("hs-file").files[0];if(!f)return;if(f.size>512*1024*1024){toast("File too large (512 MB max)");return}hsShow(new Uint8Array(await f.arrayBuffer()),`File: ${f.name} (${f.size.toLocaleString()} bytes)`);});
+ hsShow("","Hashing the text above");
+ const uuRun=()=>{const n=Math.min(1000,Math.max(1,parseInt($("uu-n").value,10)||1)),v7=$("uu-ver").value==="7",a=[];let ms=Date.now();
+  for(let i=0;i<n;i++)a.push(v7?uuidV7(ms):uuidV4());if(v7)a.sort();$("uu-out").textContent=($("uu-up").checked?a.map(x=>x.toUpperCase()):a).join("\n");};
+ $("uu-go").onclick=uuRun;$("uu-ver").onchange=uuRun;$("uu-up").onchange=uuRun;$("uu-copy").onclick=()=>{const v=$("uu-out").textContent;if(v)copy(v,"UUIDs");};uuRun();
+ /* ----- diff ----- */
+ let lastUni="";
+ function dfRun(){const msg=$("df-msg");try{const d=diffLines($("df-a").value,$("df-b").value,{ignoreWs:$("df-ws").checked,ignoreCase:$("df-case").checked});const st=diffStats(d);
+   lastUni=unifiedDiff(d,3,"original","changed");msg.className=st.add||st.del?"":"ok";msg.textContent=st.add||st.del?`${st.del} line(s) removed, ${st.add} line(s) added`:"No differences";
+   if(!st.add&&!st.del){$("df-out").textContent="";return}
+   if($("df-view").value==="uni"){$("df-out").innerHTML=`<div class="diffwrap"><pre class="pre uni" style="border:0;max-height:none">${lastUni.split("\n").map(l=>{const c=l.startsWith("@@")?"h":l.startsWith("+")&&!l.startsWith("+++")?"a":l.startsWith("-")&&!l.startsWith("---")?"d":"";return c?`<span class="${c}">${escH(l)}</span>`:escH(l)+"\n"}).join("")}</pre></div>`;return}
+   const rows=[];let blk=[];const cell=(o,side)=>o?`<td class="ln">${(side==="a"?o.a:o.b)+1}</td><td class="${side==="a"?"del":"add"}">${escH(side==="a"?d.A[o.a]:d.B[o.b])}</td>`:`<td class="ln"></td><td class="emp"></td>`;
+   const flush=()=>{const dl=blk.filter(o=>o.t==="-"),ad=blk.filter(o=>o.t==="+");for(let k=0;k<Math.max(dl.length,ad.length);k++)rows.push(`<tr>${cell(dl[k],"a")}${cell(ad[k],"b")}</tr>`);blk=[];};
+   for(const o of d.ops){if(o.t==="="){flush();rows.push(`<tr><td class="ln">${o.a+1}</td><td>${escH(d.A[o.a])}</td><td class="ln">${o.b+1}</td><td>${escH(d.B[o.b])}</td></tr>`)}else blk.push(o)}flush();
+   $("df-out").innerHTML=`<div class="diffwrap"><table class="diff" aria-label="Side by side diff"><tbody>${rows.join("")}</tbody></table></div>`;}
+  catch(e){msg.className="err";msg.textContent=e.message;$("df-out").textContent="";}}
+ $("df-go").onclick=dfRun;["df-view","df-ws","df-case"].forEach(i=>$(i).onchange=dfRun);
+ $("df-copy").onclick=()=>{if(lastUni)copy(lastUni,"Diff");else toast("No differences to copy");};
+ /* ----- units ----- */
+ $("un-u").innerHTML=UNITS.map(([u])=>`<option${u==="GB"?" selected":""}>${u}</option>`).join("");
+ const fmtN=v=>v===0?"0":v>=1e21||v<1e-6?v.toExponential(6):v.toLocaleString("en-US",{maximumFractionDigits:6});
+ function unRun(){try{const r=convertBytes($("un-v").value.replace(/,/g,""),$("un-u").value);$("un-err").textContent="";const dec=r.slice(0,6),bin=[["B",r[0][1]]].concat(r.slice(6));
+   $("un-out").innerHTML=dec.map((x,i)=>`<tr><td class="mono">${fmtN(x[1])}</td><th scope="row">${x[0]}</th><td class="mono">${fmtN(bin[i][1])}</td><th scope="row">${bin[i][0]}</th></tr>`).join("");}
+  catch(e){$("un-err").textContent=e.message;$("un-out").textContent="";}}
+ $("un-v").addEventListener("input",unRun);$("un-u").onchange=unRun;unRun();
+ function ioRun(){const s=$("io-solve").value;["iops","kib","mibs"].forEach(k=>$("io-"+k).disabled=k===s);
+  const v={iops:+$("io-iops").value.replace(/,/g,""),kib:+$("io-kib").value.replace(/,/g,""),mibs:+$("io-mibs").value.replace(/,/g,"")};
+  const need=["iops","kib","mibs"].filter(k=>k!==s);if(need.some(k=>!(v[k]>0))){$("io-out").textContent="Enter positive numbers.";return}
+  const r=iopsSolve(s,v);$("io-"+s).value=+r.toFixed(3);
+  $("io-out").textContent=s==="mibs"?`≈ ${fmtN(r)} MiB/s (${fmtN(r*1.048576)} MB/s)`:s==="iops"?`≈ ${fmtN(r)} IOPS needed`:`≈ ${fmtN(r)} KiB average IO size`;}
+ $("units").addEventListener("input",e=>{if(e.target.id.startsWith("io-"))ioRun()});$("io-solve").onchange=ioRun;ioRun();
 }
 </script>
 </body>
