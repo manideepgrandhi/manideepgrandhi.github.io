@@ -93,7 +93,9 @@ table.data td.mono{word-break:break-all}
 .diffwrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}
 @media (max-width:820px){.grid2{grid-template-columns:1fr}}
 @media (max-width:640px){.toolnav{top:60px}.diff td.ln{width:32px;padding:1px 4px}}
-.clocks th[scope=row]{text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink)}.clocks td.mono{white-space:nowrap}
+table.data th[scope=row]{text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink)}.clocks td.mono{white-space:nowrap}
+.field[hidden]{display:none}.cvgrid input,.cvgrid select{width:100%}#convert input[type=number]{width:68px}.cvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 14px}.dd{display:inline-block;background:#fff4e0;color:var(--warn);font-family:Inter,system-ui,sans-serif;font-size:.75rem;font-weight:700;padding:1px 7px;border-radius:99px}.warnbox{background:#fff4e0;border:1px solid #f3d29a;color:#7a4300;border-radius:10px;padding:10px 12px;margin:6px 0 12px;font-size:.92rem}
+@media (max-width:820px){.cvgrid{grid-template-columns:1fr 1fr}}@media (max-width:640px){.cvgrid{grid-template-columns:1fr}.cvt thead{display:none}.cvt tr{display:block;padding:8px 0;border-bottom:1px solid var(--line)}.cvt th,.cvt td{display:block;border:0!important;padding:2px 0}}
 .clocks .big{font-size:1.15rem;font-weight:700;color:var(--ink);white-space:nowrap}
 @media (max-width:640px){.clocks thead{display:none}.clocks tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}.clocks th,.clocks td{border:0!important;padding:2px 0}.clocks td.mono{white-space:normal}.clocks td:last-child{grid-column:1/-1}}
 </style>
@@ -121,6 +123,42 @@ table.data td.mono{word-break:break-all}
  <div class="card" style="padding:8px 14px"><table class="data clocks"><thead><tr><th>Zone</th><th>Date</th><th>Time</th><th>Abbr / offset</th><th>DST</th></tr></thead><tbody id="nw-out"></tbody></table></div>
  <p class="note" id="nw-az-note" hidden>Most of Arizona (America/Phoenix) stays on MST (UTC−07:00) all year with no daylight saving time. In summer it matches Pacific time; in winter it matches Mountain time. The Navajo Nation in Arizona does observe DST.</p>
  <p class="note">Next change = the next time that zone's UTC offset changes, found by scanning ahead in your browser's time zone data (not a fixed list).</p>
+</div></section>
+<section id="convert" class="panel" role="tabpanel" aria-labelledby="tab-convert" hidden><div class="wrap">
+ <h2>Time zone converter</h2>
+ <p class="lead">Convert a date and time from one zone to UTC, IST and US zones. Daylight saving gaps and repeated hours are detected.</p>
+ <div class="card">
+  <div class="cvgrid">
+   <div class="field"><label for="cv-date">Date</label><input class="txt" type="date" id="cv-date" required></div>
+   <div class="field"><label for="cv-time">Time</label><input class="txt" type="time" id="cv-time" step="1" required></div>
+   <div class="field"><label for="cv-src">From zone</label><select id="cv-src"></select></div>
+   <div class="field" id="cv-other-f" hidden><label for="cv-other">IANA zone (type to search)</label><input class="txt" type="text" id="cv-other" list="cv-iana" placeholder="Europe/London" autocomplete="off" spellcheck="false"><datalist id="cv-iana"></datalist></div>
+  </div>
+  <div class="bar"><button type="button" class="btn btn-sm btn-primary" id="cv-now">Now</button><button type="button" class="btn btn-sm" id="cv-swap">Swap to target ↓</button>
+   <label class="inline" style="font-weight:500"><input type="checkbox" id="cv-az"> Include Arizona</label>
+   <button type="button" class="btn btn-sm" id="cv-copy">Copy results</button><button type="button" class="btn btn-sm" id="cv-share">Share link</button></div>
+  <div id="cv-warn" role="alert"></div>
+  <div class="field" style="max-width:340px"><label for="cv-swapto">Swap target</label><select id="cv-swapto"></select></div>
+  <div id="cv-out" aria-live="polite"></div>
+ </div>
+ <div class="grid2" style="margin-top:16px">
+  <div class="card">
+   <h3 class="sub" style="margin-top:0">Add / subtract a duration</h3>
+   <div class="inline"><select id="cv-sign" aria-label="Add or subtract"><option value="1">+ add</option><option value="-1">− subtract</option></select>
+    <label class="sr" for="cv-dd">Days</label><input type="number" id="cv-dd" value="0" min="0" aria-label="Days"> d
+    <label class="sr" for="cv-dh">Hours</label><input type="number" id="cv-dh" value="0" min="0" aria-label="Hours"> h
+    <label class="sr" for="cv-dm">Minutes</label><input type="number" id="cv-dm" value="0" min="0" aria-label="Minutes"> m</div>
+   <p id="cv-add-out" class="sub" aria-live="polite"></p>
+   <p class="note">Days move the calendar date and keep the same clock time in the "from" zone. Hours and minutes are exact elapsed time, so adding 24 h across a DST change lands one clock hour off from adding 1 day.</p>
+  </div>
+  <div class="card">
+   <h3 class="sub" style="margin-top:0">Difference between two date-times</h3>
+   <p class="counts">Start = the date/time above. End:</p>
+   <div class="inline"><label class="sr" for="cv-e-date">End date</label><input class="txt" type="date" id="cv-e-date"><label class="sr" for="cv-e-time">End time</label><input class="txt" type="time" id="cv-e-time" step="1"><select id="cv-e-tz" aria-label="End zone"></select></div>
+   <p id="cv-diff-out" class="sub" aria-live="polite"></p>
+   <p class="note">Elapsed time between the two exact moments, so it includes any DST hour gained or lost.</p>
+  </div>
+ </div>
 </div></section>
 <section id="password" class="panel" role="tabpanel" aria-labelledby="tab-password" hidden><div class="wrap">
  <h2 id="pw-h">Random password generator</h2>
@@ -526,6 +564,20 @@ function zNextChange(ms,tz,days=400){const o=zoffset(ms,tz);let lo=ms,step=86400
  return null;}
 function zClock(ms,tz,h12){const p=zparts(ms,tz),off=zoffset(ms,tz);const hh=h12?((p.h+11)%12+1):p.h;
  return{date:`${p.wd} ${pad(p.y,4)}-${pad(p.mo)}-${pad(p.d)}`,time:`${h12?hh:pad(hh)}:${pad(p.mi)}:${pad(p.s)}${h12?(p.h<12?" AM":" PM"):""}`,abbr:zAbbr(ms,tz),off:"UTC"+offStr(off),dst:zIsDst(ms,tz)};}
+/* ---------- convert ---------- */
+const CV_ZONES=[["UTC","UTC"],["India (IST)","Asia/Kolkata"],["US Eastern","America/New_York"],["US Mountain","America/Denver"],["US Pacific","America/Los_Angeles"],["Arizona","America/Phoenix"]];
+function zValid(tz){try{new Intl.DateTimeFormat("en-US",{timeZone:tz});return true}catch(e){return false}}
+function resolveWall(y,mo,d,h,mi,s,tz){const g=wallUTC(y,mo,d,h,mi,s),offs=[...new Set([zoffset(g-86400000,tz),zoffset(g,tz),zoffset(g+86400000,tz)])],c=[];
+ for(const o of offs){const t=g-o,p=zparts(t,tz);if(p.y===y&&p.mo===mo&&p.d===d&&p.h===h&&p.mi===mi&&p.s===s&&!c.includes(t))c.push(t);}
+ c.sort((a,b)=>a-b);if(c.length===1)return{status:"ok",ms:c[0],options:c};if(c.length>1)return{status:"ambiguous",ms:c[0],options:c};
+ const before=zoffset(g-86400000,tz),after=zoffset(g+86400000,tz),t=g-before;return{status:"gap",ms:t,options:[t],gapMin:(after-before)/60000};}
+function dayDiff(ms,srcTz,dstTz){const a=zparts(ms,srcTz),b=zparts(ms,dstTz);return Math.round((Date.UTC(b.y,b.mo-1,b.d)-Date.UTC(a.y,a.mo-1,a.d))/86400000);}
+function cvRow(ms,tz,srcTz){const off=zoffset(ms,tz),f=zfmt(ms,tz);return{tz,date:f.date,wd:f.wd,time:f.time,abbr:zAbbr(ms,tz),off:"UTC"+offStr(off),iso:f.iso,dd:dayDiff(ms,srcTz,tz),dst:zIsDst(ms,tz)};}
+function addDuration(ms,tz,{days=0,hours=0,minutes=0}){let t=ms;let note=null;
+ if(days){const p=zparts(ms,tz),dt=new Date(wallUTC(p.y,p.mo,p.d+days,0,0,0));const r=resolveWall(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate(),p.h,p.mi,p.s,tz);t=r.ms;if(r.status!=="ok")note=r.status;}
+ return{ms:t+(hours*60+minutes)*60000,note};}
+function diffDuration(a,b){const neg=b<a,ms=Math.abs(b-a),m=Math.floor(ms/60000);return{neg,totalMinutes:neg?-m:m,days:Math.floor(m/1440),hours:Math.floor(m%1440/60),minutes:m%60,seconds:Math.floor(ms%60000/1000)};}
+function calendarDays(a,b,tz){const p=zparts(a,tz),q=zparts(b,tz);return Math.round((Date.UTC(q.y,q.mo-1,q.d)-Date.UTC(p.y,p.mo-1,p.d))/86400000);}
 if(typeof document!=="undefined"){
  const $=id=>document.getElementById(id);let tt;
  const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1600);};
@@ -548,10 +600,10 @@ if(typeof document!=="undefined"){
  $("cs-copy").onclick=()=>{if(ta.value)copy(ta.value,"Text");else toast("Nothing to copy");};
  $("cs-clear").onclick=()=>{ta.value="";upd();ta.focus();};
  /* ----- tool tabs ----- */
- const TABS=[["now","Time now"],["password","Password"],["case","Case"],["epoch","Epoch / time"],["json","JSON"],["sql","SQL"],["cron","Cron"],["encode","Encode & hash"],["diff","Diff"],["units","Units"]];
+ const TABS=[["now","Time now"],["convert","Convert"],["password","Password"],["case","Case"],["epoch","Epoch / time"],["json","JSON"],["sql","SQL"],["cron","Cron"],["encode","Encode & hash"],["diff","Diff"],["units","Units"]];
  const tl=$("toolnav-list");
  TABS.forEach(([id,label])=>{const b=document.createElement("button");b.type="button";b.id="tab-"+id;b.setAttribute("role","tab");b.setAttribute("aria-controls",id);b.textContent=label;b.onclick=()=>show(id,true);tl.append(b);});
- function show(id,focus){if(!TABS.some(t=>t[0]===id))id="now";TABS.forEach(([t])=>{const on=t===id;$(t).hidden=!on;const b=$("tab-"+t);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
+ function show(id,focus){id=String(id||"").split("?")[0];if(!TABS.some(t=>t[0]===id))id="now";TABS.forEach(([t])=>{const on=t===id;$(t).hidden=!on;const b=$("tab-"+t);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
   if(focus){history.replaceState(null,"","#"+id);$("tab-"+id).focus();}$("tab-"+id).scrollIntoView({block:"nearest",inline:"nearest"});}
  tl.addEventListener("keydown",e=>{const i=TABS.findIndex(t=>"tab-"+t[0]===document.activeElement.id);if(i<0)return;let k=null;
   if(e.key==="ArrowRight")k=(i+1)%TABS.length;else if(e.key==="ArrowLeft")k=(i-1+TABS.length)%TABS.length;else if(e.key==="Home")k=0;else if(e.key==="End")k=TABS.length-1;if(k!==null){e.preventDefault();show(TABS[k][0],true);}});
@@ -642,6 +694,44 @@ if(typeof document!=="undefined"){
  $("nw-12").onchange=nwRender;$("nw-az").onchange=()=>{$("nw-az-note").hidden=!$("nw-az").checked;nwRender();};
  $("nw-copy").onclick=()=>{nwRender();copy(nwRows.map(r=>`${r.l} (${r.tz}): ${r.date} ${r.time} ${r.abbr} ${r.off}${r.tz!=="UTC"?(r.dst?" DST":""):""}${r.nx&&r.nx!=="No DST changes"?" | next: "+r.nx:""}`).join("\n"),"Times");};
  nwTick();
+ /* ----- convert ----- */
+ const cvLocal=["Local ("+localTz+")",localTz];const cvAll=CV_ZONES.concat([cvLocal]);
+ const cvOpts=extra=>cvAll.map(([l,t])=>`<option value="${escH(t)}">${escH(l)}</option>`).join("")+(extra?`<option value="__other">Other IANA zone…</option>`:"");
+ $("cv-src").innerHTML=cvOpts(true);$("cv-e-tz").innerHTML=cvOpts(true).replace('<option value="__other">Other IANA zone…</option>',"");$("cv-src").value="Asia/Kolkata";$("cv-e-tz").value="Asia/Kolkata";
+ try{if(Intl.supportedValuesOf)$("cv-iana").innerHTML=Intl.supportedValuesOf("timeZone").map(z=>`<option value="${escH(z)}">`).join("");}catch(e){}
+ const cvSrc=()=>{const v=$("cv-src").value;if(v!=="__other")return v;const o=$("cv-other").value.trim();return zValid(o)&&o?o:null;};
+ const cvTargets=()=>[["UTC","UTC"],["India","Asia/Kolkata"],["US Eastern","America/New_York"],["US Mountain","America/Denver"],["US Pacific","America/Los_Angeles"]].concat($("cv-az").checked?[["Arizona","America/Phoenix"]]:[]);
+ const parseDT=(d,t)=>{const a=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d),b=/^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(t||"00:00");return a&&b?[+a[1],+a[2],+a[3],+b[1],+b[2],+(b[3]||0)]:null;};
+ const setDT=(ms,tz,di,ti)=>{const p=zparts(ms,tz);$(di).value=`${pad(p.y,4)}-${pad(p.mo)}-${pad(p.d)}`;$(ti).value=`${pad(p.h)}:${pad(p.mi)}:${pad(p.s)}`;};
+ let cvRes=null,cvText="";
+ function cvTable(ms,src,title){const rows=cvTargets().map(([l,tz])=>({l,...cvRow(ms,tz,src)}));
+  return{rows,html:`${title?`<p class="sub">${escH(title)}</p>`:""}<table class="data cvt"><thead><tr><th>Zone</th><th>Date &amp; time</th><th>Abbr / offset</th><th>ISO 8601</th></tr></thead><tbody>${rows.map(r=>`<tr><th scope="row">${escH(r.l)}<br><small class="counts">${escH(r.tz)}</small></th><td class="mono">${r.wd} ${r.date} ${r.time}${r.dd?` <span class="dd">${r.dd>0?"+":"−"}${Math.abs(r.dd)} day</span>`:""}</td><td class="mono">${escH(r.abbr)}<br><small class="counts">${r.off}</small></td><td class="mono">${r.iso}</td></tr>`).join("")}</tbody></table>`};}
+ function cvRun(){$("cv-other-f").hidden=$("cv-src").value!=="__other";const src=cvSrc(),v=parseDT($("cv-date").value,$("cv-time").value),W=$("cv-warn");W.innerHTML="";
+  if(!src){W.innerHTML='<p class="err">Unknown time zone. Pick one from the list.</p>';$("cv-out").textContent="";cvRes=null;return}
+  if(!v){W.innerHTML='<p class="err">Enter a date and time.</p>';$("cv-out").textContent="";cvRes=null;return}
+  const r=resolveWall(...v,src);cvRes={...r,src};const ab=r.options.map(t=>zAbbr(t,src));let html="",txt=[];
+  if(r.status==="gap"){const f=zfmt(r.ms,src);W.innerHTML=`<p class="warnbox">⚠ ${$("cv-time").value} does not exist on ${$("cv-date").value} in ${escH(src)}: clocks jump forward ${r.gapMin} minutes. Showing the shifted time ${f.time} ${escH(zAbbr(r.ms,src))}.</p>`;}
+  if(r.status==="ambiguous")W.innerHTML=`<p class="warnbox">⚠ ${$("cv-time").value} happens twice on ${$("cv-date").value} in ${escH(src)} (clocks fall back). Both options are shown: ${ab.map(escH).join(" first, then ")}.</p>`;
+  r.options.forEach((ms,i)=>{const t=cvTable(ms,src,r.options.length>1?`Option ${i+1}: ${zAbbr(ms,src)} (${"UTC"+offStr(zoffset(ms,src))})`:"");html+=t.html+`<p class="counts">Epoch: <span class="mono">${Math.floor(ms/1000)}</span> s · <span class="mono">${ms}</span> ms</p>`;
+   txt.push((r.options.length>1?`Option ${i+1} (${zAbbr(ms,src)}):\n`:"")+t.rows.map(x=>`${x.l} (${x.tz}): ${x.wd} ${x.date} ${x.time} ${x.abbr} ${x.off}${x.dd?` (${x.dd>0?"+":""}${x.dd} day)`:""}  ${x.iso}`).join("\n")+`\nEpoch: ${Math.floor(ms/1000)}`);});
+  $("cv-out").innerHTML=html;cvText=`From ${$("cv-date").value} ${$("cv-time").value} ${src}\n`+txt.join("\n\n");cvAdd();cvDiff();}
+ function cvAdd(){if(!cvRes){$("cv-add-out").textContent="";return}const s=+$("cv-sign").value,g=id=>Math.max(0,+$(id).value||0);
+  const r=addDuration(cvRes.ms,cvRes.src,{days:s*g("cv-dd"),hours:s*g("cv-dh"),minutes:s*g("cv-dm")});const f=zfmt(r.ms,cvRes.src);
+  $("cv-add-out").textContent=`= ${f.wd} ${f.date} ${f.time} ${zAbbr(r.ms,cvRes.src)} (${"UTC"+offStr(zoffset(r.ms,cvRes.src))})`+(r.note==="gap"?" · the day's clock time fell in a DST gap and was shifted":r.note==="ambiguous"?" · the clock time happens twice that day; earlier one used":"");}
+ function cvDiff(){const o=$("cv-diff-out");if(!cvRes){o.textContent="";return}const v=parseDT($("cv-e-date").value,$("cv-e-time").value);if(!v){o.textContent="Enter an end date and time.";return}
+  const tz=$("cv-e-tz").value,e=resolveWall(...v,tz),d=diffDuration(cvRes.ms,e.ms);
+  o.textContent=`${d.neg?"−":""}${d.days} d ${d.hours} h ${d.minutes} m${d.seconds?` ${d.seconds} s`:""} (${Math.abs(d.totalMinutes).toLocaleString()} minutes${d.neg?", end is before start":""})`+(e.status!=="ok"?` · end time ${e.status==="gap"?"is in a DST gap (shifted)":"is ambiguous (earlier one used)"}`:"");}
+ function cvFill(){$("cv-swapto").innerHTML=cvTargets().filter(([,t])=>t!==cvSrc()).map(([l,t])=>`<option value="${escH(t)}">${escH(l)}</option>`).join("");}
+ $("cv-now").onclick=()=>{const src=cvSrc()||"UTC";setDT(Date.now(),src,"cv-date","cv-time");cvRun();};
+ $("cv-swap").onclick=()=>{if(!cvRes)return;const to=$("cv-swapto").value;setDT(cvRes.ms,to,"cv-date","cv-time");$("cv-src").value=cvAll.some(z=>z[1]===to)?to:"__other";if($("cv-src").value==="__other")$("cv-other").value=to;cvFill();cvRun();};
+ $("cv-copy").onclick=()=>{if(cvText&&cvRes)copy(cvText,"Results");else toast("Nothing to copy");};
+ $("cv-share").onclick=()=>{const src=cvSrc();if(!src||!cvRes){toast("Fix the input first");return}const q=new URLSearchParams({d:$("cv-date").value,t:$("cv-time").value,tz:src});if($("cv-az").checked)q.set("az","1");
+  history.replaceState(null,"","#convert?"+q.toString());copy(location.href,"Link");};
+ $("convert").addEventListener("input",e=>{if(e.target.id==="cv-src"||e.target.id==="cv-other"||e.target.id==="cv-az")cvFill();if(/^cv-(d[dhm]|sign)$/.test(e.target.id))cvAdd();else if(/^cv-e-/.test(e.target.id))cvDiff();else cvRun();});
+ function cvFromHash(){const h=location.hash;if(!h.startsWith("#convert?"))return false;const q=new URLSearchParams(h.slice(9));if(q.get("d"))$("cv-date").value=q.get("d");if(q.get("t"))$("cv-time").value=q.get("t");
+  const tz=q.get("tz");if(tz&&zValid(tz)){if(cvAll.some(z=>z[1]===tz))$("cv-src").value=tz;else{$("cv-src").value="__other";$("cv-other").value=tz;}}$("cv-az").checked=q.get("az")==="1";return true;}
+ if(!cvFromHash())setDT(Date.now(),"Asia/Kolkata","cv-date","cv-time");setDT(Date.now()+86400000,"Asia/Kolkata","cv-e-date","cv-e-time");cvFill();cvRun();
+ window.addEventListener("hashchange",()=>{if(cvFromHash()){cvFill();cvRun();}});
 }
 </script>
 </body>

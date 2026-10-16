@@ -10,6 +10,10 @@ Personal portfolio and resume, live at https://manideepgrandhi.github.io/
 [/tools/](https://manideepgrandhi.github.io/tools/) is one self-contained page with tabs (deep links such as `/tools/#cron`). It works offline, makes no network requests, and does not store anything you type.
 
 - **Time now** (`/tools/#now`, default tab): live clocks for UTC, IST, US Eastern, Mountain and Pacific, plus optional Arizona. Shows date, 12/24-hour time, abbreviation and UTC offset, whether DST is in effect, and the next DST change, found by scanning offsets. Daylight saving comes from the browser's IANA zone data. Has a copy-all button.
+- **Convert** (`/tools/#convert`): converts a date and time from UTC, IST, US zones, Arizona, local or any IANA zone (searchable) to UTC, IST, ET, MT, PT and optionally Arizona. Shows abbreviation, offset, ±1-day markers, ISO 8601 and epoch.
+  - Warns about spring-forward gaps and shows the shifted time; shows both options for fall-back repeats.
+  - Swap and Now buttons, add/subtract days, hours or minutes, and the difference between two date-times, all DST-aware.
+  - "Share link" puts the inputs in the URL hash only when clicked.
 - **Password**: `crypto.getRandomValues` with rejection sampling. Length 8–128, character-set toggles, exclude look-alikes, a "safe for Postgres / shell" symbol set, at least one character from each selected set guaranteed, entropy shown, up to 50 at once.
 - **Case**: UPPERCASE, lowercase, Title Case, Sentence case, tOGGLE case, with character and word counts.
 - **Epoch / time**: epoch in s, ms, µs or ns to date and back. Shows UTC, IST, US Eastern, US Pacific and local time, plus ISO 8601.
