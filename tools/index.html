@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools | Manideep Grandhi</title>
+<meta name="description" content="Free in-browser tools: random password generator and text case converter. Runs offline; nothing is stored or sent.">
+<meta name="referrer" content="no-referrer">
+<style>
+:root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff;--ok:#127a3a;--warn:#b25e00;--bad:#c0262d}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;color:var(--ink);letter-spacing:-.02em}
+.logo span{color:var(--accent)}
+.links{display:flex;gap:22px;font-size:.92rem}
+.links a{color:var(--muted);font-weight:500}
+.links a:hover,.links a[aria-current]{color:var(--accent)}
+header.hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);padding:56px 0 24px}
+.eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:.82rem;padding:6px 12px;border-radius:999px;margin-bottom:14px}
+h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;letter-spacing:-.03em;font-weight:800}
+.summary{max-width:720px;color:var(--muted);font-size:1.05rem;margin-top:12px}
+section{padding:40px 0}
+section+section{border-top:1px solid var(--line)}
+h2{font-size:1.6rem;letter-spacing:-.02em;font-weight:800;margin-bottom:6px}
+.lead{color:var(--muted);margin-bottom:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.cols{display:grid;grid-template-columns:320px 1fr;gap:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font:inherit;font-weight:600;font-size:.93rem;cursor:pointer;transition:.2s;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(15,111,222,.28)}
+.btn-primary:hover{background:#0b5bb8;color:#fff}
+.btn-sm{padding:6px 12px;font-size:.85rem}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7fb3f5;outline-offset:2px}
+label{font-weight:600;font-size:.92rem}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.opt{display:flex;align-items:flex-start;gap:10px;margin:10px 0;font-size:.93rem}
+.opt input{width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none}
+.opt small{display:block;color:var(--muted);font-weight:400;font-size:.82rem}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=number]{width:84px;padding:6px 8px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.len{font-weight:800;color:var(--accent);font-size:1.2rem}
+.out{list-style:none;display:grid;gap:8px}
+.out li{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.out code{flex:1;font:500 1rem/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all}
+.meter{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;width:0;transition:.2s}
+.strength{font-size:.9rem;color:var(--muted)}
+.strength b{color:var(--ink)}
+.note{color:var(--muted);font-size:.85rem;margin-top:14px}
+.err{color:var(--bad);font-weight:600;font-size:.9rem}
+textarea{width:100%;min-height:200px;padding:14px;border:1.5px solid var(--line);border-radius:10px;font:1rem/1.5 inherit;font-family:inherit;resize:vertical;background:#fff;color:var(--ink)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.counts{color:var(--muted);font-size:.88rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+@media (max-width:640px){.links{gap:14px}.links a.hide-m{display:none}header.hero{padding:36px 0 16px}section{padding:32px 0}.card{padding:18px}.bar .btn{flex:1 1 calc(50% - 8px)}}
+</style>
+</head>
+<body>
+<nav aria-label="Main"><div class="wrap">
+ <a href="/" class="logo">Manideep<span>.</span></a>
+ <div class="links"><a class="hide-m" href="/#skills">Skills</a><a class="hide-m" href="/#experience">Experience</a><a href="#password" aria-current="page">Tools</a><a href="/blog/">Blog</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+ <span class="eyebrow">Runs in your browser · works offline</span>
+ <h1>Tools</h1>
+ <p class="summary">A password generator and a text case converter. Everything happens on this page: nothing is saved, logged or sent anywhere.</p>
+</div></header>
+
+<main>
+<section id="password" aria-labelledby="pw-h"><div class="wrap">
+ <h2 id="pw-h">Random password generator</h2>
+ <p class="lead">Uses the browser's cryptographic random generator (<code>crypto.getRandomValues</code>) with rejection sampling, so every character is equally likely.</p>
+ <div class="cols">
+  <form class="card" id="pw-form" onsubmit="return false">
+   <div class="row"><label for="pw-len">Length</label><span class="len" id="pw-len-v" aria-hidden="true">20</span></div>
+   <input type="range" id="pw-len" min="8" max="128" value="20" aria-valuetext="20 characters">
+   <fieldset style="border:0;margin-top:8px"><legend class="sr">Character sets</legend>
+    <div class="opt"><input type="checkbox" id="pw-upper" checked><label for="pw-upper">Uppercase A–Z</label></div>
+    <div class="opt"><input type="checkbox" id="pw-lower" checked><label for="pw-lower">Lowercase a–z</label></div>
+    <div class="opt"><input type="checkbox" id="pw-digits" checked><label for="pw-digits">Digits 0–9</label></div>
+    <div class="opt"><input type="checkbox" id="pw-symbols" checked><label for="pw-symbols">Symbols</label></div>
+    <div class="opt"><input type="checkbox" id="pw-safe"><label for="pw-safe">Safe for Postgres / shell<small>Symbols limited to <code>- _ . ~ + = ^</code>. No quotes, backslash, $, @, :, /, #, %, spaces.</small></label></div>
+    <div class="opt"><input type="checkbox" id="pw-amb"><label for="pw-amb">Exclude look-alikes<small>0 O o 1 l I | ` ' "</small></label></div>
+   </fieldset>
+   <div class="row" style="margin-top:14px"><label for="pw-n">How many</label><input type="number" id="pw-n" min="1" max="50" value="5"></div>
+   <button type="button" class="btn btn-primary" id="pw-gen" style="width:100%">Generate</button>
+   <p class="note">At least one character from every selected set is guaranteed.</p>
+  </form>
+  <div class="card">
+   <div class="strength" id="pw-strength" aria-live="polite"></div>
+   <div class="meter" aria-hidden="true"><i id="pw-meter"></i></div>
+   <div class="bar"><button type="button" class="btn btn-sm" id="pw-copyall">Copy all</button></div>
+   <ul class="out" id="pw-out" aria-label="Generated passwords"></ul>
+   <p class="note">Tip: store passwords in a password manager. For a psql connection, use <code>\password</code> or a <code>~/.pgpass</code> file instead of putting them in a command line.</p>
+  </div>
+ </div>
+</div></section>
+
+<section id="case" aria-labelledby="case-h"><div class="wrap">
+ <h2 id="case-h">Case converter</h2>
+ <p class="lead">Switch text between capital (block) letters and small letters, and more.</p>
+ <div class="card">
+  <label for="cs-text" class="sr">Text to convert</label>
+  <textarea id="cs-text" placeholder="Type or paste text here…" spellcheck="false"></textarea>
+  <div class="bar" role="group" aria-label="Convert">
+   <button type="button" class="btn" data-case="upper">UPPERCASE</button>
+   <button type="button" class="btn" data-case="lower">lowercase</button>
+   <button type="button" class="btn" data-case="title">Title Case</button>
+   <button type="button" class="btn" data-case="sentence">Sentence case</button>
+   <button type="button" class="btn" data-case="toggle">tOGGLE cASE</button>
+  </div>
+  <div class="row" style="margin:0"><span class="counts" id="cs-count" aria-live="polite">0 characters · 0 words</span>
+   <span><button type="button" class="btn btn-sm btn-primary" id="cs-copy">Copy</button> <button type="button" class="btn btn-sm" id="cs-clear">Clear</button></span></div>
+ </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">© 2026 Manideep Grandhi · <a href="/">Home</a> · <a href="/blog/">Blog</a></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script id="tools-js">
+"use strict";
+const SETS={upper:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",lower:"abcdefghijklmnopqrstuvwxyz",digits:"0123456789",
+ symbols:"!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",safe:"-_.~+=^"};
+const AMBIG="0Oo1lI|`'\"";
+// unbiased integer in [0, n) from crypto.getRandomValues (rejection sampling)
+function randInt(n){if(!(n>0&&n<=4294967296))throw new RangeError("bad range");const lim=Math.floor(4294967296/n)*n;const b=new Uint32Array(1);
+ for(;;){crypto.getRandomValues(b);if(b[0]<lim)return b[0]%n;}}
+function classes(o){const c=[];for(const k of ["upper","lower","digits"])if(o[k])c.push(SETS[k]);if(o.symbols)c.push(o.safe?SETS.safe:SETS.symbols);
+ return c.map(s=>o.amb?[...s].filter(ch=>!AMBIG.includes(ch)).join(""):s).filter(s=>s.length);}
+function genPassword(o){const cl=classes(o);if(!cl.length)throw new Error("Pick at least one character set");const len=o.length;
+ if(len<cl.length)throw new Error("Length too short");const pool=cl.join("");
+ const out=cl.map(s=>s[randInt(s.length)]);while(out.length<len)out.push(pool[randInt(pool.length)]);
+ for(let i=out.length-1;i>0;i--){const j=randInt(i+1);[out[i],out[j]]=[out[j],out[i]];}return out.join("");}
+function entropyBits(o){const n=classes(o).join("").length;return n?o.length*Math.log2(n):0;}
+const toUpper=s=>s.toUpperCase(),toLower=s=>s.toLowerCase();
+const toTitle=s=>s.toLowerCase().replace(/(^|[\s\-_/([{"'“‘])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+const toSentence=s=>s.toLowerCase().replace(/(^\s*|[.!?]\s+|\n\s*)(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+const toToggle=s=>[...s].map(c=>{const u=c.toUpperCase(),l=c.toLowerCase();return c===u?l:u;}).join("");
+const CASES={upper:toUpper,lower:toLower,title:toTitle,sentence:toSentence,toggle:toToggle};
+function counts(s){const w=s.trim()?s.trim().split(/\s+/).length:0;return{chars:[...s].length,words:w};}
+if(typeof document!=="undefined"){
+ const $=id=>document.getElementById(id);let tt;
+ const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1600);};
+ async function copy(text,what){try{await navigator.clipboard.writeText(text);}catch(e){const a=document.createElement("textarea");a.value=text;a.setAttribute("readonly","");a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");}catch(_){}a.remove();}toast(what+" copied");}
+ const opts=()=>({length:+$("pw-len").value,upper:$("pw-upper").checked,lower:$("pw-lower").checked,digits:$("pw-digits").checked,symbols:$("pw-symbols").checked,safe:$("pw-safe").checked,amb:$("pw-amb").checked});
+ function render(){const o=opts();$("pw-len-v").textContent=o.length;$("pw-len").setAttribute("aria-valuetext",o.length+" characters");$("pw-safe").disabled=!o.symbols;
+  const out=$("pw-out");out.textContent="";let n=Math.min(50,Math.max(1,parseInt($("pw-n").value,10)||1));
+  try{for(let i=0;i<n;i++){const p=genPassword(o);const li=document.createElement("li");const c=document.createElement("code");c.textContent=p;
+    const b=document.createElement("button");b.type="button";b.className="btn btn-sm";b.textContent="Copy";b.setAttribute("aria-label","Copy password "+(i+1));b.onclick=()=>copy(p,"Password");li.append(c,b);out.append(li);}
+   const bits=entropyBits(o),lvl=bits<50?["Weak","var(--bad)",25]:bits<80?["Fair","var(--warn)",50]:bits<110?["Strong","var(--ok)",78]:["Very strong","var(--ok)",100];
+   $("pw-strength").innerHTML="Strength: <b>"+lvl[0]+"</b> · ≈"+Math.round(bits)+" bits of entropy ("+classes(o).join("").length+" possible characters)";
+   const m=$("pw-meter");m.style.width=lvl[2]+"%";m.style.background=lvl[1];
+  }catch(e){$("pw-strength").innerHTML='<span class="err">'+e.message+'</span>';$("pw-meter").style.width="0";}}
+ $("pw-form").addEventListener("input",render);$("pw-form").addEventListener("change",render);$("pw-gen").onclick=render;
+ $("pw-copyall").onclick=()=>{const a=[...document.querySelectorAll("#pw-out code")].map(c=>c.textContent);if(a.length)copy(a.join("\n"),a.length+" password"+(a.length>1?"s":""));};
+ render();
+ const ta=$("cs-text");const upd=()=>{const c=counts(ta.value);$("cs-count").textContent=c.chars+" character"+(c.chars===1?"":"s")+" · "+c.words+" word"+(c.words===1?"":"s");};
+ ta.addEventListener("input",upd);
+ document.querySelectorAll("[data-case]").forEach(b=>b.onclick=()=>{ta.value=CASES[b.dataset.case](ta.value);upd();});
+ $("cs-copy").onclick=()=>{if(ta.value)copy(ta.value,"Text");else toast("Nothing to copy");};
+ $("cs-clear").onclick=()=>{ta.value="";upd();ta.focus();};
+}
+</script>
+</body>
+</html>
