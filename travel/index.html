@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f6fde%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Arial,sans-serif%27 font-size=%2738%27 font-weight=%27700%27 fill=%27%23fff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Travel Journal | Manideep Grandhi</title>
+<meta name="description" content="A private travel journal that runs in your browser: trips, photos, timeline, map, stats and wishlist. No account; data stays on your device.">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0f6fde">
+<style>
+:root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff;--ok:#127a3a;--warn:#b25e00;--bad:#c0262d;--bad-soft:#fdeaea;--warn-soft:#fff4e0}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+nav.site{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.site .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-weight:800;color:var(--ink);letter-spacing:-.02em}.logo span{color:var(--accent)}
+.links{display:flex;gap:18px;font-size:.92rem}.links a{color:var(--muted);font-weight:500}.links a:hover,.links a[aria-current]{color:var(--accent)}
+header.hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);padding:28px 0 12px}
+h1{font-size:clamp(1.7rem,4.5vw,2.5rem);line-height:1.15;letter-spacing:-.03em;font-weight:800}
+.summary{color:var(--muted);margin-top:4px}
+h2{font-size:1.35rem;letter-spacing:-.02em;font-weight:800;margin-bottom:10px}
+h3{font-size:1.02rem;font-weight:700;margin-bottom:8px}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-soft);border:1px solid #f3d29a;color:#6b3a00;border-radius:12px;padding:10px 14px;margin-top:14px;font-size:.9rem}
+.banner.urgent{background:var(--bad-soft);border-color:#f2b8b8;color:#7d1a1a}
+.tabs{position:sticky;top:56px;z-index:15;background:rgba(247,249,252,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:flex;gap:6px;align-items:center;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+.tabs a{flex:none;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px}
+.tabs a:hover{color:var(--accent);border-color:var(--accent)}.tabs a[aria-current=page]{background:var(--accent);border-color:var(--accent);color:#fff}
+.tabs .sp{flex:1 0 8px}
+main{padding:20px 0 60px}
+.panel[hidden]{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:10px;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:var(--ink);text-align:center;transition:.15s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn-primary:hover{background:#0b5bb8;color:#fff}
+.btn-danger{color:var(--bad);border-color:#f2b8b8}.btn-danger:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn-sm{padding:6px 11px;font-size:.84rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid #7fb3f5;outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.muted{color:var(--muted)}.small{font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters{display:grid;grid-template-columns:2fr repeat(5,1fr);gap:8px;margin-bottom:14px}
+input,select,textarea{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-width:0}
+textarea{min-height:110px;resize:vertical}
+label{font-weight:600;font-size:.88rem}
+.field{display:flex;flex-direction:column;gap:5px}
+.fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s6{grid-column:1/-1}
+fieldset{border:0}legend{font-weight:600;font-size:.88rem;margin-bottom:5px}
+.stars{display:flex;gap:2px;flex-direction:row-reverse;justify-content:flex-end}
+.stars input{position:absolute;opacity:0;width:1px;height:1px}
+.stars label{font-size:1.6rem;color:#c9d1dd;cursor:pointer;padding:0 2px;line-height:1}
+.stars input:checked~label,.stars label:hover,.stars label:hover~label{color:#f2a900}
+.stars input:focus-visible+label{outline:3px solid #7fb3f5;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.trip{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;color:inherit;transition:.15s}
+.trip:hover{border-color:var(--accent);box-shadow:0 6px 18px rgba(15,111,222,.12)}
+.trip .ph{aspect-ratio:16/9;background:linear-gradient(135deg,#e8f1fd,#f3f6fb);display:flex;align-items:center;justify-content:center;color:#9fb4d3;font-size:2rem;overflow:hidden}
+.trip .ph img{width:100%;height:100%;object-fit:cover}
+.trip .bd{padding:12px 14px}
+.trip h3{margin:0 0 2px}
+.rating{color:#f2a900;letter-spacing:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--accent-soft);color:#0b4f9e;font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:999px;border:0;font-family:inherit;cursor:default}
+button.chip{cursor:pointer}
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.tl-year{font-size:1.4rem;font-weight:800;color:var(--accent);margin:18px 0 8px;display:flex;align-items:baseline;gap:10px}
+.tl{list-style:none;border-left:2px solid var(--line);margin-left:6px;padding-left:18px}
+.tl li{position:relative;margin-bottom:12px}
+.tl li:before{content:"";position:absolute;left:-26px;top:16px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--accent)}
+.tl a{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;color:inherit}
+.tl a:hover{border-color:var(--accent)}
+.tl img,.tl .noimg{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;background:var(--accent-soft)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{display:block;font-size:1.6rem;font-weight:800;color:var(--accent);letter-spacing:-.02em}
+.stat small{color:var(--muted)}
+.bars{list-style:none}.bars li{display:grid;grid-template-columns:70px 1fr 40px;gap:8px;align-items:center;margin:6px 0;font-size:.9rem}
+.bars i{display:block;height:10px;border-radius:99px;background:var(--accent)}
+table.t{width:100%;border-collapse:collapse;font-size:.92rem}table.t th,table.t td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}table.t th{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mapbox{position:relative;background:#dbe9f8;border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:none}
+.mapbox svg{display:block;width:100%;height:auto;cursor:grab}
+.mapbox svg.drag{cursor:grabbing}
+.land{fill:#f4f1e8;stroke:#c8c2ad;stroke-width:.6;vector-effect:non-scaling-stroke}
+.grat{stroke:#c3d6ec;stroke-width:.5;vector-effect:non-scaling-stroke;fill:none}
+.pt circle{fill:#d93f3f;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke}
+.pt:hover circle,.pt:focus circle{fill:#0f6fde}
+.mapctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.mapctl .btn{width:38px;height:38px;padding:0;font-size:1.1rem}
+#onlinemap{height:480px;border-radius:14px;border:1px solid var(--line)}
+.wish{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.wish.done .wt{text-decoration:line-through;color:var(--muted)}
+.wish input[type=checkbox]{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.prio{font-size:.72rem;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+.prio.high{background:var(--bad-soft);color:var(--bad)}.prio.medium{background:var(--warn-soft);color:var(--warn)}.prio.low{background:#eef1f5;color:var(--muted)}
+.detail-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;font-size:.95rem}dl.meta dt{color:var(--muted);font-weight:600}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}
+.gallery button{border:0;padding:0;background:var(--accent-soft);border-radius:10px;overflow:hidden;aspect-ratio:1;cursor:zoom-in}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.notes{white-space:pre-wrap;margin-top:12px;line-height:1.65}
+dialog{margin:auto;border:0;border-radius:16px;padding:0;max-width:760px;width:calc(100% - 24px);max-height:calc(100dvh - 24px);box-shadow:0 20px 60px rgba(0,0,0,.25);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,40,.55)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+.dlg-b{padding:18px}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+.errs{background:var(--bad-soft);color:#7d1a1a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}
+.errs:empty{display:none}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.thumbs figure{position:relative;width:88px;height:88px;border-radius:8px;overflow:hidden;background:var(--accent-soft)}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs button{position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;font-size:.9rem;line-height:1}
+.thumbs .busy{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted)}
+#lightbox{max-width:none;width:100vw;height:100dvh;max-height:none;border-radius:0;background:#070b14;color:#fff}
+#lightbox .lb{display:flex;flex-direction:column;height:100%}
+#lightbox .lb-top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px}
+#lightbox .lb-img{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 8px}
+#lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+#lightbox .lb-nav{display:flex;justify-content:center;gap:12px;padding:12px}
+#lightbox .btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s;z-index:100;max-width:90vw}
+.toast.show{opacity:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+footer{padding:24px 0 40px;text-align:center;color:var(--muted);font-size:.85rem}
+@media (max-width:820px){.filters{grid-template-columns:1fr 1fr}.filters .q{grid-column:1/-1}.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.fgrid{grid-template-columns:repeat(2,1fr)}.s2,.s3{grid-column:span 1}.fgrid .s6{grid-column:1/-1}}
+@media (max-width:560px){.links a.hide-m{display:none}.fgrid{grid-template-columns:1fr}.s2,.s3{grid-column:1/-1}dialog:not(#lightbox){width:100%;max-width:none;max-height:100dvh;height:100dvh;border-radius:0;margin:0}dl.meta{grid-template-columns:1fr}dl.meta dd{margin-bottom:6px}.grid{grid-template-columns:1fr}}
+@media print{nav.site,.tabs,.banner,.noprint,footer,header.hero,dialog{display:none!important}body{background:#fff}main{padding:0}.panel{display:none!important}#view{display:block!important}.card{border:0;padding:0}.gallery{grid-template-columns:repeat(3,1fr)}.gallery button{aspect-ratio:auto;break-inside:avoid;background:none}.gallery img{height:200px;object-fit:contain}a{color:inherit}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="sr" href="#main">Skip to content</a>
+<nav class="site" aria-label="Site"><div class="wrap">
+ <a href="/" class="logo">Manideep<span>.</span></a>
+ <div class="links"><a class="hide-m" href="/#experience">Experience</a><a href="/tools/">Tools</a><a href="/travel/" aria-current="page">Travel</a><a href="/blog/">Blog</a></div>
+</div></nav>
+<header class="hero"><div class="wrap">
+ <h1>Travel journal</h1>
+ <p class="summary">Your trips, photos and plans, all saved in this browser. No account, no uploads.</p>
+ <div class="banner" id="banner" role="note"><span id="banner-text"><b>Your data lives only in this browser.</b> Clearing site data, switching browsers or losing this device will delete it. Export a backup regularly.</span><a class="btn btn-sm" href="#backup">Back up now</a></div>
+</div></header>
+<nav class="tabs" aria-label="Journal sections"><div class="wrap">
+ <a href="#trips" data-tab="trips">Trips</a><a href="#timeline" data-tab="timeline">Timeline</a><a href="#map" data-tab="map">Map</a><a href="#stats" data-tab="stats">Stats</a><a href="#wishlist" data-tab="wishlist">Wishlist</a><a href="#backup" data-tab="backup">Backup</a>
+ <span class="sp"></span><button type="button" class="btn btn-primary btn-sm" id="add-trip">+ Add trip</button>
+</div></nav>
+
+<main id="main" tabindex="-1"><div class="wrap">
+<section id="trips" class="panel" aria-labelledby="h-trips">
+ <h2 id="h-trips">Trips <span class="muted small" id="trip-count"></span></h2>
+ <div class="filters" role="search">
+  <div class="q"><label class="sr" for="f-q">Search trips</label><input type="search" id="f-q" placeholder="Search place, notes, tags, people…"></div>
+  <div><label class="sr" for="f-country">Country</label><select id="f-country"></select></div>
+  <div><label class="sr" for="f-year">Year</label><select id="f-year"></select></div>
+  <div><label class="sr" for="f-tag">Tag</label><select id="f-tag"></select></div>
+  <div><label class="sr" for="f-rating">Minimum rating</label><select id="f-rating"><option value="">Any rating</option><option value="5">★★★★★</option><option value="4">★★★★ & up</option><option value="3">★★★ & up</option><option value="2">★★ & up</option><option value="1">★ & up</option></select></div>
+  <div><label class="sr" for="f-sort">Sort</label><select id="f-sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="rating">Highest rated</option><option value="spend">Highest spend</option><option value="longest">Longest</option><option value="place">Place A–Z</option></select></div>
+ </div>
+ <div class="grid" id="trip-list" aria-live="polite"></div>
+</section>
+
+<section id="timeline" class="panel" aria-labelledby="h-tl" hidden><h2 id="h-tl">Timeline</h2><div id="tl-out"></div></section>
+
+<section id="map" class="panel" aria-labelledby="h-map" hidden>
+ <h2 id="h-map">Map</h2>
+ <div class="row" style="margin-bottom:10px"><label class="row" style="font-weight:500"><input type="checkbox" id="online-map" style="width:auto"> Online map (OpenStreetMap)</label></div>
+ <p class="small muted" id="online-note">The offline map is drawn on this page and makes no network requests. Turning on the online map loads Leaflet from unpkg.com and map tiles from tile.openstreetmap.org, which sends those servers your IP address and the map area you view.</p>
+ <div class="mapbox" id="mapbox" style="margin-top:10px">
+  <svg id="worldsvg" viewBox="0 0 360 180" role="img" aria-labelledby="map-title"><title id="map-title">World map with your trips</title>
+   <rect x="-720" y="-360" width="1800" height="900" fill="#dbe9f8"/><g id="grat"></g><path class="land" d="M120.4,170L119.8,171L115.5,170.9L113.7,170.3L118.1,170.4L119.4,169.6L120.4,170ZM20.8,169.5L18.9,169.6L16.3,168.6L16.9,168.2L18.8,168.4L20.5,169L20.8,169.5ZM134.8,168L136.1,168.5L136.7,170L129.5,171L125.8,170.6L126,170.2L129,169.6L131.3,168L134.8,168ZM58.8,163.5L61.3,163.5L59.8,164.1L57.4,163.7L57.6,163.3L58.8,163.5ZM54.4,163.5L56,163.9L52.7,163.5L54.4,163.5ZM81,161.9L83.2,162L83.8,162.5L79.2,162.5L77.7,161.9L81,161.9ZM111.5,161L111.2,162.2L108.9,162.5L107.6,162.5L108.1,162.1L105.8,162.4L105,162.1L105,161.7L107.9,161.2L108.3,159.5L109.7,158.9L111.5,161ZM121.4,154.2L118,154.8L117.4,155.5L117.9,156.2L116.3,156.5L114.3,158L116.8,159.2L118.2,160.7L119.3,163.2L119.2,163.7L115.6,165.3L109.4,166.6L102.8,166.7L103.1,167.1L106.3,167.9L102.1,168.4L102,169.2L104.6,170.3L120.3,172.4L121.8,173.2L130.2,171.7L137.2,172.1L139.2,171.4L151.5,170.3L150.3,169.6L150.3,169.3L144.4,169.5L144.2,168.3L144.7,168.1L151.1,166.7L157.5,166.1L162.5,165.1L164.3,164.5L164.6,164.1L163.5,163.9L164.6,163.1L167.7,162.4L169.7,161.3L172.6,161.7L173.1,160.9L175.7,161.5L179.3,161.2L179.8,161.6L187.7,159.9L189.5,160L190.8,160.8L193.4,160L194.7,160L195.1,160.4L195.9,160L199.3,159.9L201.5,160.1L202.6,160.7L207.1,160.5L212,159.7L213.9,158.5L218.6,159.8L222,158.6L226.5,157.6L227.4,157.7L230.8,156.9L231.8,156.2L234.5,155.8L236.4,156L238.7,157.3L241.4,158L242.4,158L244.1,157.4L248.9,157.9L249.7,159.2L249.6,159.7L247.8,160.3L247.9,160.7L249.1,160.7L247.9,161.9L249.9,162.3L251,162.1L253.9,159.9L257.6,159.5L259.1,158.3L262.8,157.2L266.8,157.2L268,156.2L269.7,157.2L275.8,157.4L279.7,157.2L282.8,155.6L286.2,156.9L290.2,156.7L293.6,155.9L295.6,156.7L299.8,157.3L303.2,156.5L308.8,156.8L314.8,156.2L315.1,155.3L316.6,156.8L317.5,157L325.5,156.9L326.6,157.9L328.8,158.4L332.5,158.9L334.3,158.6L336.8,159.4L339.2,159.6L341.6,160.6L347.3,160.8L351.2,161.7L349.3,163.7L346.1,164.4L343.6,166.2L343.5,167.1L344.7,168.2L346.6,168.3L347,168.8L341.8,169.2L339.8,170.9L343.7,172.4L348.9,173.3L349.4,173.8L353.2,174.4L356,174.2L360,174.7L360,180L0,180L0,174.7L0.9,174.1L2.7,174.5L4.1,174.1L5.6,174.5L7.1,174.1L10,173.9L13,174.6L21.9,175.4L24.8,175.1L31.5,175.6L36.9,175L37.1,174.6L29.9,174.3L26.4,173.7L27.3,172.5L27.1,172L23.2,171.1L27.9,171L29.4,171.3L33.6,170.3L33.2,169.9L30.5,169.4L24.7,169.1L21.9,168L21.6,166.9L23,167.3L26.3,167.1L27.1,167.5L28.7,167.4L33.9,166.5L33.5,165.7L33.8,165.4L35.1,165.2L35.7,165.5L44.8,164.3L60.3,164.5L66.1,163.7L67.7,164.7L68.7,164.4L72.4,165.2L75.1,164.9L79.4,165.3L79.9,164.9L78.7,164.2L77.5,164.1L76.3,162.6L80.9,162.9L82.3,163.6L83.7,163.6L87.6,163.2L89.9,163.3L90.8,162.6L91.6,163L98.5,163.9L99.7,163.1L103.8,164L105.1,163.9L112.6,162.5L112.7,161.6L111.5,159.7L112.6,158.1L112.3,157.3L117,154.6L122.2,153.3L122.8,153.5L121.4,154.2ZM112.2,143.8L115,144.7L114.5,145.2L113,144.9L111.9,145.6L110.8,145.5L107.7,144.5L105.3,142.8L108.9,144.1L109.7,142.9L110.7,142.5L111.4,142.6L112.2,143.8ZM121.5,141.1L122.2,141.6L122,141.9L120.6,142.2L120.2,141.8L119.3,142.3L118.8,141.8L120,141.2L120.8,141.5L121.5,141.1ZM250.3,139.7L248.7,139.8L248.9,138.6L250.5,139.1L250.3,139.7ZM325.4,130.8L326.4,131.1L328.3,130.9L328.4,132.1L327.9,133.2L327.6,132.9L326.9,133.6L326,133.5L324.7,131.2L324.7,130.7L325.4,130.8ZM353,130.9L353.2,131.3L354,130.9L354.2,131.3L354.2,131.8L352.7,133.4L353.1,133.9L351.5,134.2L350.6,135.9L349.3,136.6L346.7,136.2L346.5,135.9L347,135.1L350.5,133L352.1,131L352.8,130.5L353,130.9ZM354.6,126.2L355.3,127.2L355.4,126.5L355.8,126.8L356,127.6L356.8,127.9L358.5,127.7L358,129.2L357.2,129.1L356,131.3L355.2,131.7L354.7,131.3L355.2,130.5L354.9,129.9L353.8,129.5L354.6,128.8L354.7,127.4L352.6,124.5L354.3,125.3L354.6,126.2ZM347.1,112.2L346.7,112.4L345.5,111.7L344,110.1L345,110.5L347.1,112.2ZM358.4,107.3L358.7,107.6L358.6,108.2L357.4,108.2L357.7,107.4L358.4,107.3ZM359.4,106.8L358.7,107L358.6,106.6L360,106.1L360,106.6L359.4,106.8ZM347.8,106.5L347.5,106.6L347.2,105.9L347.8,106.5ZM347.1,104.9L347.3,105.7L346.6,105.4L346.6,104.6L347.1,104.9ZM230.1,103.6L230.4,105.7L230.2,106L229.9,105.4L229.7,105.7L229.8,106.9L227.1,114.9L225.4,115.6L224,115L223.3,112.1L224.4,110.1L224,107.4L224.4,106.2L226.3,105.8L227.7,104.6L227.9,103.7L228.3,103.8L229.2,102L230.1,103.6ZM323.6,103.8L323.9,104.5L324.6,104.2L325.4,105L326.4,109L328.8,110.4L329.7,112.3L330.7,112.4L330.9,113.5L332.9,115.3L333.1,116.1L333.1,117.3L333.6,118.1L332.9,121.6L330.3,125.7L330,127.4L328.3,127.8L326.3,129L324.9,128.4L325,127.9L323.6,128.8L320.6,128L320,127.4L319.6,126.1L318.1,125.6L318.4,125.1L318.2,124.4L317.7,125.1L316.8,125.3L317.9,123.6L317.8,122.9L316.4,124.1L316,124.9L315.2,124.5L315.2,123.9L314.1,122.8L314.3,122.6L311.3,121.5L306.1,122.2L304.2,123L303.7,123.9L299.9,124L298,125.1L296.6,125L295,124.2L295,123.6L295.7,123.3L295.7,121.6L293.3,116.1L293.8,116.5L293.4,115.6L294.2,116.3L293.4,114.4L294.1,111.8L294.2,112.5L294.6,111.8L296.7,110.7L300.9,109.7L302.2,108.2L302.3,107.3L303,106.4L303.4,107.3L303.9,107.1L303.5,106.6L303.8,106.1L304.3,106.3L304.4,105.6L305.7,104.2L307.1,103.8L308.4,104.9L309.6,105L309.4,104.4L310.6,102.5L312.6,102.1L312.6,101.6L311.8,101.3L312.4,101.1L315.3,102.2L316.5,101.9L317,102.4L316,103.3L315.5,105L320.2,107.7L320.9,107.4L321.7,105L321.5,103.7L322.1,101L322.5,100.7L322.8,101.2L323.6,103.8ZM342.1,100.5L342.4,100.8L341.7,100.8L341.3,100.2L342.1,100.5ZM300.7,100.2L299,99.6L299.9,99.4L300.7,100.2ZM340.9,99.9L339.8,99.8L339.7,99.2L340.9,99.9ZM341.7,99.6L340.6,98.3L340.9,98.3L341.7,99.6ZM304.4,100.1L303.5,100.2L304,99.3L305.1,98.7L307.3,98.4L305.1,99.4L304.4,100.1ZM297.9,98.1L298.9,98.3L299.1,98.7L296.7,99L297.9,98.1ZM302.9,98.1L302.8,98.6L299.9,98.8L299.9,98.4L300.7,98.2L301.3,98.5L302.9,98.1ZM288.6,96.8L290.5,96.9L290.8,96.5L292.6,96.9L293,97.6L295.7,98.4L294.6,98.8L288.3,97.8L285.4,96.9L286.1,95.9L287.3,96L288.6,96.8ZM314.7,96.2L314.2,96.9L314.5,95.4L314.7,96.2ZM335.9,96.8L335.2,96.5L334.5,95.1L336,96.5L335.9,96.8ZM332,95.5L330.2,96.3L328.3,95.7L328.4,95.4L329.8,95.5L330.1,95L330.2,95.5L330.8,95.5L331.6,94.8L331.5,94.2L332.3,94.3L332,95.5ZM307.2,93.5L306.9,93.8L306,93.2L307,93.1L307.2,93.5ZM310.5,93.1L310.8,93.9L310,93.4L307.9,93.4L308.1,92.8L310.5,93.1ZM333.1,94.5L332.8,94.8L332.4,93.8L330.7,92.7L330.9,92.5L332.2,93.2L333.1,94.5ZM314.1,91.2L314.4,92.8L315.5,93.4L316.3,92.3L317.4,91.7L318.3,91.7L324.6,93.9L325.8,94.9L326,95.5L327.6,96.1L327.9,96.6L327,96.7L327.2,97.4L328.7,99.1L329.3,99.1L329.3,99.5L330.8,100.3L330.7,100.6L327.9,100.1L326,98.1L324.7,97.6L323.3,98.2L323.4,99L322.6,99.3L321,99.1L320.1,98.3L319.1,98.1L317.6,98.4L318,97.6L318.7,97.3L317.9,95.4L313.7,93.5L313,94.1L312.8,93.3L312,92.8L313.8,92.5L313.7,92.2L312.2,92.2L310.5,90.9L312.4,90.4L314,90.8L314.1,91.2ZM305.2,88.6L304.4,89.6L303.7,89.8L300.2,89.8L300,90.5L300.9,91.4L301.5,91L303.3,90.6L303.3,91.1L302.8,90.9L301.5,91.9L302.5,93.2L302.3,93.5L303.2,94.7L303.2,95.3L302.6,95.6L302.2,95.3L302.7,94.5L301.7,94.9L301.5,94.6L301.6,94.2L300.9,93.6L301,92.6L300.3,92.9L300.4,95.5L299.4,95.4L299.5,93.5L299.1,93.5L298.8,92.8L300,89.4L300.9,88.7L302.9,89.1L304.1,89.1L305.1,88.4L305.2,88.6ZM308.7,88.9L308.6,89.7L308.1,89.6L308,90.3L308.4,90.8L308.1,90.9L307.4,89L307.6,88.2L307.9,87.8L308,88.4L308.6,88.5L308.7,88.9ZM285.8,95.9L284.7,95.9L282.6,94.2L279.3,89.8L278.6,88.2L275.4,85L275.3,84.5L277.5,84.8L280.6,87.9L281.7,87.9L283.8,89.9L283.4,90.7L284.4,91.1L284.9,92.3L285.6,92.4L286.1,93.1L285.8,95.9ZM297.9,88.2L299,89.1L297.8,89.2L297.5,90.8L296.6,91.5L296.1,94L296,93.7L294.9,94.1L294.5,93.5L293.3,93.1L292.1,93.5L291.7,93L290.2,92.9L290.1,91.6L289.1,90.5L289.1,88.7L289.7,88L290.4,88.3L291.2,88.1L291.4,87.3L293,86.9L296.7,83.1L297.1,83.1L297.7,84L299.2,84.6L299.1,85L298.4,85L298.6,85.5L297.9,85.9L297.3,86.8L298,87.7L297.9,88.2ZM306.4,81.6L306.5,82.8L306.2,83.7L305.8,82.7L305.4,83.2L305.7,84L305.4,84.4L304.2,83.8L303.9,83.1L304.2,82.6L303.6,82.2L302.1,83.1L301.9,82.8L302.3,82L303.5,81.3L303.8,81.8L304.6,81.5L304.8,81L305.5,81L305.4,80.2L306.2,80.7L306.4,81.6ZM261.2,83.8L260.3,84L259.9,83.2L259.7,81.8L260.1,80.2L261.8,82.5L261.6,83.5L261.2,83.8ZM119.1,79.9L118,79.9L118.3,79.2L118.9,79.1L119.1,79.9ZM304,79.7L303,81L302.4,80.3L302.9,79.1L303.5,79.1L303.3,79.7L304.1,78.8L304,79.7ZM298.5,80.7L297.2,81.6L299.5,78.6L299.7,79.4L298.5,80.7ZM301.9,78.1L303.1,78.4L303.1,78.8L302,79.6L301.9,78.1ZM305.5,77.8L305.8,79L305,78.7L305.3,79.6L304.8,79.9L304.3,78.5L304.9,78.6L304.9,78.2L304.3,77.4L305.2,77.5L305.5,77.8ZM301.5,76.9L301.3,77.8L300.3,76.5L301.5,76.9ZM301.3,71.5L301.9,71.8L302.2,71.5L302.5,72.9L302.3,73.7L301.7,74.1L301.7,75.7L304,76.2L304.1,77.5L302.9,76.4L302.7,76.8L302,76.2L300.6,76.1L301,75.5L300.7,75.2L300.6,75.6L300.1,75L299.9,73.6L300.3,74L300.7,71.5L301.3,71.5ZM114.4,71.8L112.8,72.1L112.8,71.6L114.4,71.8ZM103.1,72.1L101.7,71.8L103.1,71.6L103.8,72.1L103.1,72.1ZM107.4,70.1L110,70.4L111.7,71.4L111.3,71.8L109.3,71.6L108.6,72.4L107.6,71.8L106.1,72L105.5,71.7L105.6,71.3L107.7,71.3L107.2,70.5L106.6,70.4L107.4,70.1ZM290.3,71.3L289.5,71.8L288.7,71.5L288.6,70.6L289.1,70.2L290.8,69.9L291,70.3L290.3,71.3ZM24.5,70.9L24.1,70.9L24.1,69.7L25.2,70.5L24.5,70.9ZM100.3,67.2L100.7,67.6L101.7,67.5L103.5,68.8L104.4,69L104.3,69.3L105.8,69.7L105,70.1L102.2,70.1L102.9,69.6L101.9,69.3L101.3,68.4L98.2,67.8L97.8,67.6L98.2,67.4L97.2,67.3L95.9,68.1L95,68.1L96.2,67.2L97.7,66.8L100.3,67.2ZM102.5,66.2L101.6,65.4L101.8,64.8L102.1,64.8L102.5,66.2ZM301.2,67.2L300.7,68L300.1,66.4L301.5,64.7L302,65L301.2,67.2ZM102.2,63.4L101.1,63.6L101,63.2L102.2,63.2L102.2,63.4ZM103,63.4L102.8,64.1L102.2,63L103,63.4ZM314.6,55.9L314.8,56.2L314.2,56.8L313.8,56.5L313,57.3L312.4,57L312.9,55.9L313.5,56.1L313.9,55.6L314.6,55.9ZM214.6,54.3L213,55.4L212.3,54.9L214.6,54.3ZM203.7,54.3L206.3,54.7L206.2,55L204.7,55.1L203.5,54.7L203.7,54.3ZM195.5,51.8L195.1,53.4L192.4,52.4L192.6,51.9L195.5,51.8ZM189.2,48.8L189.8,49.5L189.7,50.8L188.8,51.1L188.4,50.8L188.2,49L189.2,48.8ZM321,52.9L320.8,54.2L320.3,54.9L317.2,55.4L315.8,56.5L315.1,56.2L315.1,55.4L311,56.1L312,56.9L311.3,58.5L310.7,59L310.2,58.6L310.4,57.7L309.4,56.7L310.4,56.4L312.6,54.6L315.7,54.5L316.7,52.7L317.4,53.2L319.4,51.8L320.1,50.6L319.9,49.4L320.3,48.8L321.4,48.6L321.9,50L321.9,50.8L321,51.8L321,52.9ZM189.6,47.8L189.2,48.6L188.5,47.7L189.4,47L189.6,47.8ZM323.9,45.8L324.6,46L325.3,45.6L325.5,46.7L324.1,47L323.2,48L321.6,47.3L321.1,48.4L320,48.4L319.8,47.4L320.3,46.7L321.4,46.6L322,44.4L323.9,45.8ZM116.3,43.4L118,43.6L117.1,44L115.9,43.6L115.6,43.3L116,43L116.3,43.4ZM118.2,40.9L115.5,40.1L117.1,40.3L118.2,40.9ZM56.5,41.5L54.3,41.2L53,40.2L51.9,40L51.6,39.2L54.2,39.7L56.5,41.5ZM123.9,39.3L123.2,40.2L123.9,39.8L124.5,40.1L124.2,40.4L126.5,40.8L126.2,41.5L126.9,41.3L127.4,42.5L126.9,43.3L125.8,43.2L126,42.4L125.8,42.2L124.6,43.1L124,43.1L124.7,42.6L123.7,42.4L120.7,42.4L120.6,42.1L121.2,41.7L120.8,41.5L122.6,39.3L124.1,38.4L124.6,38.4L123.9,39.3ZM47.3,36L48.3,35.9L48,37L48.8,37.8L46.9,36.6L46.8,35.8L47.3,36ZM323.6,39.3L324.7,41L323.2,40.7L322.6,42.1L323.5,43.2L323.5,43.9L322.7,43.3L322.1,44L322.2,39L321.6,38.1L321.7,36.7L322.6,36.2L322.2,35.8L322.7,35.6L323.6,39.3ZM173.2,37.7L171.4,38.3L170,38.2L170.8,37.1L170.3,36.1L172.4,34.9L173.3,34.8L174.3,35.4L173.8,36.1L174,36.8L173.2,37.7ZM192.7,34.4L192.1,35.2L190.9,34.2L192.4,33.9L192.7,34.4ZM27,32.9L26,33.3L25.3,32.5L27.4,32.1L27.9,32.4L27,32.9ZM177,31.4L175.9,32.4L178,32.3L176.9,34L177.9,34.1L178.9,35.4L179.6,35.5L180.5,37.1L181.7,37.3L181.6,37.9L181.1,38.2L181.4,38.7L180.6,39.2L177,39.3L174.8,40L174.2,39.8L176.6,38.6L175,38.4L174.7,38L175.8,37.7L175.2,37.2L175.4,36.5L176.9,36.6L177.1,36L176.4,35.4L175.2,35.2L174.9,34.9L175.3,34.5L175,34.2L174.4,34.7L174.4,33.7L173.9,33.2L175,31.4L177,31.4ZM14.4,30.1L13.8,30.2L12.5,29.8L14.3,29.7L14.4,30.1ZM100.7,27.8L100.3,28.4L99.6,28L100.1,27.6L100.7,27.8ZM98.1,27.3L96.9,27.8L96,27.5L96.7,27.1L98.1,27.3ZM8.3,26.2L11.3,26.7L10.5,27L8.4,26.7L8.3,26.2ZM94.8,24.3L95,24.8L95.5,24.6L98.4,25.5L98.4,26L99.9,26.3L99,26.6L97.5,26.3L96.9,25.9L94.5,26.9L94.1,26.4L92.8,26.5L93.6,26L94.1,24.3L94.8,24.3ZM165.5,23.5L165.3,24.2L166.4,24.9L165.1,25.6L161.3,26.5L157.2,26L158.2,25.6L156,25.1L157.8,24.9L157.8,24.6L155.7,24.4L156.3,23.7L157.9,23.6L159.4,24.3L160.9,23.7L162.2,24L163.8,23.5L165.5,23.5ZM104.1,22.9L103,22.9L102.8,22.4L103.2,21.9L104.1,21.7L104.9,22L104.9,22.4L104.1,22.9ZM5,23.4L5.7,23.7L5.4,22.9L8.1,23.1L10.1,24L7.5,24.6L7.4,25.5L7,25.7L4,25.1L3.8,24.6L1.6,24.6L1.1,24.3L1.3,23.9L0.1,24.1L0.6,24.6L0,25L0,21L5.1,22.8L5,23.4ZM84.4,20.9L83.7,21.2L80.2,20.6L81.8,19.9L84.4,20.9ZM360,19.2L358.9,19.2L358.7,18.9L360,18.5L360,19.2ZM1.3,19.1L0,19.2L0,18.5L2.4,18.7L1.3,19.1ZM89.5,20.5L89.4,21.5L90.8,20.7L92,21.4L91.7,22.1L92.6,22.8L94.4,21.2L94.5,20.1L97.4,20.3L98.7,20.8L98.8,21.3L98,21.9L98.7,22.4L98.6,22.9L96.7,23.6L94.2,23.4L92.7,25.2L91.5,25.9L90.1,26L89.3,26.4L89.2,27L88.1,27.2L86.8,28L85.8,29.1L85.3,31.1L86.8,31.2L87.7,32.9L89.1,32.7L95,34.7L97.7,34.9L97.9,36.7L98.6,37.8L100.1,38.8L100.9,38.5L101.4,37.4L100.9,35.9L100.2,35.3L101.8,34.9L103.5,33.5L102.7,31.9L101.5,31.2L102.7,30.1L101.9,27.7L106.2,27.6L108.6,28.9L110.4,28.9L110.7,31L112.4,31.8L113.8,31.2L115.4,29.7L118.6,33L118.2,33.7L120.4,34.8L122.7,35.4L123.1,36.2L124.2,36.7L124.3,37.9L120,39.8L113.6,39.8L111.5,40.9L108.9,43.2L109.7,43L111.3,41.7L113.4,40.9L114.9,40.8L115.8,41.3L114.9,41.9L115.5,43.8L116.8,44.3L118.5,44.1L119.5,43L119.6,43.7L120.2,44.1L114.6,46.5L113.9,46.4L113.8,45.5L115.6,44.7L112.9,44.9L113,45.2L109.9,46.3L109.3,47L109.2,47.7L109.5,48.2L109.9,48.2L109.8,47.9L110.1,48.1L110,48.4L106.3,49.1L108.1,49.1L106,49.2L105.8,50.3L105.1,51.1L104.5,50.5L104.9,51.6L104.1,52.8L104.3,52.1L103.8,51.7L103.7,50.8L103.7,51.9L103,51.8L103.7,52.1L104.3,54.4L103.6,55.2L100.9,56.5L98.7,58.6L98.7,60L99.9,63.1L99.6,64.8L98.8,64.8L98.3,64.1L97.1,62.1L97.1,60.9L95.9,59.9L94.9,60.4L93.6,59.6L90.8,59.7L90.4,59.8L90.8,60.7L89.8,60.9L88.4,60.3L86.2,60.3L83.4,61.7L82.6,62.6L82.9,64.1L82.1,67.6L83.7,70.7L85.6,71.9L88,71.3L89.2,70.7L89.7,69L92.9,68.5L93.2,69.2L92.4,70.4L92.2,71.7L91.7,71.5L91.6,73.5L91.1,74.1L95,74L96.6,74.7L96.8,75.7L96.2,78.9L97.8,81L98.6,81.2L100.4,80.4L103.2,81.4L104.3,80.6L104.5,79.4L105.1,78.9L106.6,78.8L108.2,77.6L108.9,77.9L108.6,78.5L108.1,78.6L108.4,79.6L107.9,80.1L108.3,80.9L108.7,80.9L109,80.1L108.6,79L109.8,78.6L109.7,78.2L110.1,77.8L110.4,78.5L111.1,78.6L111.8,79.4L113.8,79.4L115.1,79.9L115.7,79.4L118.1,79.3L117.3,79.6L117.6,80.1L119.2,80.6L119.3,81.4L120.9,82L121.5,83.2L122.9,84L126,84.2L128.7,85.8L129.5,88.1L130,88.3L130.1,89L129.3,89.8L129.6,90.1L131.4,90.2L131.4,91.2L132.2,90.6L135.1,91.6L135.6,92.1L135.4,92.7L136.6,92.4L140,92.9L142.8,94.8L144.4,95.1L145.3,97.3L144.9,99L141.3,103.1L140.7,107.9L139.1,111.9L138.2,112.4L138,113L135.4,113.4L132.4,114.9L131.5,115.9L131.1,118.7L126.2,124.4L125.1,125L123.8,124.9L122.2,124.5L121.6,123.9L121.5,124.4L122.8,125.3L122.6,126L123.3,126.4L123.2,126.9L122.3,128.2L120.8,128.7L117.7,128.8L117.9,130.7L117.3,131L116.2,131.2L115.3,130.8L114.9,131.1L115,132.1L115.7,132.4L116.2,132L116.5,132.6L114.8,133.5L114.4,135L113.5,135L112.7,135.6L112.4,136.3L114.4,137.2L114,138.1L112.8,138.7L112.2,139.9L110.9,140.7L111.2,141.8L111.8,142.3L110.5,142.3L109.2,142.9L109,143.8L107.4,143.5L105.1,142.3L104.4,138.7L104.8,137.7L105.9,136.9L104.4,136.6L105.3,135.8L105.6,134.1L106.8,134.5L107.3,132.4L106.6,132.1L106.3,133.4L105.7,133.2L106.3,129.9L106.8,129.3L106.4,127.2L106.8,127.1L108.6,122.4L108.5,118.9L109.1,117.6L109.8,109.8L109.6,108.3L108.5,107.4L104,104.6L103.7,103.5L100.2,97.2L98.8,96.1L99.1,95.7L98.6,94.7L100.2,92.7L100,92.2L99.6,92.7L99,92.2L99.1,91.1L99.4,90.9L99.9,89.2L101.1,88.6L101.6,87.4L102.1,87.3L102.9,86.2L102.5,85.9L102.5,83.3L101.8,82.5L101.8,81.7L100.4,81.1L99.5,81.9L100,82.5L99.1,82.8L98.9,82.2L96.5,81.6L96.4,80.9L95,79.9L94.9,80.4L94.3,80.1L94.3,78.9L92.3,77.1L92.7,77L92.5,76.7L91.5,76.8L88.8,76.1L85.3,73.8L83.4,74.3L76.5,71.7L74.5,70.1L74.3,69.6L74.6,69.5L74.7,68.6L74,67.2L71.6,64.8L70.7,64.4L70.7,63.6L67.8,61L66.9,58.8L66.1,58.4L65.2,58.2L65.3,59.8L68.4,63.3L69.3,65.7L69.8,65.7L70.6,66.6L70,67.2L69.7,66.6L67.8,65.3L67.7,64L64.9,62.3L65.4,62.3L65.8,61.4L64.5,60.4L62.7,57L61.5,56L59.4,55.4L55.6,49.7L55.8,48L55.5,47.2L56.1,44.5L55.3,41.8L56.9,42L57.4,42.9L57.7,42.6L57.2,41L54.4,39.6L52.6,39.2L52,38.3L52.1,37.7L50.9,37.2L50.7,36.4L49.5,35.7L49.5,35.2L48,34.5L47.8,33.6L46.5,32.8L45.9,31.9L43.4,31.8L40.1,30.5L36,30L32.9,29.1L31.8,29.3L32,30L28.3,30.8L28.1,30.3L28.6,29.3L29.7,29L29.4,28.7L26,30.6L26.7,31.1L25.8,31.9L23.7,32.6L21.6,34L15.2,35.6L18.2,34.1L19.4,34L22.3,32.4L23,31.1L20.9,31.6L20.3,31.1L20,31.4L19.6,30.9L18,31.3L18.1,30.4L17.5,30L16.2,30.2L14.7,29.5L14.6,28.9L13.9,28.5L15.4,26.9L16.9,26.9L19.2,26.2L18.5,25.6L19.2,25.2L17.2,25.7L15,25.6L13.6,25.3L11.9,24.3L15.5,23.4L16.3,23.4L16.2,23.9L18.3,23.9L14.6,22L13.2,21.6L13.8,21.1L16.8,20.6L18.1,19.7L23.4,18.6L25.7,19.3L36.4,19.8L43.5,21.1L45.6,20.4L47.1,20.5L50.2,19.8L50.9,20.2L51.9,19.5L54.2,20.5L55.6,19.8L55.7,20.6L58.5,20.2L64.8,21.1L66.1,21.6L64.7,22.1L70.1,22L71.1,22.6L72.2,22.1L71.2,21.7L71.8,21.3L73.8,21.2L75.7,22L78.5,22.4L81.6,22.2L81.4,21.6L82.3,21.4L83.9,21.8L83.9,22.7L84.5,21.9L85.3,21.9L85.8,20.9L83.5,19.9L83.6,18.8L84.8,18.1L87.1,18.7L88.5,19.8L87.6,20.3L89.5,20.5ZM65.8,16.9L65.3,17.3L67.6,17L68.9,17.5L70.1,17L71,17.4L71.8,18.3L72.3,17.9L71.6,16.9L73.5,16.9L74.6,17.3L75.5,19L79,20L78.9,20.4L77.3,20.5L77.9,20.9L77.6,21.2L74,20.8L66.7,21.5L66.1,21L63.9,20.8L62.7,20L67.6,19.6L62.1,19.5L61.6,19.1L63.9,18.7L60.6,18.4L62.1,17.3L64.8,16.7L65.8,16.9ZM75.5,16.6L74.6,17.2L73.1,16.5L75.5,16.6ZM103.7,16.9L103.7,17.2L100.5,17.3L99.1,16.7L99.2,16.3L99.6,16.2L101.9,16.3L103.7,16.9ZM93.4,16.8L94.2,17.5L95.1,16.7L97.7,16.2L99.4,17.3L99.3,17.9L102.2,17.3L105.8,18.2L105.9,18.7L107.8,18.4L108.8,19.1L112.1,19.9L113,20.8L111.2,21.3L115.1,22.2L116.6,23.1L118.1,23.1L117.8,23.8L116.1,25L113.3,23.6L112,23.7L111.9,24.3L114.7,25.6L115.3,26.6L115,27.3L111.2,26.3L113.8,28.1L109,27.1L107.8,26.6L108.1,26.3L105.2,25.3L105.2,25.6L102.3,25.8L101.4,25.4L102.1,24.7L106,24.5L105.7,24.2L107.3,22.7L107.1,22.3L103.1,21.1L103.8,20.9L101,19.8L98.7,20.3L91.3,19.6L90.5,19.2L91.5,18.8L90.1,18.8L89.8,17.8L90.6,16.9L91.6,16.5L94.2,16.2L93.4,16.8ZM79.6,16.2L82.6,16.2L82.9,16.5L81.9,17L83.5,17.4L83.3,18.3L80.7,18.6L77.5,17.5L77.5,17.2L79.6,17.3L78.5,16.6L79.6,16.2ZM323.6,16.8L319.9,16.6L322.1,16.1L323.6,16.8ZM86.8,17.2L85.7,18L84.6,17.9L84,16.6L85.5,15.9L89.5,16.1L88,17L86.8,17.2ZM59.5,18.6L56.9,19.1L54.1,18.1L56.1,16.3L55.1,15.7L62.4,15.8L64.5,16.5L60.8,17.5L59.5,18.2L59.5,18.6ZM330.7,14.9L329.6,15.3L326.1,14.8L326.4,14.5L330.7,14.9ZM86.4,15L85.8,15.4L83.2,15.1L85.1,14.4L86.4,15ZM325.1,14.4L324.3,15.2L319,15.4L317,14.7L317.5,14.1L318.8,13.9L325.1,14.4ZM81.5,13.3L82.3,13.7L81.8,15L80.2,15.1L79.1,14.9L79.1,14.4L77.5,14.4L77.4,13.7L81.5,13.3ZM71.8,13.8L72.2,14.2L74.1,14L74.3,14.5L73.7,15L66.3,15.6L66.1,15.3L68.2,14.8L62.3,14.8L64.6,13.5L70.9,14.5L69.5,13.6L70.4,13.2L71.5,13.3L71.8,13.8ZM237.5,19.3L233.7,19.2L233.4,18.8L231.6,18.5L231.5,18L232.5,17.8L232.4,17.2L234.4,16.4L233.5,16.3L235.9,15.4L235.6,14.9L241.2,13.7L248.2,13.1L248.9,13.5L241.6,14.7L238.5,15.7L235.4,17.6L235.6,18.5L237.5,19.3ZM85.3,12.9L88.4,13.2L89.3,13.6L89,13.9L90.8,14.4L98.9,14.3L100.2,15.1L98.1,15.6L91.8,15.6L87.6,15.2L87.1,14.1L86.1,13.7L82.9,13.2L83.3,12.8L85.3,12.9ZM63.8,12.4L63.7,13.1L62.9,13.5L58.5,14.1L57.1,13.9L60.9,12.5L63.8,12.4ZM287,13L287.2,13.5L291.1,13.3L294.1,14.2L293.9,14.7L289.4,15.8L293,16L293.5,16.7L295.6,16.2L298.8,16.4L299,16.9L303.2,17L303.3,16.3L307,16.4L308.6,17L309.1,17.6L308.5,18L311.3,19.2L312.3,18.2L313.9,18.6L319.9,18.5L319.1,17.6L320.5,17.2L329.5,17.8L333,19.2L339,19.1L339.8,19.5L339.7,20.3L340.9,20.6L347.8,20.4L349.6,21.3L350.8,21L350,20.3L350.5,19.9L358.6,20.6L360,21L360,25L358.7,25.5L357.4,25.4L358.3,25.9L359.5,27.4L359.2,27.7L357.4,27.5L353.7,28.3L350.3,30.1L348.9,29.4L346.3,30.2L345.8,29.8L344.9,30.3L343.5,30.1L342,31.8L342.1,32.2L343.2,32.4L343.1,33.8L342.1,33.9L341.7,34.7L342.1,35.1L340.4,35.7L340,36.8L338.5,37L338.2,38.1L336.8,39L335.4,34.6L335.9,33.2L336.8,32.6L336.8,32.2L338.4,31.9L343.7,28.9L344.5,27.4L343.3,27.5L342.7,28.4L340.1,29.5L339.3,28.2L336.7,28.6L334.2,30.2L335,30.9L331.3,31.2L331.3,30.5L329.8,30.3L328.5,30.8L322.2,31L315.1,35.3L316.7,35.4L317.2,36L318.2,36.2L318.8,35.7L319.9,35.8L321.3,36.9L321.4,37.8L320.6,38.8L320.1,41.6L318.2,43.7L314.9,46.6L313.5,47.2L312.3,46.7L310,48.1L309.7,49.1L307.5,50.2L307.4,50.8L308.3,51.4L309.5,53.2L309.5,54.4L309.1,54.9L306.5,55.6L306.6,54.3L306.1,53.3L306.9,53.1L306.2,52.3L305.3,52.3L304.7,51.9L305.2,51.3L305.3,50.4L304.3,50.1L301.1,51.1L302.2,49.6L301.6,49.1L299,50.7L298,50.8L297.5,51.3L298.1,51.9L298.9,52.1L298.9,52.6L299.7,52.8L300.8,52.1L302.4,52.5L302.5,53.1L301.1,53.3L299.2,55.1L300.2,55.6L301.9,58.3L301.9,59.1L301.3,59.3L302.1,60.2L301.7,61.8L301.1,61.9L298.7,65.5L295.9,67.2L294.2,67.8L293.8,67.5L293.2,67.9L290.8,68.6L290.4,69.7L289.9,69.7L289.9,68.6L288.5,68.3L286.7,69.3L285.9,70.2L285.7,70.9L288.9,74.7L289.3,76.6L289.2,78.3L285.2,81.4L284.8,80.8L285.1,80.1L283.5,79.4L282.6,77.8L280.8,77.4L281,76.6L280.1,76.6L279.2,80.8L279.9,80.8L280.5,82.6L283,84.5L283.4,85.1L283.5,87.2L284.2,88.7L283.5,88.8L281.4,87.2L280.2,84.7L280.1,83.5L278.5,81.6L278.3,82.2L278.2,81.6L278.8,78.6L277.2,73.1L275.4,74.3L274.2,74L274.5,72.7L274.3,71.8L273.5,70.6L273.7,70.3L272.4,69.3L271.4,67.2L270.5,67.2L270.3,68.2L269,67.9L268.9,68.3L267,68.5L267,69.3L266.5,69.8L265.1,70.5L262.2,73L262.2,73.4L260.3,74.1L259.9,79.6L259.3,79.7L258.9,80.5L259.2,80.8L258.3,81.1L257.5,82L256.6,81.1L254.9,77.3L254.4,75.4L253.5,74L252.6,68.6L251.2,69.2L250.5,69.1L249.2,67.9L249.6,67.5L249.3,67.2L247.4,66.1L246.4,64.6L241.5,64.9L237.4,64.3L237,63L236.5,62.9L234.7,63.5L231.5,62.1L230.1,59.9L228.9,59.7L228,60L228.8,62.3L230.2,63.3L230.1,64.1L230.8,65.2L231,64L231.6,64.2L231.4,65.4L231.8,66L234,65.9L236.4,63.6L236.4,65.1L236.8,65.8L238.7,66.4L239.8,67.7L238.5,69.6L237.8,69.8L237.7,71.1L236.6,71.4L236.3,72.1L235.3,72.4L235.3,72.8L232.4,73.6L232.2,74.4L229.6,75.3L228.7,76L225.6,76.7L225,77.3L223.5,77.4L222.6,74.8L222.6,73.2L220.9,70.5L219.1,68.7L219.1,67.4L218.5,66.3L217.5,65.7L215.1,61.9L214.6,61.9L214.9,60.5L213.9,62.4L212.4,60.1L214.1,63.9L215.7,66.1L215.5,66.9L216.9,68L217.5,71.4L218.4,72L219.3,74.1L223.3,77.6L223.3,78L222.7,78.3L224.1,79.6L224.6,79.6L231.1,78L231,79.4L229.5,83.2L227.7,85.8L220.3,92.6L219.2,94.7L218.8,96.5L219.4,96.8L219.2,98.5L220.5,100.8L220.8,104.7L219.5,106.7L217.4,107.6L214.8,109.8L214.7,110.5L215.6,112.1L215.6,113.7L215,114.5L212.6,115.7L212.9,116.2L212.2,118.8L208.2,122.8L205.8,123.9L202.6,123.9L199.6,124.8L198.4,124.1L197.9,122.6L198.2,122.4L198.2,121.7L195.2,117.1L194.3,112.1L191.8,108.1L191.8,105.8L192.5,103.5L193.6,102L193.7,100.7L192.9,99.2L193.2,98.6L191.9,95L188.8,91.1L189.8,86.9L189.4,86.3L188.5,85.2L185.9,85.7L184.3,83.7L181.9,83.9L178,85.3L175.4,84.8L172.5,85.7L171,85.2L167.6,82.7L165.2,79.1L163.4,77.8L163.3,76.4L162.4,75.3L163.5,73.9L163.9,71.9L163.7,69.9L162.9,69L163,68.1L164,66.3L164.9,65.5L165.6,63.7L167.4,62L168.3,61.9L170.4,60.1L170.2,58.8L170.7,57.4L173.1,55.9L174.1,54.2L177.8,54.8L181.5,53.4L185.3,53.3L186.3,52.9L188.4,53.1L189.5,52.6L190.2,52.8L190.2,53.3L191.1,53.1L190.6,53.6L190.9,54.3L190.8,55.2L190.1,55.7L190.3,56.2L191.5,56.9L195.2,57.7L195.7,58.6L199.1,59.7L200.1,59L199.8,58.2L200.1,57.8L201.5,57.2L202.9,57.4L203.2,57.8L205.2,58.4L206.5,58.4L208.9,59.1L211,58.4L211.7,58.6L212,59.1L212.2,58.7L213.8,59L214.6,58.5L216,55.4L216.1,54.2L215.8,53.7L216.2,53.3L214.7,53.2L214,53.8L212.5,53.9L211.7,53.4L210.6,53.3L209.7,53.9L208.7,53.3L207.6,53.3L206.3,51.8L206.8,51L206.2,50.5L207.3,49.6L208.8,49.5L209.2,48.8L211.1,48.9L213.5,48L215.2,48L218.3,49.1L220.4,49L221.6,48.5L221.7,48L221.5,47.4L216.7,44.8L217.4,44.6L218.2,43.8L217.7,43.4L219.1,42.7L215,43.7L215,44.3L216.5,44.5L216.3,44.9L213.9,45.6L213.3,45.4L213.5,45L212.5,44.7L213.6,44.1L213.3,43.9L211.7,43.7L211.7,43.3L210.7,43.4L209.6,45L208.8,45.1L208.6,46.3L207.7,47.4L208.1,48.4L209,48.7L208.8,48.9L207.6,49L206.4,49.8L206.1,49.2L204.9,49.1L203.7,49.3L204.4,49.9L203.9,50L202.8,49.5L202.6,49.7L203.4,50.8L203,51L204,51.8L204,52.3L203.1,52.1L203.4,52.6L202.8,52.7L203.2,53.6L202.5,53.6L201.7,53.2L201.1,51.7L199.4,49.7L199.5,48.3L196,46.5L195.2,45.8L194.9,44.9L194.3,44.8L194,45.2L193.7,44.9L193.9,44.4L193.1,44.3L192.3,44.6L192.6,45.9L195.1,48L195.9,48L196.2,48.3L195.9,48.5L198.5,49.8L198.3,50.2L196.9,49.6L196.4,50.2L197.2,50.6L197.1,51.1L196.1,52L195.7,52.1L196.1,51L195.4,50L192.1,48.3L190.5,47.1L190.2,46.1L188.9,45.6L186.5,46.9L184.6,46.6L183.1,46.9L183,48.1L182.1,48.8L180.8,49L179.7,50.7L180.1,51.3L179.3,52.4L178.6,52.6L177.9,53.3L175.6,53.3L174.6,54.1L174.1,54L173.5,53.1L171.1,53.1L171.2,51.7L170.5,51.3L171.2,49.2L171,47.4L170.6,47L172,46.3L178.1,46.6L178.6,46L178.8,44L177,42.4L175.5,42L175.4,41.3L178.4,41.4L178.1,40.2L179,40.7L181.3,39.9L181.6,39.1L183.8,38.4L184.7,36.9L187.1,36.3L188.1,36.5L188.8,36L188.1,34.5L188.1,33.5L188.5,32.9L190.6,32.3L190.3,33.1L190.9,33.5L189.7,34.5L189.9,35.4L191,35.6L190.9,36L192.5,35.5L194.1,36.2L197.6,35.1L199.7,35.6L199.9,35.1L201.3,34.8L201.1,33.2L201.6,32.6L202.5,32.2L203.3,33L204.1,33L204.4,31.6L203.4,31.4L203.3,30.8L205.9,30.4L208,30.5L209.1,30L208.1,29.5L202.9,30.2L201.3,29.3L201.5,28.3L201.1,27.4L201.5,26.8L205.4,24.9L205.3,24.5L203.9,24L202.2,24.3L201.2,25L201.4,25.6L197.8,27.3L197.1,28.7L198.8,29.9L197.9,31L196.8,31.3L195.9,33.9L194.7,33.8L194.1,34.6L192.9,34.6L190.4,30.5L188.4,31.7L187,31.9L185.7,31.4L185,28L190.5,25.5L194.8,22.2L199.2,20.2L203,19.8L204.5,19L208.2,18.8L211.3,19.5L210,19.8L211.1,20.4L212.1,20.1L220.3,22.1L221.1,22.5L221.1,23.2L220,23.7L218.4,24L213.2,23.4L214.8,24.1L214.9,25.6L217,26.2L217.1,25.7L216.5,25.2L217.2,24.9L219.6,25.5L220.4,25.2L219.8,24.5L222.1,23.5L223.9,23.9L224.5,23.2L223.7,22.6L224.2,22L223.5,21.4L226.3,21.7L226.8,22.3L225.6,22.4L225.6,23L226.3,23.3L227.9,23.1L228.1,22.5L233.7,21.1L234.5,21.2L233.5,21.8L234.7,21.9L238.8,21.1L239.9,21.7L241.1,21.1L240,20.5L240.6,20.1L243.5,20.5L248.5,21.9L249.2,21.4L248.1,20.6L246.9,20.5L247.3,20.1L246.7,19L248.5,18.1L249.2,17.2L252.6,17.2L252.8,17.8L251.8,18.6L252.8,19.6L252.6,21L253.7,21.6L251.3,23.7L252.4,23.8L255.1,22.2L254.5,21.7L254.9,21L253.8,20.9L253.6,20.4L254.4,19.4L253.1,18.6L254.9,17.9L254.7,17.2L255.2,17.1L255.7,17.7L255.3,18.7L256.4,18.8L255.9,18.1L257.6,17.7L259.7,17.7L261.5,18.2L260.6,17.4L260.5,16.4L266.8,16.1L266,15.5L267.2,14.9L273.2,14L276.7,14.1L280.8,13.6L282,12.7L284.4,12.3L286.1,12.6L284.7,12.9L287,13ZM69.8,12.3L67.9,12.6L66.5,12.3L68.7,11.8L70.1,12L69.8,12.3ZM204.7,12.1L202.5,12.6L200.7,12.3L201.4,12.1L200.8,11.7L202.9,11.5L204.7,12.1ZM70.3,11.4L67.5,11.6L68.5,11.2L70.3,11.4ZM84.2,11.9L81.9,11.9L81.4,11.1L84.4,11.6L84.2,11.9ZM79.9,11.7L80.3,12.1L74.8,11.6L75.8,11.3L74.6,11.1L74.5,10.7L79.2,11.2L79.9,11.7ZM285.1,11.7L279.4,12.1L281.3,10.8L282.1,10.7L285.4,11.3L285.1,11.7ZM198.3,10.3L201.5,11L199,11.4L198.5,12.2L197.6,12.4L197.1,13.2L195.9,13.2L193.8,12.6L194.7,12.3L191.2,11.1L190.4,10.3L193.2,10L193.7,10.3L195.1,10.3L195.5,10L197,9.9L198.3,10.3ZM205.4,9.6L207.4,9.9L205.9,10.5L203,10.6L200.1,10.4L197.4,9.7L202.9,9.3L205.4,9.6ZM231.1,9.5L227.6,10L226.5,9.8L227.1,9.4L224.8,9.4L228.3,9.2L228.5,9.5L230,9.1L231.5,9.3L231.1,9.5ZM279.9,11.1L275,11L273.3,10.6L272.5,9.9L271.2,9.7L275.9,8.7L280.2,10.2L279.9,11.1ZM93,10.3L94.2,10.7L91,11.7L89.2,11.8L87.1,11.7L86,11.2L86.1,10.9L86.9,10.6L85,10.6L83.3,9.8L84.7,9.1L85.7,9L85.3,8.8L87.6,8.7L88.9,9.3L92.2,9.7L93,10.3ZM111.5,6.9L116.3,7.1L118.2,7.4L118.1,7.6L112.3,8.5L114.5,8.5L110.5,9.4L108.8,10.2L103.1,10.7L104.5,10.8L103.8,11L104.6,11.5L100.2,12.8L102.1,13.2L99.4,13.8L90.5,13.5L90.4,13L92.2,12.8L91.7,12.1L95,12.5L93.7,11.8L92,11.6L94.9,10.7L93.5,10.3L93.1,9.7L96.6,9.9L98.2,9.5L92.4,9.5L90.6,9.1L88.4,8.1L94.5,7.3L96.8,7.7L97.6,7.1L100.7,6.9L111.5,6.9ZM152.9,6.5L159.2,7.3L157.3,7.7L148.6,8L155.2,8.2L157.1,7.9L157.9,8.3L156.8,8.8L164.2,8.1L167.2,8.3L167.8,8.7L163.2,9.7L160,9.8L162.3,9.9L160.3,11.2L160.3,12.4L161.5,13L158.3,13.4L160.2,13.9L160.4,14.8L159.3,14.8L160.6,15.7L158.4,15.8L159.6,16.2L159.2,16.5L156.4,16.7L157.7,17.4L157.7,17.8L155.7,17.4L155.2,17.7L157.9,18.5L158.2,19.3L156.5,19.5L154.5,18.6L154.8,19.2L153.6,19.8L157.7,19.9L152.3,21.5L148.2,21.9L145.8,23.3L140.2,24.5L139.3,25.2L138.8,26.5L137.2,27.3L137.6,28.1L136.6,29.9L135.2,30L133.7,29.1L131.7,29.1L128.4,26.4L127.7,24.8L126.3,23.9L126.7,23.2L126,22.8L127,21.6L128.5,21.3L129.1,20.1L126.5,20.7L125.3,20.4L125.6,19.2L128.6,19.4L126,18.5L124.2,18.3L125.3,17.4L122.7,15.3L121.4,14.9L121.4,14.5L118.7,13.9L111.5,13.9L108.6,13L113.2,12.6L106.7,12L106.8,11.6L114.3,10.6L114.7,10.2L112,9.9L117.8,8.7L117.3,8.2L122.8,7.8L127,8.1L129.6,7.6L135.5,8.3L133.1,7.8L133.2,7.4L136.6,6.8L144.9,6.4L152.9,6.5Z"/><g id="pts"></g></svg>
+  <div class="mapctl"><button type="button" class="btn" id="zin" aria-label="Zoom in">+</button><button type="button" class="btn" id="zout" aria-label="Zoom out">−</button><button type="button" class="btn" id="zfit" aria-label="Fit to trips">⤢</button></div>
+ </div>
+ <div id="onlinemap" hidden></div>
+ <p class="small muted" id="map-missing" style="margin-top:8px"></p>
+ <p class="small muted">Land outlines: Natural Earth (public domain).</p>
+</section>
+
+<section id="stats" class="panel" aria-labelledby="h-stats" hidden><h2 id="h-stats">Stats</h2><div id="stats-out"></div></section>
+
+<section id="wishlist" class="panel" aria-labelledby="h-wish" hidden>
+ <h2 id="h-wish">Places to visit</h2>
+ <form class="card" id="wish-form" style="margin-bottom:14px" novalidate>
+  <div class="fgrid">
+   <div class="field s2"><label for="w-place">Place *</label><input id="w-place" required maxlength="200" autocomplete="off"></div>
+   <div class="field s2"><label for="w-country">Country</label><input id="w-country" list="countries" autocomplete="off"></div>
+   <div class="field s2"><label for="w-prio">Priority</label><select id="w-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+   <div class="field s6"><label for="w-notes">Notes</label><input id="w-notes" maxlength="2000" autocomplete="off" placeholder="Why, when, best season…"></div>
+  </div>
+  <p class="errs" id="w-err" role="alert"></p>
+  <div class="row" style="margin-top:10px"><button class="btn btn-primary" type="submit">Add to wishlist</button><label class="row" style="font-weight:500"><input type="checkbox" id="w-showdone" style="width:auto" checked> Show visited</label></div>
+ </form>
+ <div id="wish-list" aria-live="polite"></div>
+</section>
+
+<section id="backup" class="panel" aria-labelledby="h-backup" hidden>
+ <h2 id="h-backup">Backup &amp; data</h2>
+ <div class="two">
+  <div class="card"><h3>Export backup</h3>
+   <p class="small muted">Downloads a JSON file with all trips and the wishlist. Photos are embedded (base64) unless you exclude them.</p>
+   <label class="row" style="font-weight:500;margin:10px 0"><input type="checkbox" id="x-photos" style="width:auto" checked> Include photos <span class="muted small" id="x-size"></span></label>
+   <button type="button" class="btn btn-primary" id="x-go">Export JSON</button>
+   <p class="small muted" id="x-last" style="margin-top:8px"></p></div>
+  <div class="card"><h3>Import backup</h3>
+   <p class="small muted">Restore from a Travel Journal JSON file.</p>
+   <fieldset style="margin:10px 0"><legend>Mode</legend>
+    <label class="row" style="font-weight:500"><input type="radio" name="imode" value="merge" checked style="width:auto"> Merge (keep existing; newer edits win)</label>
+    <label class="row" style="font-weight:500"><input type="radio" name="imode" value="replace" style="width:auto"> Replace everything</label></fieldset>
+   <label class="btn" for="i-file">Choose backup file…</label><input type="file" id="i-file" accept="application/json,.json" class="sr">
+   <div id="i-out" class="small" style="margin-top:10px" role="status" aria-live="polite"></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>Storage</h3>
+  <p class="small" id="st-info">Checking…</p>
+  <div class="row" style="margin-top:10px"><button type="button" class="btn btn-sm" id="st-persist">Ask the browser to keep my data</button><button type="button" class="btn btn-sm btn-danger" id="st-wipe">Delete all journal data</button></div>
+  <p class="small muted" style="margin-top:10px">Everything is stored with IndexedDB in this browser, for this site only. Nothing is sent to a server. Trips you add in another browser or on another device are separate; move them with export/import.</p></div>
+</section>
+
+<section id="view" class="panel" aria-live="polite" hidden></section>
+</div></main>
+
+<dialog id="trip-dlg" aria-labelledby="trip-dlg-h">
+ <form id="trip-form" method="dialog" novalidate>
+  <div class="dlg-h"><h2 id="trip-dlg-h" style="margin:0">Add trip</h2><button type="button" class="btn btn-sm" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-b">
+   <div class="errs" id="t-err" role="alert" tabindex="-1"></div>
+   <div class="fgrid">
+    <div class="field s6"><label for="t-place">Place name *</label><input id="t-place" name="place" required maxlength="200" autocomplete="off" placeholder="e.g. Hampi ruins"></div>
+    <div class="field s2"><label for="t-city">City</label><input id="t-city" name="city" autocomplete="off"></div>
+    <div class="field s2"><label for="t-state">State / region</label><input id="t-state" name="state" autocomplete="off"></div>
+    <div class="field s2"><label for="t-country">Country</label><input id="t-country" name="country" list="countries" autocomplete="off"></div>
+    <div class="field s2"><label for="t-start">Start date *</label><input type="date" id="t-start" name="start" required></div>
+    <div class="field s2"><label for="t-end">End date</label><input type="date" id="t-end" name="end"></div>
+    <div class="field s2"><label for="t-type">Trip type</label><select id="t-type" name="type"></select></div>
+    <div class="field s3"><label for="t-comp">Companions</label><input id="t-comp" name="companions" autocomplete="off" placeholder="Comma-separated"></div>
+    <div class="field s3"><label for="t-tags">Tags</label><input id="t-tags" name="tags" autocomplete="off" placeholder="beach, food, trek"></div>
+    <fieldset class="field s3"><legend>Rating</legend><div class="stars" id="t-stars">
+     <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 stars">★<span class="sr">5 stars</span></label>
+     <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 stars">★<span class="sr">4 stars</span></label>
+     <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 stars">★<span class="sr">3 stars</span></label>
+     <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 stars">★<span class="sr">2 stars</span></label>
+     <input type="radio" name="rating" id="r1" value="1"><label for="r1" title="1 star">★<span class="sr">1 star</span></label>
+    </div><button type="button" class="btn btn-sm" id="t-norate" style="align-self:flex-start;margin-top:4px">Clear rating</button></fieldset>
+    <div class="field s3"><label for="t-cur">Currency</label><input id="t-cur" name="currency" list="currencies" maxlength="3" autocomplete="off" value="INR"></div>
+    <div class="field s3"><label for="t-budget">Budget</label><input id="t-budget" name="budget" inputmode="decimal" autocomplete="off"></div>
+    <div class="field s3"><label for="t-spend">Actual spend</label><input id="t-spend" name="spend" inputmode="decimal" autocomplete="off"></div>
+    <div class="field s2"><label for="t-lat">Latitude</label><input id="t-lat" name="lat" inputmode="decimal" autocomplete="off" placeholder="15.335"></div>
+    <div class="field s2"><label for="t-lon">Longitude</label><input id="t-lon" name="lon" inputmode="decimal" autocomplete="off" placeholder="76.460"></div>
+    <div class="field s2" style="justify-content:flex-end"><button type="button" class="btn" id="t-geo">📍 Use my location</button></div>
+    <p class="small muted s6" id="t-geo-msg">Optional. Coordinates put the trip on the map. Your browser asks permission first, and it may use a location service to find you.</p>
+    <div class="field s6"><label for="t-notes">Notes</label><textarea id="t-notes" name="notes" maxlength="20000"></textarea></div>
+    <div class="field s6"><span style="font-weight:600;font-size:.88rem">Photos</span>
+     <div class="row"><label class="btn btn-sm" for="t-photos">Add photos…</label><input type="file" id="t-photos" accept="image/*" multiple class="sr"><span class="small muted" id="t-ph-msg">Resized to 1600 px JPEG and stored in this browser.</span></div>
+     <div class="thumbs" id="t-thumbs"></div></div>
+   </div>
+  </div>
+  <div class="dlg-f"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="t-save">Save trip</button></div>
+ </form>
+</dialog>
+
+<dialog id="lightbox" aria-label="Photo viewer"><div class="lb">
+ <div class="lb-top"><span id="lb-cap" class="small"></span><button type="button" class="btn btn-sm" data-close aria-label="Close photo viewer">✕ Close</button></div>
+ <div class="lb-img"><img id="lb-img" alt=""></div>
+ <div class="lb-nav"><button type="button" class="btn" id="lb-prev" aria-label="Previous photo">‹ Prev</button><button type="button" class="btn" id="lb-next" aria-label="Next photo">Next ›</button></div>
+</div></dialog>
+
+<datalist id="countries"></datalist><datalist id="currencies"></datalist>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer><div class="wrap">© 2026 Manideep Grandhi · <a href="/">Home</a> · <a href="/tools/">Tools</a> · <a href="/blog/">Blog</a></div></footer>
+<script id="tj-model">
+"use strict";
+/* ===== Travel journal: pure data model (no DOM) ===== */
+const TJ_APP="travel-journal",TJ_VERSION=1;
+const TRIP_TYPES=["solo","family","friends","couple","work","group","other"];
+const CURRENCIES=["INR","USD","EUR","GBP","AED","SGD","THB","JPY","AUD","CAD","CHF","MYR","LKR","NPR","IDR","VND"];
+const uid=()=>{const b=crypto.getRandomValues(new Uint8Array(10));return Date.now().toString(36)+"-"+Array.from(b,x=>x.toString(36).padStart(2,"0")).join("").slice(0,12);};
+const isDate=s=>typeof s==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(Date.parse(s+"T00:00:00Z"))&&new Date(s+"T00:00:00Z").toISOString().slice(0,10)===s;
+const strList=v=>(Array.isArray(v)?v:String(v||"").split(",")).map(x=>String(x).trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(y=>y.toLowerCase()===x.toLowerCase())===i);
+const numOrNull=v=>{if(v===""||v===null||v===undefined)return null;const n=Number(String(v).replace(/,/g,""));return isFinite(n)?n:NaN;};
+function normalizeTrip(input,now=new Date().toISOString()){const e=[],t={};const s=k=>String(input[k]??"").trim();
+ t.id=s("id")||uid();t.place=s("place");if(!t.place)e.push("Place name is required.");if(t.place.length>200)e.push("Place name is too long.");
+ t.city=s("city");t.state=s("state");t.country=s("country");
+ t.start=s("start");t.end=s("end")||t.start;if(!isDate(t.start))e.push("Start date is required (YYYY-MM-DD).");else if(!isDate(t.end))e.push("End date is not a valid date.");else if(t.end<t.start)e.push("End date is before the start date.");
+ t.type=TRIP_TYPES.includes(s("type"))?s("type"):"solo";t.companions=strList(input.companions);t.tags=strList(input.tags).map(x=>x.toLowerCase());
+ const r=numOrNull(input.rating);t.rating=r===null?null:Math.round(r);if(t.rating!==null&&!(t.rating>=1&&t.rating<=5))e.push("Rating must be 1 to 5.");
+ t.notes=String(input.notes??"");if(t.notes.length>20000)e.push("Notes are too long (20,000 characters max).");
+ t.currency=(s("currency")||"INR").toUpperCase();if(!/^[A-Z]{3}$/.test(t.currency))e.push("Currency must be a 3-letter code like INR.");
+ for(const k of["budget","spend"]){const n=numOrNull(input[k]);if(Number.isNaN(n)||(n!==null&&n<0))e.push(`${k==="budget"?"Budget":"Spend"} must be a positive number.`);t[k]=Number.isNaN(n)?null:n;}
+ const la=numOrNull(input.lat),lo=numOrNull(input.lon);
+ if((la===null)!==(lo===null))e.push("Enter both latitude and longitude, or neither.");
+ else if(la!==null&&(Number.isNaN(la)||la<-90||la>90))e.push("Latitude must be between -90 and 90.");
+ else if(lo!==null&&(Number.isNaN(lo)||lo<-180||lo>180))e.push("Longitude must be between -180 and 180.");
+ t.lat=Number.isNaN(la)?null:la;t.lon=Number.isNaN(lo)?null:lo;
+ t.photoIds=Array.isArray(input.photoIds)?input.photoIds.filter(x=>typeof x==="string"):[];
+ t.created=s("created")||now;t.updated=now;return{trip:t,errors:e};}
+function normalizeWish(input,now=new Date().toISOString()){const s=k=>String(input[k]??"").trim();const w={id:s("id")||uid(),place:s("place"),country:s("country"),notes:String(input.notes??""),
+ priority:["high","medium","low"].includes(s("priority"))?s("priority"):"medium",done:!!input.done,created:s("created")||now,updated:now};return{wish:w,errors:w.place?[]:["Place name is required."]};}
+const dayNum=s=>Math.round(Date.parse(s+"T00:00:00Z")/86400000);
+const tripDays=t=>isDate(t.start)&&isDate(t.end)?dayNum(t.end)-dayNum(t.start)+1:0;
+function daysTravelled(trips){const r=trips.filter(t=>isDate(t.start)&&isDate(t.end)).map(t=>[dayNum(t.start),dayNum(t.end)]).sort((a,b)=>a[0]-b[0]);let tot=0,cs=null,ce=null;
+ for(const[s,e]of r){if(cs===null){cs=s;ce=e}else if(s<=ce+1)ce=Math.max(ce,e);else{tot+=ce-cs+1;cs=s;ce=e}}if(cs!==null)tot+=ce-cs+1;return tot;}
+const yearOf=t=>(t.start||"").slice(0,4);
+function tripText(t){return[t.place,t.city,t.state,t.country,t.notes,t.type,...(t.tags||[]),...(t.companions||[])].join(" ").toLowerCase();}
+function filterTrips(trips,f={}){const q=(f.q||"").trim().toLowerCase().split(/\s+/).filter(Boolean);
+ return trips.filter(t=>(!f.country||t.country===f.country)&&(!f.year||yearOf(t)===String(f.year))&&(!f.tag||(t.tags||[]).includes(f.tag))&&(!f.minRating||(t.rating||0)>=+f.minRating)&&(!f.type||t.type===f.type)&&q.every(w=>tripText(t).includes(w)));}
+function sortTrips(trips,by="newest"){const a=trips.slice(),c=(x,y)=>x<y?-1:x>y?1:0;
+ const S={newest:(x,y)=>c(y.start,x.start)||c(y.end,x.end),oldest:(x,y)=>c(x.start,y.start)||c(x.end,y.end),rating:(x,y)=>(y.rating||0)-(x.rating||0)||c(y.start,x.start),
+  spend:(x,y)=>(y.spend||0)-(x.spend||0)||c(y.start,x.start),place:(x,y)=>x.place.localeCompare(y.place,undefined,{sensitivity:"base"}),longest:(x,y)=>tripDays(y)-tripDays(x)||c(y.start,x.start)};
+ return a.sort(S[by]||S.newest);}
+function groupByYear(trips){const m=new Map();for(const t of sortTrips(trips,"newest")){const y=yearOf(t)||"Undated";if(!m.has(y))m.set(y,[]);m.get(y).push(t);}return[...m.entries()];}
+function computeStats(trips){const countries=new Set(),cities=new Set(),spend={},budget={},tags={},years={},types={};let rs=0,rn=0;
+ for(const t of trips){if(t.country)countries.add(t.country.toLowerCase());if(t.city)cities.add((t.city+"|"+(t.country||"")).toLowerCase());
+  if(t.spend!=null)spend[t.currency]=(spend[t.currency]||0)+t.spend;if(t.budget!=null)budget[t.currency]=(budget[t.currency]||0)+t.budget;
+  for(const g of t.tags||[])tags[g]=(tags[g]||0)+1;const y=yearOf(t);if(y)years[y]=(years[y]||0)+1;types[t.type]=(types[t.type]||0)+1;if(t.rating){rs+=t.rating;rn++}}
+ const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+ return{trips:trips.length,countries:countries.size,cities:cities.size,days:daysTravelled(trips),spend,budget,topTags:top(tags).slice(0,10),years:Object.entries(years).sort((a,b)=>b[0].localeCompare(a[0])),types:top(types),avgRating:rn?Math.round(rs/rn*10)/10:null,
+  longest:trips.reduce((m,t)=>!m||tripDays(t)>tripDays(m)?t:m,null)};}
+function facetValues(trips){const u=a=>[...new Set(a.filter(Boolean))].sort((x,y)=>x.localeCompare(y));return{countries:u(trips.map(t=>t.country)),years:u(trips.map(yearOf)).reverse(),tags:u(trips.flatMap(t=>t.tags||[]))};}
+/* ----- backup ----- */
+function bytesToB64(b){let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s);}
+function b64ToBytes(s){const bin=atob(s),b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;}
+async function buildBackup({trips,wishes,photos},{includePhotos=true,now=new Date().toISOString()}={}){const out={app:TJ_APP,version:TJ_VERSION,exported:now,includesPhotos:!!includePhotos,trips,wishes,photos:[]};
+ if(includePhotos)for(const p of photos){const conv=async b=>b?{type:b.type||"image/jpeg",data:bytesToB64(new Uint8Array(await b.arrayBuffer()))}:null;
+  out.photos.push({id:p.id,tripId:p.tripId,name:p.name||"",caption:p.caption||"",w:p.w||0,h:p.h||0,created:p.created||now,image:await conv(p.blob),thumb:await conv(p.thumb)});}
+ return out;}
+function parseBackup(json){let d;try{d=typeof json==="string"?JSON.parse(json):json}catch(e){throw new Error("This file is not valid JSON.")}
+ if(!d||d.app!==TJ_APP)throw new Error("This is not a Travel Journal backup file.");if(typeof d.version!=="number"||d.version>TJ_VERSION)throw new Error("This backup was made by a newer version of the app.");
+ const errs=[],trips=[],wishes=[],photos=[];
+ for(const t of Array.isArray(d.trips)?d.trips:[]){const r=normalizeTrip(t,t.updated);r.trip.updated=t.updated||r.trip.updated;if(r.errors.length)errs.push(`Trip "${t.place||t.id}": ${r.errors.join(" ")}`);else trips.push(r.trip);}
+ for(const w of Array.isArray(d.wishes)?d.wishes:[]){const r=normalizeWish(w,w.updated);r.wish.updated=w.updated||r.wish.updated;if(r.errors.length)errs.push("Wishlist item skipped: "+r.errors.join(" "));else wishes.push(r.wish);}
+ const toBlob=x=>{if(!x||typeof x.data!=="string")return null;if(!/^image\/(jpeg|png|webp|gif)$/.test(x.type||""))throw new Error("bad type");return new Blob([b64ToBytes(x.data)],{type:x.type});};
+ for(const p of Array.isArray(d.photos)?d.photos:[]){try{const blob=toBlob(p.image);if(!blob||typeof p.id!=="string")throw 0;photos.push({id:p.id,tripId:String(p.tripId||""),name:String(p.name||""),caption:String(p.caption||""),w:+p.w||0,h:+p.h||0,created:String(p.created||""),blob,thumb:toBlob(p.thumb)||blob});}catch(e){errs.push(`Photo ${p&&p.id||"?"} skipped (unreadable image data).`)}}
+ const pid=new Set(photos.map(p=>p.id));if(d.includesPhotos)for(const t of trips)t.photoIds=t.photoIds.filter(id=>pid.has(id));
+ return{trips,wishes,photos,errors:errs,includesPhotos:!!d.includesPhotos,exported:d.exported||null};}
+function mergeData(cur,inc,mode){if(mode==="replace"){const ids=new Set(inc.photos.map(p=>p.id));return{trips:inc.trips.map(t=>({...t,photoIds:t.photoIds.filter(i=>ids.has(i))})),wishes:inc.wishes,photos:inc.photos.filter(p=>inc.trips.some(t=>t.photoIds.includes(p.id)))};}
+ const m=(a,b)=>{const map=new Map(a.map(x=>[x.id,x]));for(const x of b){const o=map.get(x.id);if(!o||(x.updated||"")>=(o.updated||""))map.set(x.id,x);}return[...map.values()];};
+ const trips=m(cur.trips,inc.trips);const photoMap=new Map(cur.photos.map(p=>[p.id,p]));for(const p of inc.photos)photoMap.set(p.id,p);
+ // keep photos referenced by the winning trips
+ const keep=new Set(trips.flatMap(t=>t.photoIds));if(!inc.includesPhotos)for(const t of trips){const o=cur.trips.find(x=>x.id===t.id);if(o)t.photoIds=[...new Set([...t.photoIds.filter(id=>photoMap.has(id)),...o.photoIds])];}
+ for(const t of trips)t.photoIds=t.photoIds.filter(id=>photoMap.has(id));
+ return{trips,wishes:m(cur.wishes,inc.wishes),photos:[...photoMap.values()].filter(p=>trips.some(t=>t.photoIds.includes(p.id)))};}
+function fitSize(w,h,max=1600){if(w<=max&&h<=max)return[w,h];const k=max/Math.max(w,h);return[Math.round(w*k),Math.round(h*k)];}
+function fmtMoney(n,cur){try{return new Intl.NumberFormat(cur==="INR"?"en-IN":"en-US",{style:"currency",currency:cur,maximumFractionDigits:2}).format(n)}catch(e){return cur+" "+n.toLocaleString()}}
+function fmtRange(t){const f=s=>new Date(s+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});if(!isDate(t.start))return"";return t.start===t.end?f(t.start):f(t.start)+" – "+f(t.end);}
+function project(lat,lon){return[lon+180,90-lat];}
+
+</script>
+<script>
+(()=>{"use strict";
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let tt;const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2400);};
+const META_KEY="travel-journal:meta",LS_KEY="travel-journal:v1";
+const meta={get(){try{return JSON.parse(localStorage.getItem(META_KEY))||{}}catch(e){return{}}},set(p){try{localStorage.setItem(META_KEY,JSON.stringify({...meta.get(),...p}))}catch(e){}}};
+/* ---------- storage: IndexedDB, localStorage fallback (no photos) ---------- */
+const Store={mode:"idb",db:null,
+ async open(){try{if(!window.indexedDB)throw new Error("no idb");this.db=await new Promise((res,rej)=>{const r=indexedDB.open("travel-journal",1);
+   r.onupgradeneeded=()=>{const d=r.result;for(const s of["trips","wishes","photos"])if(!d.objectStoreNames.contains(s)){const os=d.createObjectStore(s,{keyPath:"id"});if(s==="photos")os.createIndex("tripId","tripId");}};
+   r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error("blocked"));});}
+  catch(e){this.mode="ls";}},
+ tx(s,m,fn){return new Promise((res,rej)=>{const t=this.db.transaction(s,m);let out;t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error("aborted"));out=fn(t);});},
+ _ls(){try{return JSON.parse(localStorage.getItem(LS_KEY))||{trips:[],wishes:[]}}catch(e){return{trips:[],wishes:[]}}},
+ _lsSave(d){localStorage.setItem(LS_KEY,JSON.stringify(d));},
+ async all(s){if(this.mode==="ls")return s==="photos"?[]:this._ls()[s]||[];return new Promise((res,rej)=>{const r=this.db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});},
+ async put(s,objs){objs=[].concat(objs);if(this.mode==="ls"){if(s==="photos")throw new Error("Photos need IndexedDB, which this browser blocks here.");const d=this._ls();const m=new Map((d[s]||[]).map(x=>[x.id,x]));objs.forEach(o=>m.set(o.id,o));d[s]=[...m.values()];this._lsSave(d);return}
+  return this.tx(s,"readwrite",t=>{const os=t.objectStore(s);objs.forEach(o=>os.put(o));});},
+ async del(s,ids){ids=[].concat(ids);if(this.mode==="ls"){if(s==="photos")return;const d=this._ls();d[s]=(d[s]||[]).filter(x=>!ids.includes(x.id));this._lsSave(d);return}
+  return this.tx(s,"readwrite",t=>{const os=t.objectStore(s);ids.forEach(i=>os.delete(i));});},
+ async replaceAll(data){if(this.mode==="ls"){this._lsSave({trips:data.trips,wishes:data.wishes});return}
+  return this.tx(["trips","wishes","photos"],"readwrite",t=>{for(const s of["trips","wishes","photos"]){const os=t.objectStore(s);os.clear();(data[s]||[]).forEach(o=>os.put(o));}});}};
+/* ---------- state ---------- */
+const S={trips:[],wishes:[],photos:new Map(),urls:new Map()};
+const thumbURL=id=>{const p=S.photos.get(id);if(!p)return"";const k=id+":t";if(!S.urls.has(k))S.urls.set(k,URL.createObjectURL(p.thumb||p.blob));return S.urls.get(k);};
+const fullURL=id=>{const p=S.photos.get(id);if(!p)return"";const k=id+":f";if(!S.urls.has(k))S.urls.set(k,URL.createObjectURL(p.blob));return S.urls.get(k);};
+const dropURLs=id=>{for(const k of[id+":t",id+":f"]){if(S.urls.has(k)){URL.revokeObjectURL(S.urls.get(k));S.urls.delete(k);}}};
+async function load(){S.trips=await Store.all("trips");S.wishes=await Store.all("wishes");const ph=await Store.all("photos");S.photos=new Map(ph.map(p=>[p.id,p]));}
+const touch=()=>meta.set({changed:new Date().toISOString()});
+/* ---------- helpers ---------- */
+const stars=r=>r?`<span class="rating" aria-label="${r} out of 5 stars">${"★".repeat(r)}${"☆".repeat(5-r)}</span>`:"";
+const loc=t=>[t.city,t.state,t.country].filter(Boolean).join(", ");
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function download(name,text,type){const a=document.createElement("a");const u=URL.createObjectURL(new Blob([text],{type}));a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}
+const fmtBytes=n=>n<1024?n+" B":n<1048576?(n/1024).toFixed(0)+" KB":n<1073741824?(n/1048576).toFixed(1)+" MB":(n/1073741824).toFixed(2)+" GB";
+/* ---------- country & currency lists (from the browser, no network) ---------- */
+(function(){let names=[];try{const dn=new Intl.DisplayNames(["en"],{type:"region",fallback:"none"});const L="ABCDEFGHIJKLMNOPQRSTUVWXYZ",skip=new Set(["EU","EZ","UN","QO","XA","XB","ZZ","XK"]);
+  for(const a of L)for(const b of L){const c=a+b;if(skip.has(c))continue;const n=dn.of(c);if(n&&n!==c)names.push(n);}}catch(e){}
+ names=[...new Set(names)].sort((a,b)=>a.localeCompare(b));$("countries").innerHTML=names.map(n=>`<option value="${esc(n)}">`).join("");
+ $("currencies").innerHTML=CURRENCIES.map(c=>`<option value="${c}">`).join("");$("t-type").innerHTML=TRIP_TYPES.map(t=>`<option value="${t}">${cap(t)}</option>`).join("");})();
+/* ---------- routing ---------- */
+const TABS=["trips","timeline","map","stats","wishlist","backup"];
+function route(){const h=decodeURIComponent(location.hash.slice(1));let tab=h,id=null;if(h.startsWith("trip/")){tab="view";id=h.slice(5);}if(tab!=="view"&&!TABS.includes(tab))tab="trips";
+ for(const t of TABS.concat("view"))$(t).hidden=t!==tab;document.querySelectorAll(".tabs a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.tab===tab)&&a.setAttribute("aria-current","page"));
+ if(tab==="view")renderView(id);else render(tab);}
+window.addEventListener("hashchange",()=>{route();window.scrollTo(0,0);});
+function render(tab){({trips:renderList,timeline:renderTimeline,map:renderMap,stats:renderStats,wishlist:renderWishes,backup:renderBackup})[tab]();}
+function refresh(){renderBanner();route();}
+/* ---------- banner ---------- */
+function renderBanner(){const m=meta.get(),b=$("banner"),n=S.trips.length+S.wishes.length;const last=m.lastExport?new Date(m.lastExport):null;
+ const stale=n>0&&(!last||(m.changed&&m.changed>m.lastExport&&Date.now()-last>7*864e5)||Date.now()-last>30*864e5);
+ b.classList.toggle("urgent",stale);
+ $("banner-text").innerHTML=(Store.mode==="ls"?"<b>IndexedDB is unavailable here, so photos can't be saved; trips are kept in localStorage.</b> ":"")+
+  `<b>Your data lives only in this browser.</b> Clearing site data, switching browsers or losing this device will delete it. `+(n===0?"Export a backup regularly once you start adding trips.":last?`Last backup: ${last.toLocaleDateString()}${m.changed>m.lastExport?" (changes since then)":""}.`:"<b>You haven't exported a backup yet.</b>");}
+/* ---------- list ---------- */
+function fillSelect(sel,vals,label){const v=sel.value;sel.innerHTML=`<option value="">${label}</option>`+vals.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");if(vals.includes(v))sel.value=v;}
+function cardHTML(t){const ph=t.photoIds.find(id=>S.photos.has(id));
+ return`<a class="trip" href="#trip/${encodeURIComponent(t.id)}"><div class="ph">${ph?`<img src="${thumbURL(ph)}" alt="" loading="lazy">`:"🧭"}</div><div class="bd"><h3>${esc(t.place)}</h3>
+ <div class="small muted">${esc(loc(t))}</div><div class="small">${fmtRange(t)} · ${tripDays(t)} day${tripDays(t)>1?"s":""}</div>${stars(t.rating)}
+ ${t.tags.length?`<div class="chips">${t.tags.slice(0,5).map(g=>`<span class="chip">#${esc(g)}</span>`).join("")}</div>`:""}</div></a>`;}
+function renderList(){const f=facetValues(S.trips);fillSelect($("f-country"),f.countries,"All countries");fillSelect($("f-year"),f.years,"All years");fillSelect($("f-tag"),f.tags,"All tags");
+ const list=sortTrips(filterTrips(S.trips,{q:$("f-q").value,country:$("f-country").value,year:$("f-year").value,tag:$("f-tag").value,minRating:$("f-rating").value}),$("f-sort").value);
+ $("trip-count").textContent=S.trips.length?`${list.length} of ${S.trips.length}`:"";
+ $("trip-list").innerHTML=S.trips.length===0?`<div class="empty card" style="grid-column:1/-1"><p style="font-size:2rem">🧳</p><p><b>No trips yet.</b></p><p>Add your first trip, or restore a backup from the Backup tab.</p><p style="margin-top:12px"><button type="button" class="btn btn-primary" data-add>+ Add trip</button></p></div>`
+  :list.length?list.map(cardHTML).join(""):`<p class="empty" style="grid-column:1/-1">No trips match these filters.</p>`;}
+["f-q","f-country","f-year","f-tag","f-rating","f-sort"].forEach(id=>$(id).addEventListener("input",renderList));
+/* ---------- timeline ---------- */
+function renderTimeline(){const g=groupByYear(S.trips);
+ $("tl-out").innerHTML=g.length?g.map(([y,ts])=>`<h3 class="tl-year">${esc(y)} <span class="small muted">${ts.length} trip${ts.length>1?"s":""} · ${daysTravelled(ts)} days</span></h3><ul class="tl">${ts.map(t=>{const ph=t.photoIds.find(id=>S.photos.has(id));
+  return`<li><a href="#trip/${encodeURIComponent(t.id)}">${ph?`<img src="${thumbURL(ph)}" alt="">`:`<span class="noimg" aria-hidden="true"></span>`}<span><b>${esc(t.place)}</b><br><span class="small muted">${esc(loc(t))}</span><br><span class="small">${fmtRange(t)}</span> ${stars(t.rating)}</span></a></li>`}).join("")}</ul>`).join("")
+  :`<p class="empty card">Your trips will appear here, grouped by year.</p>`;}
+/* ---------- map (offline SVG) ---------- */
+const VB0=[0,0,360,180];let vb=VB0.slice();
+(function(){let g="";for(let x=0;x<=360;x+=30)g+=`<line class="grat" x1="${x}" y1="0" x2="${x}" y2="180"/>`;for(let y=0;y<=180;y+=30)g+=`<line class="grat" x1="0" y1="${y}" x2="360" y2="${y}"/>`;$("grat").innerHTML=g;})();
+function setVB(v){const w=Math.min(360,Math.max(4,v[2])),h=w/2;let x=Math.min(360-w,Math.max(0,v[0])),y=Math.min(180-h,Math.max(0,v[1]));vb=[x,y,w,h];$("worldsvg").setAttribute("viewBox",vb.join(" "));
+ const r=Math.max(.25,w/360*3.2);document.querySelectorAll("#pts circle").forEach(c=>c.setAttribute("r",r));}
+function zoom(k,cx,cy){const[x,y,w,h]=vb;cx=cx??x+w/2;cy=cy??y+h/2;const nw=w*k;setVB([cx-(cx-x)*k,cy-(cy-y)*k,nw,nw/2]);}
+function fitPts(){const P=S.trips.filter(t=>t.lat!=null).map(t=>project(t.lat,t.lon));if(!P.length){setVB(VB0);return}
+ let x0=Math.min(...P.map(p=>p[0])),x1=Math.max(...P.map(p=>p[0])),y0=Math.min(...P.map(p=>p[1])),y1=Math.max(...P.map(p=>p[1]));
+ let w=Math.max(x1-x0,(y1-y0)*2,12)*1.5;setVB([(x0+x1)/2-w/2,(y0+y1)/2-w/4,w,w/2]);}
+let mapFitted=false;
+function renderMap(){const pts=S.trips.filter(t=>t.lat!=null&&t.lon!=null);
+ $("pts").innerHTML=pts.map(t=>{const[x,y]=project(t.lat,t.lon);return`<a class="pt" href="#trip/${encodeURIComponent(t.id)}"><title>${esc(t.place)}${loc(t)?" – "+esc(loc(t)):""} (${fmtRange(t)})</title><circle cx="${x.toFixed(3)}" cy="${y.toFixed(3)}" r="3"/></a>`}).join("");
+ const miss=S.trips.length-pts.length;$("map-missing").textContent=`${pts.length} trip${pts.length===1?"":"s"} on the map.`+(miss?` ${miss} trip${miss>1?"s have":" has"} no coordinates; edit a trip to add latitude and longitude.`:"");
+ if(!mapFitted){fitPts();mapFitted=true}else setVB(vb);if(online.on)online.draw();}
+$("zin").onclick=()=>zoom(.6);$("zout").onclick=()=>zoom(1/.6);$("zfit").onclick=fitPts;
+(function(){const svg=$("worldsvg");let drag=null;const toSvg=(cx,cy)=>{const r=svg.getBoundingClientRect();return[vb[0]+(cx-r.left)/r.width*vb[2],vb[1]+(cy-r.top)/r.height*vb[3]];};
+ svg.addEventListener("wheel",e=>{e.preventDefault();const[x,y]=toSvg(e.clientX,e.clientY);zoom(e.deltaY<0?.8:1.25,x,y);},{passive:false});
+ svg.addEventListener("pointerdown",e=>{if(e.target.closest("a"))return;drag={x:e.clientX,y:e.clientY,v:vb.slice()};svg.setPointerCapture(e.pointerId);svg.classList.add("drag");});
+ svg.addEventListener("pointermove",e=>{if(!drag)return;const r=svg.getBoundingClientRect();setVB([drag.v[0]-(e.clientX-drag.x)/r.width*drag.v[2],drag.v[1]-(e.clientY-drag.y)/r.height*drag.v[3],drag.v[2],drag.v[3]]);});
+ const end=()=>{drag=null;svg.classList.remove("drag")};svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);})();
+/* ---------- online map (opt-in only, not remembered) ---------- */
+const online={on:false,map:null,layer:null,loading:null,
+ load(){if(window.L)return Promise.resolve();if(this.loading)return this.loading;
+  this.loading=new Promise((res,rej)=>{const c=document.createElement("link");c.rel="stylesheet";c.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";c.integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";c.crossOrigin="";document.head.appendChild(c);
+   const s=document.createElement("script");s.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";s.integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";s.crossOrigin="";s.onload=res;s.onerror=()=>{this.loading=null;rej(new Error("Could not load the online map. Are you offline?"))};document.head.appendChild(s);});return this.loading;},
+ draw(){if(!this.map){this.map=L.map("onlinemap",{worldCopyJump:true}).setView([20,0],2);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(this.map);}
+  if(this.layer)this.layer.remove();const pts=S.trips.filter(t=>t.lat!=null);this.layer=L.layerGroup(pts.map(t=>L.marker([t.lat,t.lon],{title:t.place}).bindPopup(`<b>${esc(t.place)}</b><br>${esc(loc(t))}<br>${fmtRange(t)}<br><a href="#trip/${encodeURIComponent(t.id)}">Open</a>`))).addTo(this.map);
+  if(pts.length)this.map.fitBounds(L.latLngBounds(pts.map(t=>[t.lat,t.lon])).pad(.3),{maxZoom:8});setTimeout(()=>this.map.invalidateSize(),50);}};
+$("online-map").addEventListener("change",async e=>{online.on=e.target.checked;$("onlinemap").hidden=!online.on;$("mapbox").hidden=online.on;
+ if(online.on){try{await online.load();online.draw();}catch(err){toast(err.message);e.target.checked=false;online.on=false;$("onlinemap").hidden=true;$("mapbox").hidden=false;}}});
+/* ---------- stats ---------- */
+function renderStats(){const s=computeStats(S.trips);if(!s.trips){$("stats-out").innerHTML=`<p class="empty card">Stats appear once you add trips.</p>`;return}
+ const money=o=>Object.keys(o).length?Object.entries(o).sort().map(([c,v])=>`<tr><td>${esc(c)}</td><td>${esc(fmtMoney(v,c))}</td><td>${s.budget[c]!=null?esc(fmtMoney(s.budget[c],c)):"–"}</td></tr>`).join(""):`<tr><td colspan="3" class="muted">No spend recorded</td></tr>`;
+ const curs={...s.budget,...s.spend};const mx=Math.max(...s.years.map(y=>y[1]),1);
+ $("stats-out").innerHTML=`<div class="stats"><div class="stat"><b>${s.trips}</b><small>Trips</small></div><div class="stat"><b>${s.countries}</b><small>Countries</small></div><div class="stat"><b>${s.cities}</b><small>Cities</small></div><div class="stat"><b>${s.days}</b><small>Days travelled</small></div></div>
+ <div class="two"><div class="card"><h3>Spend by currency</h3><table class="t"><thead><tr><th>Currency</th><th>Spent</th><th>Budget</th></tr></thead><tbody>${money(Object.fromEntries(Object.keys(curs).map(c=>[c,s.spend[c]||0])))}</tbody></table><p class="small muted" style="margin-top:8px">Totals are kept per currency; nothing is converted.</p></div>
+ <div class="card"><h3>Top tags</h3>${s.topTags.length?`<div class="chips">${s.topTags.map(([g,n])=>`<button type="button" class="chip" data-tag="${esc(g)}">#${esc(g)} · ${n}</button>`).join("")}</div>`:`<p class="muted small">No tags yet.</p>`}
+ <h3 style="margin-top:16px">Trips per year</h3><ul class="bars">${s.years.map(([y,n])=>`<li><span>${esc(y)}</span><i style="width:${n/mx*100}%" aria-hidden="true"></i><span>${n}</span></li>`).join("")}</ul>
+ <h3 style="margin-top:16px">By type</h3><p class="small">${s.types.map(([t,n])=>`${esc(cap(t))}: ${n}`).join(" · ")}</p>
+ ${s.avgRating?`<p class="small" style="margin-top:8px">Average rating: ${s.avgRating} / 5</p>`:""}${s.longest?`<p class="small">Longest trip: <a href="#trip/${encodeURIComponent(s.longest.id)}">${esc(s.longest.place)}</a> (${tripDays(s.longest)} days)</p>`:""}</div></div>`;}
+$("stats-out").addEventListener("click",e=>{const b=e.target.closest("[data-tag]");if(!b)return;$("f-tag").value="";location.hash="#trips";setTimeout(()=>{fillSelect($("f-tag"),facetValues(S.trips).tags,"All tags");$("f-tag").value=b.dataset.tag;renderList();},0);});
+/* ---------- detail view ---------- */
+function renderView(id){const t=S.trips.find(x=>x.id===id),v=$("view");if(!t){v.innerHTML=`<div class="card empty"><p>That trip doesn't exist (it may have been deleted).</p><p><a href="#trips">Back to trips</a></p></div>`;return}
+ const ph=t.photoIds.filter(i=>S.photos.has(i));document.title=t.place+" | Travel Journal";
+ v.innerHTML=`<article class="card"><div class="detail-head"><div><p class="noprint"><a href="#trips">← All trips</a></p><h2 style="font-size:1.8rem;margin:4px 0 2px">${esc(t.place)}</h2><div class="muted">${esc(loc(t))}</div><div>${fmtRange(t)} · ${tripDays(t)} day${tripDays(t)>1?"s":""} ${stars(t.rating)}</div></div>
+ <div class="row noprint"><button type="button" class="btn btn-sm" data-edit="${esc(t.id)}">Edit</button><button type="button" class="btn btn-sm" onclick="print()">Print</button><button type="button" class="btn btn-sm btn-danger" data-del="${esc(t.id)}">Delete</button></div></div>
+ <dl class="meta"><dt>Type</dt><dd>${esc(cap(t.type))}</dd>${t.companions.length?`<dt>Companions</dt><dd>${esc(t.companions.join(", "))}</dd>`:""}
+ ${t.budget!=null?`<dt>Budget</dt><dd>${esc(fmtMoney(t.budget,t.currency))}</dd>`:""}${t.spend!=null?`<dt>Spent</dt><dd>${esc(fmtMoney(t.spend,t.currency))}${t.budget?` (${Math.round(t.spend/t.budget*100)}% of budget)`:""}</dd>`:""}
+ ${t.lat!=null?`<dt>Coordinates</dt><dd>${t.lat.toFixed(5)}, ${t.lon.toFixed(5)}</dd>`:""}${t.tags.length?`<dt>Tags</dt><dd><div class="chips" style="margin:0">${t.tags.map(g=>`<span class="chip">#${esc(g)}</span>`).join("")}</div></dd>`:""}</dl>
+ ${t.notes?`<div class="notes">${esc(t.notes)}</div>`:""}
+ ${ph.length?`<h3 style="margin-top:18px">Photos (${ph.length})</h3><div class="gallery">${ph.map((i,k)=>`<button type="button" data-lb="${k}" aria-label="Open photo ${k+1} of ${ph.length}"><img src="${thumbURL(i)}" alt="Photo ${k+1} from ${esc(t.place)}" loading="lazy"></button>`).join("")}</div>`:""}
+ <p class="small muted" style="margin-top:16px">Added ${new Date(t.created).toLocaleDateString()} · updated ${new Date(t.updated).toLocaleDateString()}</p></article>`;
+ v.querySelectorAll("[data-lb]").forEach(b=>b.onclick=()=>openLB(ph,+b.dataset.lb,t.place));}
+document.addEventListener("click",async e=>{const ed=e.target.closest("[data-edit]"),dl=e.target.closest("[data-del]"),ad=e.target.closest("[data-add]");
+ if(ed)openForm(S.trips.find(t=>t.id===ed.dataset.edit));
+ if(ad)openForm(null);
+ if(dl){const t=S.trips.find(x=>x.id===dl.dataset.del);if(!t||!confirm(`Delete "${t.place}" and its ${t.photoIds.length} photo(s)? This cannot be undone.`))return;
+  await Store.del("photos",t.photoIds);await Store.del("trips",t.id);t.photoIds.forEach(i=>{dropURLs(i);S.photos.delete(i)});S.trips=S.trips.filter(x=>x.id!==t.id);touch();toast("Trip deleted");location.hash="#trips";refresh();}});
+/* ---------- lightbox ---------- */
+const lb={ids:[],i:0,place:""};
+function openLB(ids,i,place){Object.assign(lb,{ids,i,place});showLB();$("lightbox").showModal();}
+function showLB(){const id=lb.ids[lb.i];$("lb-img").src=fullURL(id);$("lb-img").alt=`Photo ${lb.i+1} of ${lb.ids.length} from ${lb.place}`;$("lb-cap").textContent=`${lb.place} · ${lb.i+1} / ${lb.ids.length}`;$("lb-prev").disabled=$("lb-next").disabled=lb.ids.length<2;}
+$("lb-prev").onclick=()=>{lb.i=(lb.i-1+lb.ids.length)%lb.ids.length;showLB();};$("lb-next").onclick=()=>{lb.i=(lb.i+1)%lb.ids.length;showLB();};
+$("lightbox").addEventListener("keydown",e=>{if(e.key==="ArrowLeft")$("lb-prev").click();if(e.key==="ArrowRight")$("lb-next").click();});
+let tsx=null;$("lightbox").addEventListener("touchstart",e=>{tsx=e.touches[0].clientX},{passive:true});$("lightbox").addEventListener("touchend",e=>{if(tsx===null)return;const d=e.changedTouches[0].clientX-tsx;if(Math.abs(d)>50)(d>0?$("lb-prev"):$("lb-next")).click();tsx=null;});
+document.querySelectorAll("dialog [data-close]").forEach(b=>b.addEventListener("click",()=>b.closest("dialog").close()));
+/* ---------- trip form ---------- */
+const F={edit:null,keep:[],pending:[],busy:0,fromWish:null};
+function openForm(t,prefill){const f=$("trip-form");f.reset();$("t-err").textContent="";F.edit=t||null;F.keep=t?t.photoIds.filter(i=>S.photos.has(i)):[];F.pending=[];F.fromWish=prefill&&prefill.wishId||null;
+ $("trip-dlg-h").textContent=t?"Edit trip":"Add trip";const v=t||{currency:"INR",type:"solo",...(prefill||{})};
+ for(const k of["place","city","state","country","start","end","type","notes","currency"])f.elements[k].value=v[k]??"";
+ f.elements.companions.value=(v.companions||[]).join(", ");f.elements.tags.value=(v.tags||[]).join(", ");
+ for(const k of["budget","spend","lat","lon"])f.elements[k].value=v[k]??"";if(v.rating)$("r"+v.rating).checked=true;
+ $("t-photos").disabled=Store.mode==="ls";if(Store.mode==="ls")$("t-ph-msg").textContent="Photos can't be saved in this browser (IndexedDB unavailable).";
+ drawThumbs();$("trip-dlg").showModal();$("t-place").focus();}
+function drawThumbs(){$("t-thumbs").innerHTML=F.keep.map(i=>`<figure><img src="${thumbURL(i)}" alt="Saved photo"><button type="button" data-rm-keep="${esc(i)}" aria-label="Remove photo">✕</button></figure>`).join("")+
+ F.pending.map((p,k)=>`<figure><img src="${p.url}" alt="New photo ${esc(p.name)}"><button type="button" data-rm-new="${k}" aria-label="Remove new photo ${esc(p.name)}">✕</button></figure>`).join("")+(F.busy?`<figure class="busy">Processing ${F.busy}…</figure>`:"");}
+$("t-thumbs").addEventListener("click",e=>{const a=e.target.closest("[data-rm-keep]"),b=e.target.closest("[data-rm-new]");if(a)F.keep=F.keep.filter(i=>i!==a.dataset.rmKeep);if(b){const p=F.pending.splice(+b.dataset.rmNew,1)[0];URL.revokeObjectURL(p.url);}drawThumbs();});
+$("t-norate").onclick=()=>document.querySelectorAll("#t-stars input").forEach(i=>i.checked=false);
+async function decodeImage(file){if(window.createImageBitmap){try{return await createImageBitmap(file,{imageOrientation:"from-image"})}catch(e){}}
+ return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{res(im);setTimeout(()=>URL.revokeObjectURL(u),0)};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("unreadable"))};im.src=u;});}
+function toJPEG(img,max,q){const[w,h]=fitSize(img.width,img.height,max);const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+ return new Promise((res,rej)=>c.toBlob(b=>b?res({blob:b,w,h}):rej(new Error("encode failed")),"image/jpeg",q));}
+async function processImage(file){if(!/^image\//.test(file.type)&&!/\.(jpe?g|png|webp|gif|heic|heif|avif|bmp)$/i.test(file.name))throw new Error("not an image");if(file.size>60*1048576)throw new Error("larger than 60 MB");
+ const img=await decodeImage(file);const full=await toJPEG(img,1600,.82),th=await toJPEG(img,480,.72);if(img.close)img.close();return{blob:full.blob,thumb:th.blob,w:full.w,h:full.h,name:file.name};}
+$("t-photos").addEventListener("change",async e=>{const files=[...e.target.files];e.target.value="";F.busy+=files.length;drawThumbs();const bad=[];
+ for(const f of files){try{const p=await processImage(f);p.url=URL.createObjectURL(p.thumb);F.pending.push(p);}catch(err){bad.push(`${f.name} (${err.message})`)}F.busy--;drawThumbs();}
+ if(bad.length)toast("Skipped: "+bad.join(", "));});
+$("t-geo").onclick=()=>{const m=$("t-geo-msg");if(!navigator.geolocation){m.textContent="This browser can't share your location. Type the coordinates instead.";return}
+ m.textContent="Asking for your location…";navigator.geolocation.getCurrentPosition(p=>{$("t-lat").value=p.coords.latitude.toFixed(5);$("t-lon").value=p.coords.longitude.toFixed(5);m.textContent=`Location filled in (accuracy about ${Math.round(p.coords.accuracy)} m).`;},
+  err=>{m.textContent=err.code===1?"Location permission was denied. You can type the coordinates instead.":"Couldn't get your location. Type the coordinates instead.";},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});};
+$("trip-form").addEventListener("submit",async e=>{e.preventDefault();if(F.busy){toast("Wait for photos to finish processing");return}const f=e.target,g=k=>f.elements[k].value;
+ const input={...(F.edit||{}),place:g("place"),city:g("city"),state:g("state"),country:g("country"),start:g("start"),end:g("end"),type:g("type"),companions:g("companions"),tags:g("tags"),
+  rating:(f.querySelector("#t-stars input:checked")||{}).value??null,notes:g("notes"),currency:g("currency"),budget:g("budget"),spend:g("spend"),lat:g("lat"),lon:g("lon")};
+ const{trip,errors}=normalizeTrip(input);if(errors.length){$("t-err").innerHTML=errors.map(esc).join("<br>");$("t-err").focus();return}
+ $("t-save").disabled=true;try{const now=new Date().toISOString();const newPhotos=F.pending.map(p=>({id:uid(),tripId:trip.id,name:p.name,caption:"",w:p.w,h:p.h,created:now,blob:p.blob,thumb:p.thumb}));
+  const removed=F.edit?F.edit.photoIds.filter(i=>!F.keep.includes(i)):[];trip.photoIds=F.keep.concat(newPhotos.map(p=>p.id));
+  if(newPhotos.length)await Store.put("photos",newPhotos);await Store.put("trips",trip);if(removed.length)await Store.del("photos",removed);
+  newPhotos.forEach(p=>S.photos.set(p.id,p));removed.forEach(i=>{dropURLs(i);S.photos.delete(i)});F.pending.forEach(p=>URL.revokeObjectURL(p.url));F.pending=[];
+  const ix=S.trips.findIndex(x=>x.id===trip.id);if(ix>=0)S.trips[ix]=trip;else S.trips.push(trip);
+  if(F.fromWish){const w=S.wishes.find(x=>x.id===F.fromWish);if(w){w.done=true;w.updated=now;await Store.put("wishes",w);}}
+  touch();askPersist();$("trip-dlg").close();toast(F.edit?"Trip updated":"Trip saved");location.hash="#trip/"+encodeURIComponent(trip.id);refresh();}
+ catch(err){$("t-err").textContent="Could not save: "+(err&&err.name==="QuotaExceededError"?"browser storage is full. Remove some photos or export and clear old data.":err.message);}
+ finally{$("t-save").disabled=false;}});
+$("trip-dlg").addEventListener("close",()=>{F.pending.forEach(p=>URL.revokeObjectURL(p.url));F.pending=[];});
+$("add-trip").onclick=()=>openForm(null);
+/* ---------- wishlist ---------- */
+function renderWishes(){const show=$("w-showdone").checked,P={high:0,medium:1,low:2};const ws=S.wishes.filter(w=>show||!w.done).sort((a,b)=>a.done-b.done||P[a.priority]-P[b.priority]||a.place.localeCompare(b.place));
+ $("wish-list").innerHTML=ws.length?ws.map(w=>`<div class="wish${w.done?" done":""}"><input type="checkbox" data-wdone="${esc(w.id)}" ${w.done?"checked":""} aria-label="Visited ${esc(w.place)}"><div style="flex:1;min-width:0"><div class="wt"><b>${esc(w.place)}</b>${w.country?` <span class="muted small">· ${esc(w.country)}</span>`:""} <span class="prio ${w.priority}">${w.priority}</span></div>${w.notes?`<div class="small muted">${esc(w.notes)}</div>`:""}</div>
+  <div class="row"><button type="button" class="btn btn-sm" data-wplan="${esc(w.id)}">Plan trip</button><button type="button" class="btn btn-sm btn-danger" data-wdel="${esc(w.id)}" aria-label="Delete ${esc(w.place)}">Delete</button></div></div>`).join("")
+  :`<p class="empty card">${S.wishes.length?"Everything here is visited. 🎉":"Add places you want to visit."}</p>`;}
+$("w-showdone").onchange=renderWishes;
+$("wish-form").addEventListener("submit",async e=>{e.preventDefault();const{wish,errors}=normalizeWish({place:$("w-place").value,country:$("w-country").value,priority:$("w-prio").value,notes:$("w-notes").value});
+ if(errors.length){$("w-err").textContent=errors.join(" ");$("w-place").focus();return}$("w-err").textContent="";await Store.put("wishes",wish);S.wishes.push(wish);touch();e.target.reset();$("w-prio").value="medium";$("w-showdone").checked=true;toast("Added to wishlist");renderBanner();renderWishes();$("w-place").focus();});
+$("wish-list").addEventListener("click",async e=>{const d=e.target.closest("[data-wdel]"),p=e.target.closest("[data-wplan]");
+ if(d){const w=S.wishes.find(x=>x.id===d.dataset.wdel);if(!confirm(`Remove "${w.place}" from the wishlist?`))return;await Store.del("wishes",w.id);S.wishes=S.wishes.filter(x=>x.id!==w.id);touch();renderWishes();}
+ if(p){const w=S.wishes.find(x=>x.id===p.dataset.wplan);openForm(null,{place:w.place,country:w.country,notes:w.notes,wishId:w.id});}});
+$("wish-list").addEventListener("change",async e=>{const c=e.target.closest("[data-wdone]");if(!c)return;const w=S.wishes.find(x=>x.id===c.dataset.wdone);w.done=c.checked;w.updated=new Date().toISOString();await Store.put("wishes",w);touch();renderWishes();});
+/* ---------- backup ---------- */
+function renderBackup(){let bytes=0;for(const p of S.photos.values())bytes+=(p.blob?.size||0)+(p.thumb?.size||0);
+ $("x-size").textContent=S.photos.size?`(${S.photos.size} photos, about ${fmtBytes(bytes*1.37)})`:"";const m=meta.get();
+ $("x-last").textContent=m.lastExport?`Last export: ${new Date(m.lastExport).toLocaleString()}${m.lastExportPhotos===false?" (without photos)":""}.`:"No export yet.";
+ $("st-info").textContent="Checking…";(async()=>{let t=`Saved here: ${S.trips.length} trips, ${S.photos.size} photos, ${S.wishes.length} wishlist places. Storage: ${Store.mode==="idb"?"IndexedDB":"localStorage (no photos)"}.`;
+  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();t+=` This site uses about ${fmtBytes(e.usage||0)}`+(e.quota?` of roughly ${fmtBytes(e.quota)} the browser allows.`:".");}
+   if(navigator.storage&&navigator.storage.persisted){const p=await navigator.storage.persisted();t+=p?" The browser has agreed to keep this data unless you clear it.":" The browser may delete this data if the device runs low on space.";}}catch(e){}
+  $("st-info").textContent=t;})();}
+$("x-go").onclick=async()=>{const inc=$("x-photos").checked;$("x-go").disabled=true;try{const data=await buildBackup({trips:S.trips,wishes:S.wishes,photos:[...S.photos.values()]},{includePhotos:inc});
+  const d=new Date(),name=`travel-journal-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}${inc?"":"-no-photos"}.json`;
+  download(name,JSON.stringify(data),"application/json");meta.set({lastExport:d.toISOString(),lastExportPhotos:inc});toast("Backup downloaded");renderBanner();renderBackup();}
+ catch(err){toast("Export failed: "+err.message);}finally{$("x-go").disabled=false;}};
+$("i-file").addEventListener("change",async e=>{const file=e.target.files[0];e.target.value="";if(!file)return;const out=$("i-out");out.textContent="Reading…";
+ try{const inc=parseBackup(await file.text());const mode=document.querySelector("input[name=imode]:checked").value;
+  if(mode==="replace"&&(S.trips.length||S.wishes.length)&&!confirm(`Replace all ${S.trips.length} trips and ${S.wishes.length} wishlist places in this browser with the backup (${inc.trips.length} trips, ${inc.photos.length} photos)?`)){out.textContent="Import cancelled.";return}
+  if(Store.mode==="ls"&&inc.photos.length){inc.photos=[];inc.errors.push("Photos were skipped because this browser can't store them here.");}
+  const merged=mergeData({trips:S.trips,wishes:S.wishes,photos:[...S.photos.values()]},inc,mode);await Store.replaceAll(merged);
+  for(const k of S.urls.keys())URL.revokeObjectURL(S.urls.get(k));S.urls.clear();await load();mapFitted=false;touch();askPersist();
+  out.innerHTML=`<p class="ok" style="color:var(--ok);font-weight:600">Imported ${inc.trips.length} trips, ${inc.photos.length} photos and ${inc.wishes.length} wishlist places (${mode}).</p>`+(inc.includesPhotos?"":"<p>This backup had no photos; existing photos were kept.</p>")+(inc.errors.length?`<ul>${inc.errors.slice(0,20).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"");
+  renderBanner();renderBackup();}
+ catch(err){out.innerHTML=`<p style="color:var(--bad);font-weight:600">${esc(err.message||String(err))}</p>`;}});
+let asked=false;async function askPersist(){if(asked)return;asked=true;try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist();}catch(e){}}
+$("st-persist").onclick=async()=>{try{const ok=navigator.storage&&navigator.storage.persist?await navigator.storage.persist():false;toast(ok?"The browser will keep this data":"The browser declined; export backups regularly");}catch(e){toast("Not supported here")}renderBackup();};
+$("st-wipe").onclick=async()=>{if(!confirm("Delete ALL trips, photos and wishlist places from this browser? Export a backup first if you might want them."))return;if(!confirm("Really delete everything? This cannot be undone."))return;
+ await Store.replaceAll({trips:[],wishes:[],photos:[]});for(const k of S.urls.keys())URL.revokeObjectURL(S.urls.get(k));S.urls.clear();S.trips=[];S.wishes=[];S.photos.clear();meta.set({changed:null});toast("All journal data deleted");refresh();};
+window.addEventListener("beforeprint",()=>{if(!location.hash.startsWith("#trip/"))toast("Open a trip to print it");});
+/* ---------- start ---------- */
+(async()=>{await Store.open();try{await load();}catch(e){toast("Could not read saved data: "+e.message);}renderBanner();route();document.documentElement.dataset.ready="1";})();
+})();
+
+</script>
+</body>
+</html>

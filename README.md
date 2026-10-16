@@ -23,3 +23,19 @@ Personal portfolio and resume, live at https://manideepgrandhi.github.io/
 - **Encode & hash**: Base64 (UTF-8, URL-safe), URL encode/decode, MD5 (own implementation) and SHA-1/256/384/512 (WebCrypto) for text or files, and UUID v4/v7 in bulk.
 - **Diff**: line diff (LCS), side by side or unified, with ignore-whitespace and ignore-case options.
 - **Units**: decimal and binary byte units, plus an IOPS × IO size = throughput calculator (formula only, approximate).
+
+## Travel journal
+
+[/travel/](https://manideepgrandhi.github.io/travel/) is a private travel journal that runs entirely in the browser, with no account and no server.
+
+- **Storage:** trips, wishlist and photos are saved in IndexedDB. Photos are resized to at most 1600 px JPEG, plus a 480 px thumbnail. If IndexedDB is unavailable, trips and the wishlist fall back to localStorage, without photos.
+- **Trips:** place, city, state, country, dates, type, companions, 1–5 rating, tags, notes, budget and spend (INR by default, any 3-letter currency), optional latitude/longitude (typed in or "use my location"), and multiple photos with a gallery and lightbox.
+- **Views:**
+  - **List:** search, filter by country, year, tag and rating, and sort.
+  - **Timeline:** grouped by year.
+  - **Stats:** countries, cities, trips, days travelled (overlapping trips counted once), spend per currency, top tags.
+  - **Map:** an offline SVG world map using Natural Earth land outlines (public domain). An optional "online map" uses Leaflet and OpenStreetMap tiles; it is off by default, not remembered, and loaded with SRI.
+  - **Wishlist:** with "Plan trip", which marks the place visited once the trip is saved.
+  - **Print:** a print-friendly trip page.
+- **Backup:** JSON export with photos embedded as base64, or without photos. Import can merge (newer edits win) or replace. A banner reminds you that the data lives only in this browser and to export regularly.
+- No network requests are made unless you turn on the online map, or use "use my location" (the browser may consult its location service).
