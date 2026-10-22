@@ -1,13 +1,13 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8">
+<!doctype html><html lang="en" data-mg-site="DBA Blog" data-mg-here="/blog/"><head><meta charset="utf-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f6fde%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Arial,sans-serif%27 font-size=%2738%27 font-weight=%27700%27 fill=%27%23fff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>script:CPU,I/O and memory usage by databases · Sqlservv.com</title><meta name="description" content="-- Get CPU utilization by database (CPU Usage by Database) WITH DB_CPU_Stats AS (SELECT pa.DatabaseID, DB_Name(pa.DatabaseID) AS [Database Name], SUM(qs.total_worker_time/1000) AS …">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" id="hl-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
-<link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
-<body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<link rel="stylesheet" href="../assets/style.css"><!--mg:head link--><link rel="stylesheet" href="/assets/mg-shared.css"><script>(function(){var h=document.documentElement,p;try{p=localStorage.getItem("mg-theme");if(!p){var o=localStorage.getItem("theme");if(o==="dark"||o==="light"){p=o;localStorage.setItem("mg-theme",p)}}}catch(e){}if(p!=="light"&&p!=="dark")p="auto";var d=p==="dark"||(p==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);h.setAttribute("data-theme",d?"dark":"light");h.setAttribute("data-theme-pref",p)})();</script><!--/mg:head--></head>
+<body data-root="../"><!--mg:body link--><script src="/assets/mg-shared.js"></script><!--/mg:body--><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 November 2017</time></div>
 <h1>script:CPU,I/O and memory usage by databases</h1><div class="chips"><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">-- Get CPU utilization by database  (CPU Usage by Database)
 
@@ -63,7 +63,7 @@ ORDER BY [Buffer Pool Rank] OPTION (RECOMPILE);
 -- Tells you how much memory (in the buffer pool)
 -- is being used by each database on the instance</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/scriptcpuio-and-memory-usage-by_18.html">View original post on Blogger</a></p><nav class="pn"><a href="script-i-o-requests-taking-longer-than-15-seconds.html">← Script: I/O  requests taking longer than 15 seconds</a><a href="technical-how-to-identify-and-fix-the-orphaned-users-in-sql-server.html">Technical :How to identify and fix the Orphaned Users in SQL Server? →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">DBA notes &amp; scripts · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer><div id="mg-foot-slot"></div>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

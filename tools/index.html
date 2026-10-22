@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-mg-site="Tools" data-mg-here="/tools/">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f6fde%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Arial,sans-serif%27 font-size=%2738%27 font-weight=%27700%27 fill=%27%23fff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
@@ -8,7 +8,7 @@
 <meta name="description" content="Free in-browser tools: password generator, case converter, epoch converter, JSON and SQL formatters, cron helper, Base64/hash/UUID, text diff and unit converter. Runs offline; nothing is stored or sent.">
 <meta name="referrer" content="no-referrer">
 <style>
-:root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff;--ok:#127a3a;--warn:#b25e00;--bad:#c0262d}
+:root{--accent:#0b63c9;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff;--ok:#127a3a;--warn:#b25e00;--bad:#c0262d}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -63,7 +63,7 @@ textarea{width:100%;min-height:200px;padding:14px;border:1.5px solid var(--line)
 footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.88rem}
 @media (max-width:820px){.cols{grid-template-columns:1fr}}
 @media (max-width:640px){.links{gap:14px}.links a.hide-m{display:none}header.hero{padding:36px 0 16px}section{padding:32px 0}.card{padding:18px}.bar .btn{flex:1 1 calc(50% - 8px)}}
-.toolnav{position:sticky;top:60px;z-index:9;background:rgba(247,249,252,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.toolnav{position:sticky;top:0;z-index:9;background:rgba(247,249,252,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .toolnav .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:thin}
 .toolnav button{flex:none;border:1.5px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px;cursor:pointer}
 .toolnav button:hover{color:var(--accent);border-color:var(--accent)}
@@ -99,12 +99,10 @@ table.data th[scope=row]{text-transform:none;letter-spacing:0;font-size:.95rem;c
 .clocks .big{font-size:1.15rem;font-weight:700;color:var(--ink);white-space:nowrap}
 @media (max-width:640px){.clocks thead{display:none}.clocks tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}.clocks th,.clocks td{border:0!important;padding:2px 0}.clocks td.mono{white-space:normal}.clocks td:last-child{grid-column:1/-1}}
 </style>
+<!--mg:head link--><link rel="stylesheet" href="/assets/mg-shared.css"><script>(function(){var h=document.documentElement,p;try{p=localStorage.getItem("mg-theme");if(!p){var o=localStorage.getItem("theme");if(o==="dark"||o==="light"){p=o;localStorage.setItem("mg-theme",p)}}}catch(e){}if(p!=="light"&&p!=="dark")p="auto";var d=p==="dark"||(p==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);h.setAttribute("data-theme",d?"dark":"light");h.setAttribute("data-theme-pref",p)})();</script><!--/mg:head-->
 </head>
-<body>
-<nav aria-label="Main"><div class="wrap">
- <a href="/" class="logo">Manideep<span>.</span></a>
- <div class="links"><a class="hide-m" href="/#skills">Skills</a><a class="hide-m" href="/#experience">Experience</a><a href="/projects/">Projects</a><a href="/tools/" aria-current="page">Tools</a><a href="/travel/">Travel</a><a href="/blog/">Blog</a></div>
-</div></nav>
+<body class="mg-fam">
+<!--mg:body link--><script src="/assets/mg-shared.js"></script><!--/mg:body-->
 
 <header class="hero"><div class="wrap">
  <span class="eyebrow">Runs in your browser · works offline</span>
@@ -332,7 +330,7 @@ table.data th[scope=row]{text-transform:none;letter-spacing:0;font-size:.95rem;c
 </div></section>
 </main>
 
-<footer><div class="wrap">© 2026 Manideep Grandhi<br><span class="morefrom">More from Manideep: <a href="/">Home</a> · <a href="/projects/">Projects</a> · <a href="/tools/">Tools</a> · <a href="/pg-commands/">pg-commands</a> · <a href="/db-cheatsheet/">DB Cheat Sheet</a> · <a href="/paisa-diary/">Paisa Diary</a> · <a href="/travel/">Travel</a> · <a href="/blog/">Blog</a></span></div></footer>
+<div id="mg-foot-slot"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script id="tools-js">

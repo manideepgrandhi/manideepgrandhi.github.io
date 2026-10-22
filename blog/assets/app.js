@@ -1,8 +1,8 @@
 (function(){
 var root=document.body.dataset.root||'';
-var dark=document.documentElement.dataset.theme==='dark';
-function setHl(){document.getElementById('hl-light').disabled=dark;document.getElementById('hl-dark').disabled=!dark}setHl();
-document.getElementById('theme').onclick=function(){dark=!dark;document.documentElement.dataset.theme=dark?'dark':'';localStorage.theme=dark?'dark':'light';setHl()};
+function setHl(){var dark=document.documentElement.getAttribute('data-theme')==='dark',l=document.getElementById('hl-light'),d=document.getElementById('hl-dark');if(l)l.disabled=dark;if(d)d.disabled=!dark}setHl();
+/* theme toggle lives in the shared bar (mg-shared.js, key mg-theme); keep legacy localStorage.theme in sync */
+window.addEventListener('mg-theme',function(e){setHl();try{localStorage.theme=e.detail.theme}catch(x){}});
 if(window.hljs){document.querySelectorAll('pre code').forEach(function(el){try{hljs.highlightElement(el)}catch(e){}})}
 document.querySelectorAll('.copy').forEach(function(b){b.onclick=function(){var t=b.parentNode.querySelector('code').innerText;
 (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(function(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}).finally(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy'},1500)})}});

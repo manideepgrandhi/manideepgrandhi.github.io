@@ -39,3 +39,29 @@ Personal portfolio and resume, live at https://manideepgrandhi.github.io/
   - **Print:** a print-friendly trip page.
 - **Backup:** JSON export with photos embedded as base64, or without photos. Import can merge (newer edits win) or replace. A banner reminds you that the data lives only in this browser and to export regularly.
 - No network requests are made unless you turn on the online map, or use "use my location" (the browser may consult its location service).
+
+## Shared look: header bar, footer, dark mode
+
+One source of truth for the look shared by every site (home, projects, tools, travel, blog, pg-commands, db-cheatsheet, paisa-diary):
+
+- `assets/mg-shared.css` holds the design tokens (`--mg-*`), the slim site bar, the footer, and the dark palette for the personal pages (`body.mg-fam`).
+- `assets/mg-shared.js` builds the bar (brand, site title, nav that collapses to ☰ on mobile, theme toggle) and the footer. It reads its config from `<html data-mg-site data-mg-here data-mg-local>` and exposes `window.MG` plus a `mg-theme` event.
+- `assets/mg-theme-head.js` is the pre-paint script, inlined in `<head>`. It sets `data-theme` (light/dark) and `data-theme-pref` (light/dark/auto) from `localStorage["mg-theme"]`, falling back to the system setting. It migrates the blog's old `localStorage.theme` once.
+
+The theme is stored under one key, `mg-theme` (`light` | `dark` | `auto`), so the choice carries across all sites on this origin.
+
+Pages hold marker blocks that are regenerated, so never edit inside them:
+
+```
+<!--mg:head link|inline--> … <!--/mg:head-->
+<!--mg:body link|inline--> … <!--/mg:body-->
+```
+
+`link` pages (home, projects, tools, blog) load `/assets/…`. `inline` pages (travel, pg-commands, db-cheatsheet, paisa-diary) carry a vendored copy so they keep working offline.
+
+After editing anything in `assets/mg-*`:
+
+```
+python3 scripts/sync-mg-shared.py          # this repo + ../pg-commands, ../db-cheatsheet/src/head.html, ../paisa-diary
+(cd ../db-cheatsheet && ./build.sh)
+```
