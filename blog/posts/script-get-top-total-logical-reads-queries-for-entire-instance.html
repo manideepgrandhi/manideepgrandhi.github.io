@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>19 November 2017</time></div>
 <h1>Script:Get top total logical reads queries for entire instance</h1><div class="chips"><a class="chip" href="../tags/pscript.html">pscript</a><a class="chip" href="../tags/scripts.html">scripts</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT TOP(50) DB_NAME(t.[dbid]) AS [Database Name],</code></pre></div>
 <p>REPLACE(REPLACE(LEFT(t.[text], 255), CHAR(10),''), CHAR(13),'') AS [Short Query Text],</p>
@@ -31,7 +31,7 @@ ORDER BY qs.total_logical_reads DESC OPTION (RECOMPILE);
 -- Helps you find the most expensive queries from a memory perspective across the entire instance
 -- Can also help track down parameter sniffing issues</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/scriptget-top-total-logical-reads_18.html">View original post on Blogger</a></p><nav class="pn"><a href="technical-how-to-identify-and-fix-the-orphaned-users-in-sql-server.html">← Technical :How to identify and fix the Orphaned Users in SQL Server?</a><a href="script-database-specific-queries-20-queries-inside.html">Script : Database specific queries(20 Queries inside) →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

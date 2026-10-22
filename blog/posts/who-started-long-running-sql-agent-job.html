@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>27 November 2019</time></div>
 <h1>Who started long running sql agent job</h1><div class="chips"><a class="chip" href="../tags/script.html">script</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT top 1  msdb.dbo.agent_datetime(run_date, run_time) as &#x27;Job_RunDateTime&#x27;,
       sj.name
@@ -25,7 +25,7 @@ where activity.run_Requested_date is not null and activity.stop_execution_date i
 and  sj.name = N&#x27;my agent job name&#x27; AND step_id = 0
 Order by   msdb.dbo.agent_datetime(sh.run_date, sh.run_time) desc ;</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2019/11/who-started-long-running-sql-agent-job.html">View original post on Blogger</a></p><nav class="pn"><a href="rename-all-user-tables-in-a-sql-database.html">← Rename all user tables in a SQL Database</a><a href="sql-server-how-much-free-space-i-have-in-my-database.html">SQL SERVER – How Much Free Space I Have in My Database? →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

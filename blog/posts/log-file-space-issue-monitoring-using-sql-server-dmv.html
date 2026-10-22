@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>31 May 2017</time></div>
 <h1>Log File Space Issue Monitoring Using SQL Server DMV</h1><div class="chips"><a class="chip" href="../tags/space.html">Space</a></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT dbs.[name] AS [Database Name], CONVERT(DECIMAL(18,2), dopc1.cntr_value/1024.0) AS [Log Size (MB)], CONVERT(DECIMAL(18,2), dopc.cntr_value/1024.0) AS [Log Used (MB)], CONVERT(DECIMAL(18,2), dopc1.cntr_value/1024.0) - CONVERT(DECIMAL(18,2), dopc.cntr_value/1024.0)[Log Free Space Left (MB)], CAST(CAST(dopc.cntr_value AS FLOAT) / CAST(dopc1.cntr_value AS FLOAT)AS DECIMAL(18,2)) * 100 AS [Log space Used (%)], dbs.recovery_model_desc AS [Recovery Model], dbs.state_desc [Database State], dbs.log_reuse_wait_desc AS [Log Reuse Wait Description]
 FROM sys.databases AS dbs
@@ -19,7 +19,7 @@ WITH (NOLOCK) ON dbs.name = dopc1.instance_name
 WHERE dopc.counter_name LIKE N&#x27;Log File(s) Used Size (KB)%&#x27; AND dopc1.counter_name LIKE N&#x27;Log File(s) Size (KB)%&#x27; AND dopc1.cntr_value &gt; 0
 order by 5 DESC OPTION (RECOMPILE)</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/05/log-file-space-issue-monitoring-using_30.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-backup-information-using-powershell.html">← Sql backup information using powershell</a><a href="miss-index-script.html">Miss index script →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

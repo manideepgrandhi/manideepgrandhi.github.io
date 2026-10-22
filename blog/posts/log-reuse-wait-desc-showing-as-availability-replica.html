@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>02 February 2020</time></div>
 <h1>Log_reuse_wait_desc showing as Availability_Replica</h1><div class="chips"><a class="chip" href="../tags/alwayson.html">alwayson</a></div><div class="content"><p>Recently in one my Always On Availability replica environment I got an issue where one of the availability replica database log file has grown completely, and we got a request to shrink the issue. When we run the below command we found that “log_reuse_wait_desc” showing as “Availability_Replica</p>
 <p>What this means is&nbsp;this indicates that the logged changes in the availability database at the primary replica that have not arrived and that these changes were applied to the availability database at one of the secondary replicas. Until logged changes arrive and are applied, the changes cannot be truncated from the availability database log at the primary replica.</p>
@@ -39,7 +39,7 @@ where drs.is_local=0</code></pre></div>
 <p>Note&nbsp;This method will result in the loss of the High Availability/Disaster Recovery scenario for the secondary. You may have to set up the Availability Group again in the future.</p>
 <p>Add more log space or log files.</p></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2020/02/logreusewaitdesc-showing-as.html">View original post on Blogger</a></p><nav class="pn"><a href="sql-agent-job-schedules.html">← SQL Agent:Job schedules</a><a href="how-to-measure-transactions-per-seconds-in-sql-server.html">How to Measure Transactions Per Seconds in SQL Server? →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

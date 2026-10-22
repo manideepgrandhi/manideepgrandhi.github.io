@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f6fde%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Arial,sans-serif%27 font-size=%2738%27 font-weight=%27700%27 fill=%27%23fff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects | Manideep Grandhi</title>
+<meta name="description" content="All of Manideep Grandhi's sites and code: pg-commands, DB cheat sheet, tools, travel journal, Paisa Diary, DBA scripts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#0f6fde;--accent-soft:#e8f1fd;--ink:#14213d;--muted:#5b6475;--line:#e3e7ee;--bg:#f7f9fc;--card:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;color:var(--ink);letter-spacing:-.02em}.logo span{color:var(--accent)}
+.links{display:flex;gap:22px;font-size:.92rem}.links a{color:var(--muted);font-weight:500}.links a:hover,.links a[aria-current]{color:var(--accent)}
+.hero{padding:56px 0 24px}.eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:.8rem;padding:4px 12px;border-radius:999px;margin-bottom:14px}
+h1{font-size:2.3rem;letter-spacing:-.03em;line-height:1.15}.summary{color:var(--muted);max-width:680px;margin-top:10px}
+h2{font-size:1.15rem;margin:34px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:.2s}
+.card:hover{border-color:#c7d6ee;box-shadow:0 10px 28px rgba(20,33,61,.07);transform:translateY(-2px)}
+.card h3{font-size:1.05rem;display:flex;align-items:center;gap:10px}
+.ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:1.1rem;background:var(--accent-soft);flex:none}
+.card p{color:var(--muted);font-size:.92rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px}.tags span{font-size:.75rem;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 9px;border-radius:999px}
+.acts{display:flex;gap:10px;margin-top:auto;padding-top:4px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-weight:600;font-size:.86rem}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#0b5bb8}
+.btn-ghost{border:1.5px solid var(--line);color:var(--ink);background:#fff}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0;color:var(--muted);font-size:.88rem}
+@media (max-width:640px){.links{gap:14px}.links .hide-m{display:none}h1{font-size:1.8rem}.hero{padding:36px 0 10px}}
+</style>
+</head>
+<body>
+<nav aria-label="Main"><div class="wrap">
+ <a href="/" class="logo">Manideep<span>.</span></a>
+ <div class="links"><a class="hide-m" href="/#experience">Experience</a><a href="/projects/" aria-current="page">Projects</a><a href="/tools/">Tools</a><a href="/travel/">Travel</a><a href="/blog/">Blog</a></div>
+</div></nav>
+<header class="hero"><div class="wrap">
+ <span class="eyebrow">Sites &amp; code</span>
+ <h1>Projects</h1>
+ <p class="summary">Everything I've built and published: browser tools for DBAs, offline apps, and the scripts I use day to day. All of them run in your browser or from a shell, with no accounts and nothing sent anywhere.</p>
+</div></header>
+<main class="wrap">
+<h2>Web apps &amp; sites</h2>
+<div class="grid" id="sites"></div>
+<h2>Code &amp; scripts</h2>
+<div class="grid" id="code"></div>
+</main>
+<footer><div class="wrap">© 2026 Manideep Grandhi · <a href="https://github.com/manideepgrandhi">GitHub</a><br><span class="morefrom">More from Manideep: <a href="/">Home</a> · <a href="/projects/">Projects</a> · <a href="/tools/">Tools</a> · <a href="/pg-commands/">pg-commands</a> · <a href="/db-cheatsheet/">DB Cheat Sheet</a> · <a href="/paisa-diary/">Paisa Diary</a> · <a href="/travel/">Travel</a> · <a href="/blog/">Blog</a></span></div></footer>
+<script>
+const GH="https://github.com/manideepgrandhi/";
+const P={sites:[
+ ["🐘","pg-commands","pg_dump / pg_restore / psql command builder, recipes, role &amp; privilege script generators and DBA admin tools.","/pg-commands/","pg-commands",["PostgreSQL","Aurora","Security"]],
+ ["📘","DB Cheat Sheet","Offline mobile cheat sheet for Aurora PostgreSQL, SQL Server, MongoDB and MarkLogic.","/db-cheatsheet/","db-cheatsheet",["Offline","Multi-DB","Mobile"]],
+ ["🧰","Tools","Time now (UTC/IST/US zones), date converter, passwords, case, epoch, JSON, SQL formatter, cron, hashes, diff, units.","/tools/","manideepgrandhi.github.io",["Utilities","Time zones"]],
+ ["💰","Paisa Diary","Mobile-friendly daily expense tracker; data stays in your browser.","/paisa-diary/","paisa-diary",["Finance","Offline"]],
+ ["🧭","Travel journal","Places I've been with photos, map, stats and a wishlist, saved in the browser with JSON backup.","/travel/","manideepgrandhi.github.io",["Personal","IndexedDB"]],
+ ["📝","DBA Blog","SQL Server, PostgreSQL and cloud notes and scripts, with tags and search.","/blog/","manideepgrandhi.github.io",["SQL Server","PostgreSQL","Notes"]],
+ ["👤","Portfolio","Resume, skills and experience.","/","manideepgrandhi.github.io",["About me"]]],
+code:[
+ ["🗂️","DBA scripts","Read-only Bash/AWS CLI and SQL scripts: RDS inventory, backup &amp; patch compliance, Postgres permissions audit, SQL Agent job failure monitor and more.",null,"DBA",["AWS","RDS","Bash","SQL Server"]],
+ ["💾","pg-dump-wrapper","Bash wrapper around pg_dump with validation, logging, verification, checksums and retention.",null,"pg-dump-wrapper",["PostgreSQL","Backup","Bash"]]]};
+for(const k in P)document.getElementById(k).innerHTML=P[k].map(([ic,n,d,live,repo,tags])=>`<article class="card"><h3><span class="ic" aria-hidden="true">${ic}</span>${n}</h3><p>${d}</p><div class="tags">${tags.map(t=>`<span>${t}</span>`).join("")}</div><div class="acts">${live?`<a class="btn btn-primary" href="${live}">Open site</a>`:""}<a class="btn btn-ghost" href="${GH+repo}" rel="noopener">Source ↗</a></div></article>`).join("");
+</script>
+</body>
+</html>

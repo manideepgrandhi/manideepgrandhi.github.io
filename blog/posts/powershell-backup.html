@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>13 June 2017</time></div>
 <h1>powershell-Backup</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-powershell">#Setup HTML
 $Header = @&quot;
@@ -205,7 +205,7 @@ Set-CellColor -Property DaysSinceLastFull -Color red -Filter &quot;DaysSinceLast
 Set-AlternatingRows -CSSEvenClass even -CssOddClass Odd | Out-File C:\PowerShell\PD_BACKUP_REPORT.Html
 Send-MailMessage -to &quot;Aamir &quot;, &quot;Michael &quot;, &quot;Steve  -from &quot;SQLAdmin &quot; -Subject &quot;PD Database Backup Report&quot; -SmtpServer mail.commonhealth.com -Attachments &quot;C:\PowerShell\PD_BACKUP_REPORT.Html&quot; -BodyAsHtml (Get-Content C:\PowerShell\PD_BACKUP_REPORT.Html | Out-String)</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/powershell-backup_13.html">View original post on Blogger</a></p><nav class="pn"><a href="monitoring-ag-health.html">← Monitoring AG health.</a><a href="stop-multiple-running-sql-jobs-at-once.html">-- Stop Multiple running SQL Jobs at once: →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

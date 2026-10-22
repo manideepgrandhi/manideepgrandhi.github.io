@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>14 November 2017</time></div>
 <h1>Script - Alwayson events</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">;WITH cte_HADR AS (SELECT object_name, CONVERT(XML, event_data) AS data
 FROM sys.fn_xe_file_target_read_file(&#x27;d:\MSSQL\Data\MSSQL12.MSSQLSERVER\MSSQL\Log\AlwaysOn*.xel&#x27;, null, null, null)
@@ -20,7 +20,7 @@ SELECT data.value(&#x27;(/event/@timestamp)[1]&#x27;,&#x27;datetime&#x27;) AS [t
 FROM cte_HADR
 WHERE data.value(&#x27;(/event/data[@name=&#x27;&#x27;error_number&#x27;&#x27;])[1]&#x27;,&#x27;int&#x27;) = 1480</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/11/script-alwayson-events_13.html">View original post on Blogger</a></p><nav class="pn"><a href="script-index-depth-and-fragmentation.html">← Script :index depth and fragmentation..</a><a href="technical-locks-blocks-and-deadlocks.html">Technical - locks, blocks and deadlocks →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>

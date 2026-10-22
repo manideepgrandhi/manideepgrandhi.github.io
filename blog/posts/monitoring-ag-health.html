@@ -7,7 +7,7 @@
 <link rel="stylesheet" id="hl-dark" disabled href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
 <link rel="stylesheet" href="../assets/style.css"><script>if(localStorage.theme==='dark')document.documentElement.dataset.theme='dark'</script></head>
 <body data-root="../"><header class="nav"><div class="wrap navin"><a class="logo" href="../index.html">Sqlservv<span>.com</span></a>
-<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
+<nav class="links"><a href="../index.html">Home</a><a href="../tags/index.html">Tags</a><a href="../about.html">About</a><a href="https://manideepgrandhi.github.io/">Portfolio</a><a href="https://manideepgrandhi.github.io/projects/">Projects</a><button id="theme" aria-label="Toggle dark mode">◐</button></nav></div></header>
 <main class="wrap"><article class="post"><a class="back" href="../index.html">← All posts</a><div class="cmeta"><time>11 June 2017</time></div>
 <h1>Monitoring AG health.</h1><div class="chips"></div><div class="content"><div class="code"><button class="copy" type="button">Copy</button><pre><code class="language-sql">SELECT 	ar.replica_server_name, 	adc.database_name, 	ag.name AS ag_name, 	drs.is_local, 	drs.is_primary_replica, 	drs.synchronization_state_desc, 	drs.is_commit_participant, 	drs.synchronization_health_desc, 	drs.recovery_lsn, 	drs.truncation_lsn, 	drs.last_sent_lsn, 	drs.last_sent_time, 	drs.last_received_lsn, 	drs.last_received_time, 	drs.last_hardened_lsn, 	drs.last_hardened_time, 	drs.last_redone_lsn, 	drs.last_redone_time, 	drs.log_send_queue_size, 	drs.log_send_rate, 	drs.redo_queue_size, 	drs.redo_rate, 	drs.filestream_send_rate, 	drs.end_of_log_lsn, 	drs.last_commit_lsn, 	drs.last_commit_time
 FROM sys.dm_hadr_database_replica_states AS drs
@@ -16,7 +16,7 @@ INNER JOIN sys.availability_groups AS ag 	ON ag.group_id = drs.group_id
 INNER JOIN sys.availability_replicas AS ar 	ON drs.group_id = ar.group_id AND 	drs.replica_id = ar.replica_id
 ORDER BY 	ag.name, 	ar.replica_server_name, 	adc.database_name;</code></pre></div></div>
 <p class="orig"><a href="https://sqlservv.blogspot.com/2017/06/monitoring-ag-health_10.html">View original post on Blogger</a></p><nav class="pn"><a href="unused-index-script.html">← Unused index script</a><a href="powershell-backup.html">powershell-Backup →</a></nav></article></main>
-<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
+<footer class="wrap foot">© Manideep Grandhi · DBA notes &amp; scripts · <a href="https://manideepgrandhi.github.io/">Portfolio</a> · <a href="https://manideepgrandhi.github.io/projects/">Projects</a> · <a href="https://sqlservv.blogspot.com/">Original blog</a></footer>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/powershell.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/pgsql.min.js"></script>
