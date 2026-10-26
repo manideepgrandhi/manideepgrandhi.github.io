@@ -34,7 +34,7 @@ def walk(t):
         for f in files:
             if f.endswith('.html'): sync(os.path.join(d, f))
 targets = sys.argv[1:] or [ROOT] + [os.path.join(os.path.dirname(ROOT), r) for r in
-          ('pg-commands/index.html', 'db-cheatsheet/src/head.html', 'paisa-diary/index.html')]
+          ('pg-commands/index.html', 'db-cheatsheet/src/head.html', 'db-cheatsheet/locking.html', 'paisa-diary/index.html')]
 for t in targets:
     if os.path.exists(t): walk(t)
 print('done. Rebuild db-cheatsheet with ./build.sh after syncing.')
