@@ -40,9 +40,19 @@ Personal portfolio and resume, live at https://manideepgrandhi.github.io/
 - **Backup:** JSON export with photos embedded as base64, or without photos. Import can merge (newer edits win) or replace. A banner reminds you that the data lives only in this browser and to export regularly.
 - No network requests are made unless you turn on the online map, or use "use my location" (the browser may consult its location service).
 
+## Sticky Pad
+
+[/sticky/](https://manideepgrandhi.github.io/sticky/) is a sticky-notes page that runs entirely in the browser.
+
+- **Notes:** multi-line. In the composer, Enter adds a new line and Ctrl/⌘+Enter or **Save note** saves. `/` jumps to the composer.
+- **Each note:** pin to top, 7 colours, copy, edit inline (double-click or ✏️; Ctrl/⌘+Enter saves, Esc cancels), delete with Undo. Long notes collapse after 12 lines with "Show more".
+- **Search** highlights matches. **Export** downloads `sticky-pad-YYYY-MM-DD.json`; **Import** merges by note id (newer edits win). **Clear all** asks first and can be undone.
+- **Storage:** `localStorage["mg-sticky-v1"]` on this device only; other open tabs stay in sync.
+- **Offline:** `sticky/sw.js` (network first, cache fallback) plus `manifest.webmanifest`, so it opens offline after one visit and can be installed as an app.
+
 ## Shared look: header bar, footer, dark mode
 
-One source of truth for the look shared by every site (home, projects, tools, travel, blog, pg-commands, db-cheatsheet, paisa-diary):
+One source of truth for the look shared by every site (home, projects, tools, travel, sticky, blog, pg-commands, db-cheatsheet, paisa-diary):
 
 - `assets/mg-shared.css` holds the design tokens (`--mg-*`), the slim site bar, the footer, and the dark palette for the personal pages (`body.mg-fam`).
 - `assets/mg-shared.js` builds the bar (brand, site title, nav that collapses to ☰ on mobile, theme toggle) and the footer. It reads its config from `<html data-mg-site data-mg-here data-mg-local>` and exposes `window.MG` plus a `mg-theme` event.
@@ -57,7 +67,7 @@ Pages hold marker blocks that are regenerated, so never edit inside them:
 <!--mg:body link|inline--> … <!--/mg:body-->
 ```
 
-`link` pages (home, projects, tools, blog) load `/assets/…`. `inline` pages (travel, pg-commands, db-cheatsheet, paisa-diary) carry a vendored copy so they keep working offline.
+`link` pages (home, projects, tools, blog) load `/assets/…`. `inline` pages (travel, sticky, pg-commands, db-cheatsheet, paisa-diary) carry a vendored copy so they keep working offline.
 
 After editing anything in `assets/mg-*`:
 
