@@ -68,6 +68,23 @@ Optional sync across devices with no server. The page signs in with Google Ident
 5. Copy the Client ID (`…apps.googleusercontent.com`) into `sticky/config.js` as `GOOGLE_CLIENT_ID: '…'`, then commit and push. A client ID is public, not a secret.
 6. On each device, open /sticky/, click **Connect Google Drive**, and sign in with the same Google account.
 
+## Sticky Pad · Gist Sync
+
+[`/sticky-gist/`](https://manideepgrandhi.github.io/sticky-gist/) is a separate copy of Sticky Pad that syncs through a **secret GitHub Gist** instead of Google Drive. It has its own storage (`mg-stickygist-*`), service worker scope and cache (`sticky-gist-v1`) and manifest, so it never touches the notes in `/sticky/`.
+
+**End-to-end encrypted.** Anyone with a secret gist's link can open it, so the gist only holds an encrypted envelope `{v, kdf, iter, salt, iv, ct}`. The key comes from your passphrase with PBKDF2-SHA256 (600,000 rounds, 16-byte salt fixed per gist), and each save uses AES-256-GCM with a fresh 12-byte IV. The passphrase is never stored or sent. The token and gist ID stay in this browser's localStorage. If you tick *Remember on this device*, a non-extractable `CryptoKey` is kept in IndexedDB. A wrong passphrase is rejected and never overwrites the gist. If you forget the passphrase, nobody can recover the synced copy.
+
+**Sync.** The page finds the gist by its description `sticky-pad-gist-sync (encrypted)` (file `sticky-pad-notes.enc.json`), or creates a secret one. It merges per note, so the newest edit wins and deletes are kept as tombstones for 30 days. It then re-reads the gist version just before writing to handle edits made at the same time on two devices. Sync runs on open, about 3 s after a change, when you return to the tab, when the device comes back online, and on **Sync now**. The app reports bad or expired tokens (401), missing gist access (403/404), rate limits (it retries after the reset) and offline.
+
+**Setup (once per device):**
+
+1. Open [github.com/settings/tokens/new?scopes=gist](https://github.com/settings/tokens/new?scopes=gist&description=Sticky%20Pad%20Gist%20Sync) (Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)).
+2. Give it a note and an expiry, tick **only** `gist`, then click **Generate token** and copy the `ghp_…` value.
+3. On `/sticky-gist/`, click **Connect GitHub Gist**, paste the token, and pick a passphrase. The first device asks you to confirm it.
+4. On every other device, use a token (the same one or a new one) and the **same passphrase**. The app finds the same gist.
+
+Fine-grained tokens with the account permission **Gists: Read and write** should also work. If one can't find your gist, paste its ID under *Advanced*. This path hasn't been tested.
+
 ## Shared look: header bar, footer, dark mode
 
 One source of truth for the look shared by every site (home, projects, tools, travel, sticky, blog, pg-commands, db-cheatsheet, paisa-diary):

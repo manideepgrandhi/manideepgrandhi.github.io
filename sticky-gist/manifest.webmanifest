@@ -1,0 +1,16 @@
+{
+  "name": "Sticky Pad · Gist Sync | Manideep Grandhi",
+  "short_name": "Sticky Gist",
+  "description": "Sticky notes saved in your browser, synced through an encrypted secret GitHub Gist. Works offline.",
+  "id": "/sticky-gist/",
+  "start_url": "/sticky-gist/",
+  "scope": "/sticky-gist/",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#14213d",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
