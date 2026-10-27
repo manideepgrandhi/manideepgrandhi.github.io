@@ -47,8 +47,26 @@ Personal portfolio and resume, live at https://manideepgrandhi.github.io/
 - **Notes:** multi-line. In the composer, Enter adds a new line and Ctrl/⌘+Enter or **Save note** saves. `/` jumps to the composer.
 - **Each note:** pin to top, 7 colours, copy, edit inline (double-click or ✏️; Ctrl/⌘+Enter saves, Esc cancels), delete with Undo. Long notes collapse after 12 lines with "Show more".
 - **Search** highlights matches. **Export** downloads `sticky-pad-YYYY-MM-DD.json`; **Import** merges by note id (newer edits win). **Clear all** asks first and can be undone.
-- **Storage:** `localStorage["mg-sticky-v1"]` on this device only; other open tabs stay in sync.
-- **Offline:** `sticky/sw.js` (network first, cache fallback) plus `manifest.webmanifest`, so it opens offline after one visit and can be installed as an app.
+- **Storage:** `localStorage["mg-sticky-v1"]` holds `{v:2, notes, tombs}`. Each note has a `mod` time, and deleted notes leave a tombstone `{id: deletedAt}` so deletes can sync. Older v1 data is upgraded automatically. Other open tabs stay in sync.
+- **Offline:** `sticky/sw.js` (network first, cache fallback) plus `manifest.webmanifest`, so it opens offline after one visit and can be installed as an app. It only caches `/sticky/` files, never Google requests.
+
+### Google Drive sync
+
+Optional sync across devices with no server. The page signs in with Google Identity Services, asks only for the `drive.appdata` scope, and keeps all notes in one file, `sticky-pad.json`, in the hidden app-data folder of your own Drive. That folder is private to this app and the app can't see your other Drive files. The access token stays in memory. Only a "connected" flag and your email are saved in localStorage.
+
+- **When it syncs:** on page load (silently), about 3 seconds after a change, when you come back to the tab, when the device goes back online, and when you press **Sync now**.
+- **Merge:** each sync pulls, merges, then pushes. For each note the newest change wins, including pins and colours. Deletes win over older edits. Tombstones are purged after 30 days. If the file changes during a sync, the page pulls and merges again before writing.
+- **Disconnect** revokes the token and keeps the notes on this device.
+- **Limits:** a Google token lasts about an hour. After that, browsers may block the silent sign-in pop-up, so you may need to tap **Sync now** once. A device that stays offline for more than 30 days can bring back notes that were deleted elsewhere.
+
+**Setup (one time).** Until this is done the page shows "Sync not set up yet".
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and create a project, for example `sticky-pad`.
+2. Go to **APIs & Services → Library**, search for **Google Drive API**, and click **Enable**.
+3. Go to **APIs & Services → OAuth consent screen** (Google Auth Platform). Choose **External**, set the app name and your email, and add the scope `.../auth/drive.appdata`. This scope is non-sensitive, so no Google review is needed. Then either add your Google account under **Test users**, or **Publish** the app. In Testing mode, sign-ins expire after 7 days.
+4. Go to **APIs & Services → Credentials → Create credentials → OAuth client ID**. Choose **Web application** and add `https://manideepgrandhi.github.io` under **Authorized JavaScript origins**. For local testing, also add `http://localhost:8765`. You don't need a redirect URI.
+5. Copy the Client ID (`…apps.googleusercontent.com`) into `sticky/config.js` as `GOOGLE_CLIENT_ID: '…'`, then commit and push. A client ID is public, not a secret.
+6. On each device, open /sticky/, click **Connect Google Drive**, and sign in with the same Google account.
 
 ## Shared look: header bar, footer, dark mode
 

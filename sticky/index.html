@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sticky Pad | Manideep Grandhi</title>
-<meta name="description" content="Sticky notes that live in your browser: multi-line notes, pin, colours, search, JSON backup. Works offline; nothing is sent anywhere.">
+<meta name="description" content="Sticky notes that live in your browser: multi-line notes, pin, colours, search, JSON backup. Works offline. Optional sync through your own Google Drive.">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b63c9">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -20,6 +20,7 @@ h1{margin:0;font-size:clamp(1.5rem,4vw,2.1rem);letter-spacing:-.02em;font-weight
 button,input,textarea{font:inherit;color:inherit}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--mg-line);background:var(--mg-surface);color:var(--mg-ink);border-radius:8px;padding:7px 12px;font-size:.88rem;font-weight:600;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--mg-accent);color:var(--mg-accent)}
+.btn[hidden]{display:none}
 .btn.pri{background:var(--mg-accent);border-color:var(--mg-accent);color:var(--mg-accent-ink)}
 .btn.pri:hover{filter:brightness(1.08);color:var(--mg-accent-ink)}
 .btn.danger:hover{border-color:#c0262d;color:#c0262d}
@@ -60,6 +61,18 @@ html[data-theme=dark] .ib:hover{background:rgba(255,255,255,.1)}
 .ib[aria-pressed=true]{opacity:1}
 .pal{position:absolute;right:8px;bottom:42px;z-index:5;background:var(--mg-surface);border:1px solid var(--mg-line);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .erow{display:flex;gap:6px;justify-content:flex-end}
+.sync{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-4px 0 10px;font-size:.88rem;color:var(--mg-muted)}
+.sync .dot{width:9px;height:9px;border-radius:50%;background:#9aa4b6;flex:none}
+.sync .dot[data-k=ok]{background:#1e9e50}.sync .dot[data-k=syncing],.sync .dot[data-k=connecting]{background:#e0a100;animation:pulse 1s infinite alternate}
+.sync .dot[data-k=offline],.sync .dot[data-k=auth]{background:#e07a00}.sync .dot[data-k=error]{background:#d33}
+@keyframes pulse{to{opacity:.35}}
+#stext{color:var(--mg-ink);font-weight:600}.semail{font-size:.8rem}
+.sbtns{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.sync .btn{padding:5px 10px;font-size:.82rem}.btn.lnk{border-color:transparent;background:none;color:var(--mg-accent)}
+.shelp{margin:0 0 14px;background:var(--mg-surface);border:1px solid var(--mg-line);border-radius:10px;padding:0 14px;font-size:.87rem;color:var(--mg-muted)}
+.shelp[open]{padding-bottom:6px}.shelp summary{cursor:pointer;padding:9px 0;font-weight:600;color:var(--mg-ink)}.shelp p{margin:0 0 8px}
+.shelp code{font:.8rem var(--mg-mono);background:var(--mg-surface2);padding:0 4px;border-radius:4px}
+@media (max-width:560px){.sbtns{margin-left:0;width:100%}}
 .empty{text-align:center;color:var(--mg-muted);padding:40px 10px;border:2px dashed var(--mg-line);border-radius:12px}
 .foot{color:var(--mg-muted);font-size:.82rem;margin:18px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#14213d;color:#fff;border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;font-size:.9rem;max-width:calc(100vw - 24px)}
@@ -197,7 +210,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 </script><!--/mg:body-->
 <header class="hero"><div class="wrap">
  <h1>Sticky Pad</h1>
- <p class="sub">Quick sticky notes, saved only in this browser. Works offline; nothing is sent anywhere.</p>
+ <p class="sub">Quick sticky notes, saved in this browser and working offline. Optionally sync them across devices through your own Google Drive.</p>
 </div></header>
 <main class="wrap">
  <section class="composer" id="composer" data-c="yellow" aria-label="New note">
@@ -218,39 +231,70 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   <input type="file" id="file" accept="application/json,.json" hidden>
   <button type="button" class="btn danger" id="clr">Clear all</button>
  </div>
+ <div class="sync" id="sync">
+  <span class="dot" id="sdot" aria-hidden="true"></span><span id="stext" role="status">Sync off</span><span class="semail" id="semail"></span>
+  <span class="sbtns"><button type="button" class="btn" id="sconn">☁ Connect Google Drive</button><button type="button" class="btn" id="snow" hidden>⟳ Sync now</button><button type="button" class="btn" id="sdisc" hidden>Disconnect</button><button type="button" class="btn lnk" id="shelp" aria-controls="shelpbox">How sync works</button></span>
+ </div>
+ <details class="shelp" id="shelpbox"><summary>Sync across devices with Google Drive</summary>
+  <p>Optional. Notes are kept in this browser and copied to a hidden app folder in <b>your own</b> Google Drive (scope <code>drive.appdata</code>: this page can see only its own file, not your other Drive files). There is no server; the page talks to Google directly. Connect on each device with the same Google account. Changes sync about 3 seconds after you stop typing, when you come back to the tab, and when you go back online. The newest change to each note wins, and deletes sync too (kept as markers for 30 days).</p>
+  <p>The sign-in lasts about an hour. After that, auto-sync may need one tap on <b>Sync now</b>, because browsers block sign-in pop-ups that you didn't click.</p>
+  <p id="snoset"><b>Not set up yet:</b> this page needs a Google OAuth client ID in <code>sticky/config.js</code>. The steps are in the <a href="https://github.com/manideepgrandhi/manideepgrandhi.github.io#google-drive-sync" rel="noopener">README</a>.</p>
+ </details>
  <div class="grid" id="list" aria-label="Notes"></div>
- <p class="foot">Notes are stored in this browser's local storage on this device only. Clearing site data removes them, so use <b>Export</b> to keep a backup. Shortcuts while editing: <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> save, <kbd>Esc</kbd> cancel. Double-click a note to edit it.</p>
+ <p class="foot">Notes are stored in this browser's local storage. Unless Google Drive sync is connected, they stay on this device only and clearing site data removes them, so use <b>Export</b> to keep a backup. Shortcuts while editing: <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> save, <kbd>Esc</kbd> cancel. Double-click a note to edit it.</p>
 </main>
 <div id="mg-foot-slot"></div>
 <div class="toast" id="toast" role="status" hidden><span id="tmsg"></span><button type="button" id="tundo" hidden>Undo</button></div>
+<script src="config.js"></script>
 <script>
 (function(){
 "use strict";
-const KEY="mg-sticky-v1",COLORS=["yellow","green","blue","pink","purple","orange","white"],CL={yellow:"Yellow",green:"Green",blue:"Blue",pink:"Pink",purple:"Purple",orange:"Orange",white:"White"};
+const KEY="mg-sticky-v1",SKEY="mg-sticky-sync",COLORS=["yellow","green","blue","pink","purple","orange","white"],CL={yellow:"Yellow",green:"Green",blue:"Blue",pink:"Pink",purple:"Purple",orange:"Orange",white:"White"};
+const TOMB_DAYS=30,DAY=86400000,FILE="sticky-pad.json",SCOPE="https://www.googleapis.com/auth/drive.appdata";
+const CFG=window.STICKY_CONFIG||{},CLIENT_ID=String(CFG.GOOGLE_CLIENT_ID||"").trim();
 const $=id=>document.getElementById(id);
-let notes=load(),newColor=prefColor(),editing=null,draft="",expanded=new Set(),palFor=null,undoFn=null,tt=0;
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||"null");return d&&Array.isArray(d.notes)?d.notes.filter(valid):[]}catch(e){return[]}}
-function valid(n){return n&&typeof n.id==="string"&&typeof n.text==="string"}
-function norm(n){return{id:String(n.id),text:String(n.text),color:COLORS.includes(n.color)?n.color:"yellow",pinned:!!n.pinned,created:+n.created||Date.now(),updated:+n.updated||+n.created||Date.now()}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({v:1,notes}));return true}catch(e){toast("Couldn't save: browser storage is full or blocked.");return false}}
+let notes=[],tombs={},newColor=prefColor(),editing=null,draft="",expanded=new Set(),palFor=null,undoFn=null,tt=0;
+/* ---------- data ---------- */
+function valid(n){return n&&typeof n.id==="string"&&n.id&&typeof n.text==="string"}
+function norm(n){const c=+n.created||Date.now(),u=+n.updated||c;return{id:String(n.id),text:String(n.text),color:COLORS.includes(n.color)?n.color:"yellow",pinned:!!n.pinned,created:c,updated:u,mod:Math.max(+n.mod||0,u)}}
+function cleanTombs(t,now){const o={};for(const k in t||{}){const v=+t[k];if(v&&v>now-TOMB_DAYS*DAY)o[k]=v}return o}
+function parseState(d){d=d||{};const ns=(Array.isArray(d)?d:Array.isArray(d.notes)?d.notes:[]).filter(valid).map(norm);return{notes:ns,tombs:cleanTombs(d.tombs,Date.now())}}
+function load(){try{const s=parseState(JSON.parse(localStorage.getItem(KEY)||"null"));notes=s.notes;tombs=s.tombs}catch(e){notes=[];tombs={}}}
+/* merge two states: per id, the newest change wins (a note's mod time vs a tombstone's delete time; ties go to the delete).
+   Tombstones older than TOMB_DAYS are purged. Pure function, exposed for tests. */
+function merge(a,b,now){now=now||Date.now();const m=new Map();
+ const put=(id,r)=>{const c=m.get(id);if(!c||r.ts>c.ts||(r.ts===c.ts&&r.t&&!c.t)||(r.ts===c.ts&&!r.t&&!c.t&&JSON.stringify(r.n)>JSON.stringify(c.n)))m.set(id,r)};
+ for(const s of [a,b]){for(const n of s.notes||[])put(n.id,{ts:n.mod||n.updated,n});for(const id in s.tombs||{})put(id,{ts:+s.tombs[id],t:1})}
+ const out={notes:[],tombs:{}};for(const [id,r] of m){if(r.t){if(r.ts>now-TOMB_DAYS*DAY)out.tombs[id]=r.ts}else out.notes.push(Object.assign({},r.n))}
+ return out}
+function canon(s){return JSON.stringify({n:s.notes.slice().sort((x,y)=>x.id<y.id?-1:1).map(n=>[n.id,n.text,n.color,n.pinned,n.created,n.updated,n.mod]),t:Object.keys(s.tombs).sort().map(k=>[k,s.tombs[k]])})}
+function state(){return{notes,tombs}}
+function save(fromSync){try{localStorage.setItem(KEY,JSON.stringify({v:2,notes,tombs}));}catch(e){toast("Couldn't save: browser storage is full or blocked.");return false}if(!fromSync)Sync.changed();return true}
+function touch(n){n.mod=Math.max(Date.now(),(n.mod||0)+1)}
+function kill(id){const i=notes.findIndex(n=>n.id===id);if(i<0)return null;const [n]=notes.splice(i,1);tombs[id]=Math.max(Date.now(),(n.mod||0)+1);return n}
+function revive(n){delete tombs[n.id];touch(n);if(!find(n.id))notes.push(n)}
 function prefColor(){try{const c=localStorage.getItem(KEY+"-color");return COLORS.includes(c)?c:"yellow"}catch(e){return"yellow"}}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
-function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function hl(t,q){if(!q)return esc(t);const lo=t.toLowerCase(),ql=q.toLowerCase();let o="",i=0,j;while((j=lo.indexOf(ql,i))>=0){o+=esc(t.slice(i,j))+"<mark>"+esc(t.slice(j,j+q.length))+"</mark>";i=j+q.length}return o+esc(t.slice(i))}
 function ago(t){const s=(Date.now()-t)/1000;if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+" min ago";if(s<86400)return Math.floor(s/3600)+" h ago";if(s<86400*7)return Math.floor(s/86400)+" d ago";return new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
 function full(t){return new Date(t).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}
+function hhmm(t){return new Date(t).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}
 function grow(ta){ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight+2,innerHeight*.6)+"px"}
 function sorted(){return notes.slice().sort((a,b)=>(b.pinned-a.pinned)||(b.created-a.created))}
+function find(id){return notes.find(n=>n.id===id)}
+/* ---------- UI ---------- */
 function swatches(el,cur,onpick){el.innerHTML=COLORS.map(c=>`<button type="button" data-c="${c}" data-pick="${c}" aria-pressed="${c===cur}" title="${CL[c]}" aria-label="${CL[c]}"></button>`).join("");el.onclick=e=>{const b=e.target.closest("[data-pick]");if(b)onpick(b.dataset.pick)}}
 function render(){
+ if(editing&&!find(editing))editing=null;if(palFor&&!find(palFor))palFor=null;
  const q=$("q").value.trim(),list=$("list"),all=sorted(),shown=q?all.filter(n=>n.text.toLowerCase().includes(q.toLowerCase())):all;
  $("count").textContent=q?`${shown.length} of ${notes.length}`:notes.length+(notes.length===1?" note":" notes");
  $("clr").disabled=$("exp").disabled=!notes.length;
  if(!shown.length){list.innerHTML=`<div class="empty" style="grid-column:1/-1">${notes.length?"No notes match “"+esc(q)+"”.":"No notes yet. Write one above and press Save."}</div>`;return}
  list.innerHTML=shown.map(n=>{
   const ed=editing===n.id,long=n.text.split("\n").length>12||n.text.length>600,open=expanded.has(n.id);
-  return `<article class="card${n.pinned?" pinned":""}" data-c="${n.color}" data-id="${n.id}">`+
-  (ed?`<label class="sr" for="ed-${n.id}">Edit note</label><textarea id="ed-${n.id}" class="edit" rows="3">${esc(draft)}</textarea><div class="erow"><button type="button" class="btn" data-a="cancel">Cancel</button><button type="button" class="btn pri" data-a="save">Save</button></div>`
+  return `<article class="card${n.pinned?" pinned":""}" data-c="${n.color}" data-id="${esc(n.id)}">`+
+  (ed?`<label class="sr" for="ed-${esc(n.id)}">Edit note</label><textarea id="ed-${esc(n.id)}" class="edit" rows="3">${esc(draft)}</textarea><div class="erow"><button type="button" class="btn" data-a="cancel">Cancel</button><button type="button" class="btn pri" data-a="save">Save</button></div>`
      :`<p class="txt${long&&!open&&!q?" clamp":""}" data-a="dbl" title="Double-click to edit">${hl(n.text,q)}</p>${long&&!q?`<button type="button" class="more" data-a="more">${open?"Show less":"Show more"}</button>`:""}`)+
   `<div class="meta"><span class="when" title="Created ${full(n.created)}${n.updated!==n.created?" · edited "+full(n.updated):""}">${n.pinned?"📌 ":""}${ago(n.updated)}${n.updated!==n.created?" · edited":""}</span>`+
   `<button type="button" class="ib" data-a="pin" aria-pressed="${n.pinned}" title="${n.pinned?"Unpin":"Pin to top"}" aria-label="${n.pinned?"Unpin":"Pin to top"}">📌</button>`+
@@ -259,29 +303,29 @@ function render(){
   `<button type="button" class="ib" data-a="edit" title="Edit" aria-label="Edit">✏️</button>`+
   `<button type="button" class="ib" data-a="del" title="Delete" aria-label="Delete">🗑️</button></div>`+
   (palFor===n.id?`<div class="pal sw" role="group" aria-label="Pick a colour"></div>`:"")+`</article>`}).join("");
- if(palFor){const c=list.querySelector(`[data-id="${palFor}"]`);if(c){const n=find(palFor);swatches(c.querySelector(".pal"),n.color,col=>{n.color=col;palFor=null;save();render()});c.querySelector(".pal button[aria-pressed=true]").focus()}}
- if(editing){const ta=list.querySelector(".edit");if(ta){grow(ta);ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}
+ if(palFor){const c=[...list.querySelectorAll(".card")].find(x=>x.dataset.id===palFor);if(c){const n=find(palFor);swatches(c.querySelector(".pal"),n.color,col=>{n.color=col;touch(n);palFor=null;save();render()});c.querySelector(".pal button[aria-pressed=true]").focus()}}
+ if(editing){const ta=list.querySelector(".edit");if(ta&&document.activeElement!==ta){grow(ta);ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}
 }
-function find(id){return notes.find(n=>n.id===id)}
 function setNewColor(c){newColor=c;$("composer").dataset.c=c;try{localStorage.setItem(KEY+"-color",c)}catch(e){}swatches($("newsw"),c,setNewColor)}
 function add(){const ta=$("new"),t=ta.value.replace(/\s+$/,"").replace(/^\s*\n/,"");if(!t.trim()){ta.focus();return}
- const now=Date.now();notes.push({id:uid(),text:t,color:newColor,pinned:false,created:now,updated:now});if(!save()){notes.pop();return}ta.value="";grow(ta);ta.focus();render()}
+ const now=Date.now(),n={id:uid(),text:t,color:newColor,pinned:false,created:now,updated:now,mod:now};notes.push(n);if(!save()){notes.pop();return}ta.value="";grow(ta);ta.focus();render()}
 function toast(msg,undo){clearTimeout(tt);$("tmsg").textContent=msg;undoFn=undo||null;$("tundo").hidden=!undo;$("toast").hidden=false;tt=setTimeout(()=>{$("toast").hidden=true;undoFn=null},undo?7000:2600)}
 $("tundo").onclick=()=>{if(undoFn){const f=undoFn;undoFn=null;f();}$("toast").hidden=true};
-function finishEdit(id,keep){const n=find(id);if(keep&&n){const t=draft.replace(/\s+$/,"");if(!t.trim()){editing=null;del(id);return}if(t!==n.text){n.text=t;n.updated=Date.now();save()}}editing=null;render();const c=document.querySelector(`[data-id="${id}"] [data-a=edit]`);if(c)c.focus()}
-function del(id){const i=notes.findIndex(n=>n.id===id);if(i<0)return;const [n]=notes.splice(i,1);expanded.delete(id);save();render();toast("Note deleted.",()=>{notes.push(n);save();render()})}
+function cardOf(id){return [...document.querySelectorAll(".card")].find(c=>c.dataset.id===id)}
+function finishEdit(id,keep){const n=find(id);if(keep&&n){const t=draft.replace(/\s+$/,"");if(!t.trim()){editing=null;del(id);return}if(t!==n.text){n.text=t;n.updated=Date.now();touch(n);save()}}editing=null;render();const c=cardOf(id);if(c)c.querySelector("[data-a=edit]").focus()}
+function startEdit(id){if(editing===id)return;if(editing)finishEdit(editing,true);const n=find(id);if(!n)return;editing=id;draft=n.text;palFor=null;render()}
+function del(id){const n=kill(id);if(!n)return;expanded.delete(id);save();render();toast("Note deleted.",()=>{revive(n);save();render()})}
 async function copy(t){try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.append(ta);ta.select();try{document.execCommand("copy")}catch(_){}ta.remove()}toast("Copied to clipboard.")}
 $("list").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const card=b.closest(".card"),id=card&&card.dataset.id,n=find(id),a=b.dataset.a;if(!n)return;
- if(a==="pin"){n.pinned=!n.pinned;save();render();toast(n.pinned?"Pinned to top.":"Unpinned.")}
+ if(a==="pin"){n.pinned=!n.pinned;touch(n);save();render();toast(n.pinned?"Pinned to top.":"Unpinned.")}
  else if(a==="color"){palFor=palFor===id?null:id;render()}
  else if(a==="copy")copy(n.text);
- else if(a==="edit"){startEdit(id)}
+ else if(a==="edit")startEdit(id);
  else if(a==="del")del(id);
  else if(a==="save")finishEdit(id,true);
  else if(a==="cancel")finishEdit(id,false);
  else if(a==="more"){expanded.has(id)?expanded.delete(id):expanded.add(id);render()}});
 $("list").addEventListener("dblclick",e=>{const p=e.target.closest(".txt");if(p)startEdit(p.closest(".card").dataset.id)});
-function startEdit(id){if(editing===id)return;if(editing)finishEdit(editing,true);const n=find(id);if(!n)return;editing=id;draft=n.text;palFor=null;render()}
 $("list").addEventListener("input",e=>{if(e.target.classList.contains("edit")){draft=e.target.value;grow(e.target)}});
 $("list").addEventListener("keydown",e=>{if(!e.target.classList.contains("edit"))return;const id=e.target.closest(".card").dataset.id;
  if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();finishEdit(id,true)}else if(e.key==="Escape"){e.preventDefault();finishEdit(id,false)}});
@@ -294,17 +338,102 @@ document.addEventListener("keydown",e=>{const t=e.target;if(e.key==="/"&&!e.ctrl
  else if(e.key==="Escape"&&palFor){palFor=null;render()}});
 document.addEventListener("click",e=>{if(palFor&&!e.target.closest(".pal")&&!e.target.closest("[data-a=color]")){palFor=null;render()}});
 $("exp").onclick=()=>{const d=new Date(),p=x=>String(x).padStart(2,"0"),name=`sticky-pad-${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`;
- const blob=new Blob([JSON.stringify({app:"sticky-pad",v:1,exported:d.toISOString(),notes},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast(`Exported ${notes.length} note${notes.length===1?"":"s"}.`)};
+ const blob=new Blob([JSON.stringify({app:"sticky-pad",v:2,exported:d.toISOString(),notes},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast(`Exported ${notes.length} note${notes.length===1?"":"s"}.`)};
 $("imp").onclick=()=>$("file").click();
+/* import = merge by id, newer change wins; a note in the backup that was deleted here is restored (you asked for it) */
 $("file").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(_){toast("That file isn't valid JSON.");return}
  const arr=Array.isArray(d)?d:d&&Array.isArray(d.notes)?d.notes:null;if(!arr){toast("No notes found in that file.");return}
- const before=JSON.stringify(notes);let added=0,updated=0,skipped=0;
- for(const raw of arr){if(!valid(raw)){skipped++;continue}const n=norm(raw),cur=find(n.id);if(!cur){notes.push(n);added++}else if(n.updated>cur.updated){Object.assign(cur,n);updated++}else skipped++}
- if(!save()){notes=JSON.parse(before);return}render();toast(`Imported: ${added} new, ${updated} updated, ${skipped} skipped.`,()=>{notes=JSON.parse(before);save();render()})};
-$("clr").onclick=()=>{if(!notes.length)return;if(!confirm(`Delete all ${notes.length} notes from this browser?`))return;const old=notes;notes=[];editing=palFor=null;save();render();toast("All notes cleared.",()=>{notes=old;save();render()})};
-window.addEventListener("storage",e=>{if(e.key===KEY&&!editing){notes=load();render()}});
+ const addedIds=[],prev=[];let updated=0,skipped=0;
+ for(const raw of arr){if(!valid(raw)){skipped++;continue}const n=norm(raw),cur=find(n.id);
+  if(!cur){if(tombs[n.id])touch(n);delete tombs[n.id];notes.push(n);addedIds.push(n.id)}
+  else if(n.mod>cur.mod){prev.push(Object.assign({},cur));Object.assign(cur,n);updated++}else skipped++}
+ if(!save())return;render();toast(`Imported: ${addedIds.length} new, ${updated} updated, ${skipped} skipped.`,()=>{addedIds.forEach(kill);prev.forEach(o=>{const c=find(o.id);if(c){Object.assign(c,o);touch(c)}});save();render()})};
+$("clr").onclick=()=>{if(!notes.length)return;if(!confirm(`Delete all ${notes.length} notes${Sync.on()?" here and on your other synced devices":" from this browser"}?`))return;const old=notes.slice();old.forEach(n=>kill(n.id));editing=palFor=null;save();render();toast("All notes cleared.",()=>{old.forEach(revive);save();render()})};
+window.addEventListener("storage",e=>{if(e.key===KEY&&!editing){load();render()}});
 setInterval(()=>{if(!editing&&!palFor&&document.visibilityState==="visible")render()},60000);
-setNewColor(newColor);render();
+
+/* ---------- Google Drive sync (optional, client-side only) ----------
+   Token: Google Identity Services token client, scope drive.appdata (a hidden app folder only this app can see).
+   The access token lives in memory only (about 1 hour). localStorage keeps just {connected, email, fileId, version, last}. */
+const Sync=(function(){
+ const API="https://www.googleapis.com/drive/v3",UP="https://www.googleapis.com/upload/drive/v3";
+ let meta=loadMeta(),token=null,tokenExp=0,tc=null,gisP=null,busy=false,again=false,timer=0,st={k:"off"};
+ function loadMeta(){try{return JSON.parse(localStorage.getItem(SKEY)||"{}")||{}}catch(e){return{}}}
+ function saveMeta(){try{localStorage.setItem(SKEY,JSON.stringify(meta))}catch(e){}}
+ function on(){return !!(CLIENT_ID&&meta.connected)}
+ function status(k,msg){st={k,msg};ui()}
+ function ui(){const s=$("stext"),d=$("sdot"),c=$("sconn"),n=$("snow"),x=$("sdisc");
+  const T={off:"Sync off",unset:"Sync not set up yet",connecting:"Connecting…",syncing:"Syncing…",ok:"Synced "+(meta.last?hhmm(meta.last):""),offline:"Offline, will sync",auth:"Sign-in needed: tap Sync now",error:"Sync error"+(st.msg?": "+st.msg:"")};
+  let k=st.k;if(!CLIENT_ID)k="unset";else if(!meta.connected&&k!=="connecting"&&k!=="error")k="off";
+  s.textContent=T[k]||k;d.dataset.k=k;$("sync").title=meta.email?"Google Drive: "+meta.email:"";
+  c.hidden=on();c.textContent=CLIENT_ID?"☁ Connect Google Drive":"☁ Sync not set up yet";c.disabled=k==="connecting";
+  n.hidden=x.hidden=!on();$("snoset").hidden=!!CLIENT_ID;n.disabled=k==="syncing";$("semail").textContent=meta.email&&on()?meta.email:""}
+ function loadGis(){if(window.google&&google.accounts&&google.accounts.oauth2)return Promise.resolve();if(gisP)return gisP;
+  gisP=new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.onload=()=>res();s.onerror=()=>{gisP=null;rej(new Error("couldn't load Google sign-in"))};document.head.append(s)});return gisP}
+ async function getToken(interactive){
+  if(token&&Date.now()<tokenExp-60000)return token;
+  await loadGis();
+  return new Promise((res,rej)=>{
+   const done=(f,v)=>{clearTimeout(to);f(v)},to=setTimeout(()=>rej(Object.assign(new Error("sign-in timed out"),{auth:1})),interactive?180000:20000);
+   tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,
+    callback:r=>{if(r&&r.access_token&&(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(r,SCOPE))){token=r.access_token;tokenExp=Date.now()+(+r.expires_in||3600)*1000;done(res,token)}else done(rej,Object.assign(new Error(r&&r.error||"access not granted"),{auth:1}))},
+    error_callback:e=>done(rej,Object.assign(new Error(e&&e.type==="popup_closed"?"sign-in window closed":e&&e.type==="popup_failed_to_open"?"popup blocked":(e&&e.type)||"sign-in failed"),{auth:1}))});
+   const o={};if(meta.connected)o.prompt="";if(meta.email)o.login_hint=meta.email;tc.requestAccessToken(o)})}
+ async function api(url,opt){opt=opt||{};const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+token},opt.headers||{})}));
+  if(r.status===401){token=null;throw Object.assign(new Error("session expired"),{auth:1})}
+  if(!r.ok){let m="HTTP "+r.status;try{const j=await r.json();if(j.error&&j.error.message)m=j.error.message}catch(e){}throw new Error(m)}return r}
+ async function findFile(){
+  if(meta.fileId){try{return await(await api(`${API}/files/${encodeURIComponent(meta.fileId)}?fields=id,version,modifiedTime,trashed`)).json()}catch(e){if(e.auth)throw e;meta.fileId=null}}
+  const q=encodeURIComponent(`name='${FILE}' and trashed=false`);const j=await(await api(`${API}/files?spaces=appDataFolder&q=${q}&orderBy=modifiedTime desc&fields=files(id,version,modifiedTime)&pageSize=10`)).json();
+  return j.files&&j.files[0]||null}
+ function body(s){return JSON.stringify({app:"sticky-pad",v:2,saved:new Date().toISOString(),notes:s.notes,tombs:s.tombs})}
+ async function push(file,s){
+  if(file)return(await api(`${UP}/files/${encodeURIComponent(file.id)}?uploadType=media&fields=id,version,modifiedTime`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:body(s)})).json();
+  const b="sp"+Math.random().toString(36).slice(2),m=JSON.stringify({name:FILE,parents:["appDataFolder"],mimeType:"application/json"});
+  return(await api(`${UP}/files?uploadType=multipart&fields=id,version,modifiedTime`,{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+b},body:`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${m}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body(s)}\r\n--${b}--`})).json()}
+ async function run(interactive){
+  if(!CLIENT_ID)return;if(!meta.connected&&!interactive)return;
+  if(busy){again=true;return}
+  if(navigator.onLine===false){status("offline");return}
+  busy=true;clearTimeout(timer);
+  try{
+   status(meta.connected?"syncing":"connecting");
+   await getToken(interactive);
+   if(!meta.connected){meta.connected=true;saveMeta();status("syncing");
+    try{const a=await(await api(`${API}/about?fields=user(emailAddress)`)).json();meta.email=a.user&&a.user.emailAddress||"";saveMeta()}catch(e){if(e.auth)throw e}}
+   for(let i=0;i<4;i++){
+    const file=await findFile();
+    const remote=file?parseState(await(await api(`${API}/files/${encodeURIComponent(file.id)}?alt=media`)).json().catch(()=>({}))):{notes:[],tombs:{}};
+    const local={notes:notes.map(n=>Object.assign({},n)),tombs:Object.assign({},tombs)};
+    const merged=merge(local,remote);
+    if(canon(merged)!==canon(state())){notes=merged.notes;tombs=merged.tombs;save(true);render()}
+    if(file&&canon(merged)===canon(remote)){meta.fileId=file.id;meta.version=file.version;break}
+    if(file){const f2=await findFile();if(f2&&f2.version!==file.version)continue}   // someone wrote meanwhile: pull again
+    const r=await push(file,merged);meta.fileId=r.id;meta.version=r.version;break}
+   meta.last=Date.now();saveMeta();status("ok");
+  }catch(e){
+   if(e.auth){status(meta.connected?"auth":"error",meta.connected?"":e.message)}
+   else if(navigator.onLine===false||e instanceof TypeError)status("offline");
+   else status("error",e.message)}
+  finally{busy=false;if(again){again=false;changed()}}}
+ function changed(){if(!on())return;clearTimeout(timer);timer=setTimeout(()=>run(false),3000);if(st.k==="ok")ui()}
+ function disconnect(){const t=token;token=null;tokenExp=0;meta={};saveMeta();status("off");
+  try{if(t&&window.google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(t,()=>{})}catch(e){}
+  toast("Disconnected from Google Drive. Notes stay in this browser.")}
+ $("sconn").onclick=()=>{if(!CLIENT_ID){$("shelpbox").open=true;$("shelpbox").scrollIntoView({behavior:"smooth",block:"nearest"});return}run(true)};
+ $("snow").onclick=()=>run(true);
+ $("sdisc").onclick=()=>{if(confirm("Disconnect Google Drive sync on this device? Your notes stay here, and the copy in Drive is kept."))disconnect()};
+ $("shelp").onclick=()=>{const h=$("shelpbox");h.open=!h.open};
+ addEventListener("online",()=>run(false));
+ addEventListener("offline",()=>{if(on())status("offline")});
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&on()&&Date.now()-(meta.last||0)>15000)run(false)});
+ window.addEventListener("storage",e=>{if(e.key===SKEY){meta=loadMeta();ui()}});
+ status(on()?(navigator.onLine===false?"offline":"ok"):"off");
+ return{run,changed,on,disconnect,_meta:()=>meta}})();
+
+load();setNewColor(newColor);render();
+if(Sync.on())setTimeout(()=>Sync.run(false),800);
+window.Sticky={merge,canon,state,sync:Sync,reload(){load();render()}};
 if("serviceWorker" in navigator&&location.protocol!=="file:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 })();
 </script>
