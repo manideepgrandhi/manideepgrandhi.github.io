@@ -1,0 +1,54 @@
+name: Rebuild search index
+
+# Rebuilds /search-index.json (the cross-site search) from this repo and the
+# db-cheatsheet, pg-commands and paisa-diary repos. Commits only when it changed.
+on:
+  schedule:
+    - cron: "30 20 * * *"   # 02:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: search-index
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: manideepgrandhi.github.io
+      - uses: actions/checkout@v4
+        with:
+          repository: manideepgrandhi/db-cheatsheet
+          path: db-cheatsheet
+      - uses: actions/checkout@v4
+        with:
+          repository: manideepgrandhi/pg-commands
+          path: pg-commands
+      - uses: actions/checkout@v4
+        with:
+          repository: manideepgrandhi/paisa-diary
+          path: paisa-diary
+
+      - name: Build index
+        run: |
+          export CHROME="$(command -v google-chrome || command -v google-chrome-stable)"
+          test -n "$CHROME" || { echo "Chrome not found"; exit 1; }
+          python3 manideepgrandhi.github.io/scripts/build-search-index.py --repos "$GITHUB_WORKSPACE"
+
+      - name: Commit if changed
+        working-directory: manideepgrandhi.github.io
+        run: |
+          if git diff --quiet -- search-index.json; then
+            echo "Index unchanged"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add search-index.json
+          git commit -m "Rebuild search index"
+          git push
