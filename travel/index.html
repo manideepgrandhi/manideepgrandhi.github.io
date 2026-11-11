@@ -233,6 +233,7 @@ html[data-theme=dark] .mg-s-ov{background:rgba(0,0,0,.6)}
 .mg-s-list a.mg-s-on{background:var(--mg-surface2,#eef2f7);border-color:var(--mg-line,#e3e7ee)}
 .mg-s-t{display:block;font-weight:650;color:var(--mg-ink,#14213d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mg-s-h{font-weight:500;color:var(--mg-muted,#5b6475)}
+.mg-s-k{float:right;font:700 10px/1 var(--mg-font,system-ui,sans-serif);letter-spacing:.05em;text-transform:uppercase;color:var(--mg-muted,#5b6475);padding:3px 0 0 10px}
 .mg-s-sn{display:block;margin-top:2px;font-size:13px;color:var(--mg-muted,#5b6475);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 .mg-s-sn code{font:12.5px/1.45 var(--mg-mono,monospace);background:none;padding:0;color:inherit;white-space:normal}
 .mg-s-ov mark{background:#ffe58a;color:#3a2a00;border-radius:3px;padding:0 1px}
@@ -305,9 +306,10 @@ function foot(){if(document.getElementById("mg-foot")||ds.mgNofoot!==undefined)r
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",foot);else foot();
 })();
 </script><script id="mg-search-js">
-/* mg-search.js: one search box for all of Manideep's sites (button in the shared top bar, "/" or Ctrl/Cmd+K).
+/* mg-search.js: search + quick-open launcher for all of Manideep's sites (button in the shared top bar, "/" or Ctrl/Cmd+K).
    Single source: manideepgrandhi.github.io/assets/. Copied inline into offline apps by scripts/sync-mg-shared.py.
-   Index: https://manideepgrandhi.github.io/search-index.json, built by scripts/build-search-index.py from the published pages only.
+   An empty query lists every site (hard-coded CATALOG, so sites without indexed pages still appear). Typed queries put
+   site-name matches above page-content matches from /search-index.json (built by scripts/build-search-index.py).
    Nothing you type leaves the browser: the index is fetched once (then kept in the Cache API for offline use) and searched locally.
    Also gives headings without an id a stable "s-<slug>" id so results can link straight to a section. */
 (function(){
@@ -389,13 +391,34 @@ function hl(text,words,len){text=String(text||"");if(!text)return"";var low=text
  var re=new RegExp("("+words.map(function(w){return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}).join("|")+")","gi");
  return pre+cut.split(re).map(function(s,k){return k%2?"<mark>"+esc(s)+"</mark>":esc(s)}).join("")+post}
 
+/* ---------- site catalog (quick-open; kept here so it works even when the index hasn't loaded) ---------- */
+var CATALOG=[["Home","/"],["Projects","/projects/"],["Tools","/tools/"],["pg-commands","/pg-commands/"],["PG role grantor","/pg-role-grantor/"],["DB Cheat Sheet","/db-cheatsheet/"],["Paisa Diary","/paisa-diary/"],["Office Days","/office-days/"],["Sticky Pad","/sticky/"],["Sticky Gist","/sticky-gist/"],["Travel","/travel/"],["Blog","/blog/"],["RDS backup compliance","/rds-backup-compliance/"],["RDS patch compliance","/rds-patch-compliance/"],["RDS compliance report","/rds-compliance-report/"]];
+function siteHay(name,url){return (name+" "+url.replace(/[\/-]+/g," ")).toLowerCase().replace(/\s+/g," ").trim()}
+function siteScore(name,url,q){var ql=String(q).toLowerCase().trim();if(!ql)return 0;
+ var nl=name.toLowerCase(),hay=siteHay(name,url),seg=url.replace(/^\/|\/$/g,"").toLowerCase();
+ if(nl===ql||hay===ql)return 100;
+ if(seg===ql)return 95;
+ if(nl.indexOf(ql)===0)return 90;
+ var words=hay.split(" ");
+ for(var i=0;i<words.length;i++){if(words[i]===ql)return 85;if(ql.length>=2&&words[i].indexOf(ql)===0)return 80}
+ if(nl.indexOf(ql)>=0||hay.indexOf(ql)>=0)return 70;
+ var qt=toks(ql);if(!qt.length)return 0;
+ for(var t=0;t<qt.length;t++){var hit=0;
+  for(var j=0;j<words.length;j++){if(words[j]===qt[t]||(qt[t].length>=2&&words[j].indexOf(qt[t])===0)){hit=1;break}
+   if(qt[t].length>=4&&Math.abs(words[j].length-qt[t].length)<=2&&dist(qt[t],words[j],1)<=1){hit=1;break}}
+  if(!hit)return 0}
+ return 50+qt.length}
+function catalogHits(q){if(!String(q).trim())return CATALOG.map(function(s){return{k:"s",name:s[0],url:s[1],s:1}});
+ var out=[];for(var i=0;i<CATALOG.length;i++){var s=CATALOG[i],n=siteScore(s[0],s[1],q);if(n)out.push({k:"s",name:s[0],url:s[1],s:n})}
+ out.sort(function(a,b){return b.s-a.s||a.name.localeCompare(b.name)});return out}
+
 /* ---------- UI ---------- */
 var ov,inp,list,stat,items=[],act=-1,isOpen=false,lastFocus=null,timer;
 var ICON='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>';
 var KEY=MAC?"⌘K":"Ctrl+K",EX=["deadlock","pg_dump","tempdb","vacuum","blocking","sticky"];
 function build(){if(ov)return;ov=d.createElement("div");ov.id="mg-search";ov.className="mg-s-ov";ov.hidden=true;
- ov.innerHTML='<div class="mg-s-dlg" role="dialog" aria-modal="true" aria-label="Search all sites">'+
- '<div class="mg-s-top">'+ICON+'<input id="mg-s-q" type="search" placeholder="Search all my sites…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-expanded="true" aria-controls="mg-s-list" aria-autocomplete="list">'+
+ ov.innerHTML='<div class="mg-s-dlg" role="dialog" aria-modal="true" aria-label="Search or open a site">'+
+ '<div class="mg-s-top">'+ICON+'<input id="mg-s-q" type="search" placeholder="Search or jump to a site…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-expanded="true" aria-controls="mg-s-list" aria-autocomplete="list">'+
  '<button type="button" class="mg-s-x" aria-label="Close search">Esc</button></div>'+
  '<div class="mg-s-list" id="mg-s-list" role="listbox" aria-label="Results"></div>'+
  '<div class="mg-s-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span><span class="mg-s-stat" aria-live="polite"></span></div></div>';
@@ -412,35 +435,45 @@ function key(e){if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if
  else if(e.key==="Home"&&items.length&&!inp.value){setAct(0,true)}}
 function setAct(i,scroll){act=i;var as=list.querySelectorAll("a[data-i]");for(var k=0;k<as.length;k++){var on=k===i;as[k].classList.toggle("mg-s-on",on);as[k].setAttribute("aria-selected",on)}
  var a=as[i];if(a){inp.setAttribute("aria-activedescendant",a.id);if(scroll)a.scrollIntoView({block:"nearest"})}}
-function href(it){var X=IDX,e=X.e[it.i],pg=X.pages[e[0]];return ORIGIN+pg[1]+(e[1]?"#"+e[1].replace(/ /g,"%20"):"")}
-function go(i,newTab){var it=items[i];if(!it)return;var url=href(it),e=IDX.e[it.i],pg=IDX.pages[e[0]];ss(LASTQ,inp.value);
+function href(it){if(it.k==="s")return ORIGIN+it.url;var X=IDX,e=X.e[it.i],pg=X.pages[e[0]];return ORIGIN+pg[1]+(e[1]?"#"+e[1].replace(/ /g,"%20"):"")}
+function pathOf(url){return url==="/"?"/":url}
+function go(i,newTab){var it=items[i];if(!it)return;var url=href(it);ss(LASTQ,inp.value||null);
  if(newTab){window.open(url,"_blank","noopener");return}
- if(e[1])ss(GO,e[1]);
- var here=location.pathname.replace(/index\.html$/,""),there=pg[1].replace(/index\.html$/,"");
+ var here=location.pathname.replace(/index\.html$/,"");
+ if(it.k==="s"){var there=it.url.replace(/index\.html$/,"");if(!ORIGIN&&(here===there||(there==="/"&&(here==="/"||here==="")))){close();window.scrollTo(0,0);return}location.href=url;return}
+ var e=IDX.e[it.i],pg=IDX.pages[e[0]];if(e[1])ss(GO,e[1]);
+ var there=pg[1].replace(/index\.html$/,"");
  if(!ORIGIN&&here===there){close();if(location.hash==="#"+e[1]||!e[1]){if(e[1])reveal(1);else window.scrollTo(0,0)}else location.hash=e[1];return}
  location.href=url}
-function empty(msg){var sites=IDX?IDX.sites.map(function(s){return esc(s[0])}).join(" · "):"";
- list.innerHTML='<div class="mg-s-empty">'+(msg||"Type to search "+(sites?"<b>"+sites+"</b>":"all my sites")+".")+
+function empty(msg){list.innerHTML='<div class="mg-s-empty">'+(msg||"No matches.")+
  '<div class="mg-s-ex">Try '+EX.map(function(x){return '<button type="button" data-q="'+x+'">'+x+"</button>"}).join("")+"</div></div>";items=[];act=-1;inp.removeAttribute("aria-activedescendant")}
-function run(){var q=inp.value;if(!IDX){return}
- if(!q.trim()){empty();stat.textContent=IDX.e.length+" sections indexed";return}
- var t0=Date.now(),res=search(IDX,q),X=IDX;
- if(!res.r.length){empty('No matches for “'+esc(q.trim())+'”. Check the spelling or try fewer words.');stat.textContent="0 results";return}
- var g={},order=[];res.r.forEach(function(r){var s=X.pages[X.e[r.i][0]][0];if(!g[s]){g[s]=[];order.push(s)}if(g[s].length<8)g[s].push(r)});
- items=[];var html="";order.forEach(function(s){html+='<div class="mg-s-grp" role="group" aria-label="'+esc(X.sites[s][0])+'"><div class="mg-s-site">'+esc(X.sites[s][0])+"</div>";
-  g[s].forEach(function(r){var e=X.e[r.i],pg=X.pages[e[0]],n=items.length;items.push(r);var head=e[2]&&e[2]!==pg[2]?e[2]:"";
-   var sn=e[3]&&res.w.some(function(w){return e[3].toLowerCase().indexOf(w)>=0})?hl(e[3],res.w,150):e[4]&&res.w.some(function(w){return e[4].toLowerCase().indexOf(w)>=0})?'<code>'+hl(e[4],res.w,120)+"</code>":hl(e[3]||"",res.w,150);
-   html+='<a id="mg-s-r'+n+'" role="option" aria-selected="false" data-i="'+n+'" href="'+esc(href(r))+'"><span class="mg-s-t">'+hl(pg[2],res.w)+(head?' <span class="mg-s-h">› '+hl(head,res.w)+"</span>":"")+"</span>"+(sn?'<span class="mg-s-sn">'+sn+"</span>":"")+"</a>"});
-  html+="</div>"});
- list.innerHTML=html;list.scrollTop=0;setAct(0,false);stat.textContent=res.r.length+(res.r.length>=80?"+":"")+" result"+(res.r.length===1?"":"s")+" · "+(Date.now()-t0)+" ms"}
+function siteRow(it,words){var n=items.length;items.push(it);return '<a id="mg-s-r'+n+'" role="option" aria-selected="false" data-i="'+n+'" href="'+esc(href(it))+'"><span class="mg-s-t">'+hl(it.name,words||[])+' <span class="mg-s-k">Site</span></span><span class="mg-s-sn">'+esc(pathOf(it.url))+"</span></a>"}
+function run(){var q=inp.value,sites=catalogHits(q),t0=Date.now();
+ if(!q.trim()){items=[];var html='<div class="mg-s-grp" role="group" aria-label="Sites"><div class="mg-s-site">Jump to a site</div>';
+  sites.forEach(function(it){html+=siteRow(it)});html+="</div>";list.innerHTML=html;list.scrollTop=0;setAct(0,false);
+  stat.textContent=CATALOG.length+" sites"+(IDX?" · "+IDX.e.length+" sections indexed":"");return}
+ var res=IDX?search(IDX,q):{r:[],w:[]},words=res.w||toks(q);
+ if(!sites.length&&!res.r.length){empty('No matches for “'+esc(q.trim())+'”. Check the spelling or try fewer words.');stat.textContent="0 results";return}
+ items=[];var html="";
+ if(sites.length){html+='<div class="mg-s-grp" role="group" aria-label="Sites"><div class="mg-s-site">Sites</div>';sites.forEach(function(it){html+=siteRow(it,words)});html+="</div>"}
+ if(res.r.length){var X=IDX,g={},order=[];res.r.forEach(function(r){var s=X.pages[X.e[r.i][0]][0];if(!g[s]){g[s]=[];order.push(s)}if(g[s].length<8)g[s].push(r)});
+  order.forEach(function(s){html+='<div class="mg-s-grp" role="group" aria-label="'+esc(X.sites[s][0])+'"><div class="mg-s-site">'+esc(X.sites[s][0])+"</div>";
+   g[s].forEach(function(r){var e=X.e[r.i],pg=X.pages[e[0]],n=items.length;items.push(r);var head=e[2]&&e[2]!==pg[2]?e[2]:"";
+    var sn=e[3]&&res.w.some(function(w){return e[3].toLowerCase().indexOf(w)>=0})?hl(e[3],res.w,150):e[4]&&res.w.some(function(w){return e[4].toLowerCase().indexOf(w)>=0})?'<code>'+hl(e[4],res.w,120)+"</code>":hl(e[3]||"",res.w,150);
+    html+='<a id="mg-s-r'+n+'" role="option" aria-selected="false" data-i="'+n+'" href="'+esc(href(r))+'"><span class="mg-s-t">'+hl(pg[2],res.w)+(head?' <span class="mg-s-h">› '+hl(head,res.w)+"</span>":"")+"</span>"+(sn?'<span class="mg-s-sn">'+sn+"</span>":"")+"</a>"});
+   html+="</div>"})}
+ list.innerHTML=html;list.scrollTop=0;setAct(0,false);
+ var n=items.length,ns=sites.length,np=res.r.length;
+ stat.textContent=(ns?ns+" site"+(ns===1?"":"s"):"")+(ns&&np?" · ":"")+(np?np+(np>=80?"+":"")+" page result"+(np===1?"":"s"):"")+" · "+(Date.now()-t0)+" ms"}
 function open(){build();if(isOpen)return;isOpen=true;lastFocus=d.activeElement;ov.hidden=false;h.classList.add("mg-s-lock");
  var b=d.getElementById("mg-search-btn");if(b)b.setAttribute("aria-expanded","true");
- if(!inp.value){var l=ss(LASTQ);if(l)inp.value=l}inp.focus();inp.select();
- if(IDX){run();return}
- list.innerHTML='<div class="mg-s-empty">Loading the search index…</div>';stat.textContent="";
+ inp.value="";inp.focus();
+ run();
+ if(IDX)return;
  load().then(function(){if(isOpen)run()},function(){if(!isOpen)return;
-  list.innerHTML='<div class="mg-s-empty mg-s-err">Couldn’t load the search index'+(navigator.onLine===false?" (you’re offline and it hasn’t been saved on this device yet)":"")+'.<div class="mg-s-ex"><button type="button" class="mg-s-retry">Try again</button></div></div>';
-  var rb=list.querySelector(".mg-s-retry");rb.addEventListener("click",function(){isOpen=false;ov.hidden=true;open()})})}
+  if(inp.value.trim()&&!list.querySelector("a[data-i]")){list.innerHTML='<div class="mg-s-empty mg-s-err">Couldn’t load the search index'+(navigator.onLine===false?" (you’re offline and it hasn’t been saved on this device yet)":"")+'.<div class="mg-s-ex"><button type="button" class="mg-s-retry">Try again</button></div></div>';
+   var rb=list.querySelector(".mg-s-retry");if(rb)rb.addEventListener("click",function(){isOpen=false;ov.hidden=true;open()})}
+  else if(!inp.value.trim()){stat.textContent=CATALOG.length+" sites · index unavailable"}})}
 function close(){if(!isOpen)return;isOpen=false;ov.hidden=true;h.classList.remove("mg-s-lock");var b=d.getElementById("mg-search-btn");if(b)b.setAttribute("aria-expanded","false");
  if(inp.value)ss(LASTQ,inp.value);if(lastFocus&&lastFocus.focus)try{lastFocus.focus({preventScroll:true})}catch(e){}}
 function typing(t){return t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable)}
@@ -451,11 +484,11 @@ window.addEventListener("keydown",function(e){var k=e.key;
 
 function button(){if(d.getElementById("mg-search-btn"))return true;var t=d.getElementById("mg-theme");if(!t)return false;
  var b=d.createElement("button");b.type="button";b.className="mg-btn mg-sbtn";b.id="mg-search-btn";b.innerHTML=ICON;
- b.title="Search all sites (/ or "+KEY+")";b.setAttribute("aria-label","Search all sites");b.setAttribute("aria-haspopup","dialog");b.setAttribute("aria-expanded","false");
+ b.title="Search or open a site (/ or "+KEY+")";b.setAttribute("aria-label","Search or open a site");b.setAttribute("aria-haspopup","dialog");b.setAttribute("aria-expanded","false");
  b.addEventListener("click",open);b.addEventListener("pointerenter",function(){load().catch(function(){})},{once:true});t.parentNode.insertBefore(b,t);return true}
 if(!button())d.addEventListener("DOMContentLoaded",button);
 window.addEventListener("load",function(){(window.requestIdleCallback||function(f){setTimeout(f,2500)})(warm)});
-window.MGSearch={open:open,close:close,load:load,search:function(q){return load().then(function(X){var r=search(X,q);return r.r.map(function(x){var e=X.e[x.i],pg=X.pages[e[0]];return{site:X.sites[pg[0]][0],page:pg[2],heading:e[2],url:href(x),score:x.s}})})},slug:slug};
+window.MGSearch={open:open,close:close,load:load,catalog:CATALOG,siteScore:siteScore,catalogHits:catalogHits,search:function(q){return load().then(function(X){var r=search(X,q);return r.r.map(function(x){var e=X.e[x.i],pg=X.pages[e[0]];return{site:X.sites[pg[0]][0],page:pg[2],heading:e[2],url:href(x),score:x.s}})})},slug:slug};
 })();
 </script><!--/mg:body-->
 <a class="sr" href="#main">Skip to content</a>

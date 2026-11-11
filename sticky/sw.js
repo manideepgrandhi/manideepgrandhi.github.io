@@ -1,6 +1,6 @@
 /* Sticky Pad service worker: network first, cache fallback, so updates arrive when online and the page still opens offline.
    Only same-origin /sticky/ files are handled; Google sign-in and Drive API calls are never cached. */
-const CACHE = 'sticky-pad-v2';
+const CACHE = 'sticky-pad-v3';
 const FILES = ['./', './index.html', './config.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

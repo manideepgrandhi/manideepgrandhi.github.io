@@ -1,7 +1,7 @@
 /* Sticky Pad · Gist Sync service worker: network first, cache fallback, so updates arrive when online and the page still opens offline.
    Only same-origin /sticky-gist/ files are handled; GitHub API calls are never cached.
    Cache names start with "sticky-gist-" so this worker never touches the plain Sticky Pad's "sticky-pad-*" caches (and vice versa). */
-const CACHE = 'sticky-gist-v1';
+const CACHE = 'sticky-gist-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
