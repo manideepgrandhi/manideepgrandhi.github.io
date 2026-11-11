@@ -23,10 +23,10 @@ from urllib.parse import quote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITES = [  # (group name, url prefix); first match wins
-    ('DB Cheat Sheet', '/db-cheatsheet/'), ('pg-commands', '/pg-commands/'), ('Paisa Diary', '/paisa-diary/'),
+    ('DB Cheat Sheet', '/db-cheatsheet/'), ('pg-commands', '/pg-commands/'), ('PG role grantor', '/pg-role-grantor/'), ('Paisa Diary', '/paisa-diary/'),
     ('Blog', '/blog/'), ('Sticky Pad', '/sticky/'), ('Sticky Pad', '/sticky-gist/'), ('Travel', '/travel/'),
     ('Tools', '/tools/'), ('Projects', '/projects/'), ('Home', '/')]
-MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/paisa-diary/': 'paisa-diary'}
+MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/pg-role-grantor/': 'pg-role-grantor', '/paisa-diary/': 'paisa-diary'}
 APP_PAGES = {'/sticky/', '/sticky-gist/', '/travel/', '/paisa-diary/'}       # private-data apps: source HTML only
 STATIC_PAGES = {'/tools/'}   # rendered values there (clocks, random UUIDs) would change the index every night
 SKIP_PATHS = re.compile(r'^/blog/tags/|^/db-cheatsheet/src/|^/sticky-gist/')  # tag lists; build input; gist copy duplicates /sticky/

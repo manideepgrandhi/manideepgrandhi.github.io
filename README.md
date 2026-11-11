@@ -85,6 +85,10 @@ Optional sync across devices with no server. The page signs in with Google Ident
 
 Fine-grained tokens with the account permission **Gists: Read and write** should also work. If one can't find your gist, paste its ID under *Advanced*. This path hasn't been tested.
 
+## PG role grantor
+
+The live app is at [manideepgrandhi.github.io/pg-role-grantor](https://manideepgrandhi.github.io/pg-role-grantor/). It is a browser-only SQL generator for PostgreSQL and Aurora PostgreSQL 14–17 (roles, privileges, default ACLs, memberships, and FDW setup). Source: [manideepgrandhi/pg-role-grantor](https://github.com/manideepgrandhi/pg-role-grantor). It is also listed on [/projects/](https://manideepgrandhi.github.io/projects/).
+
 ## Shared look: header bar, footer, dark mode
 
 One source of truth for the look shared by every site (home, projects, tools, travel, sticky, blog, pg-commands, db-cheatsheet, paisa-diary):
