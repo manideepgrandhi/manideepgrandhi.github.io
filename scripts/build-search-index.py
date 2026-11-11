@@ -2,7 +2,7 @@
 """Build /search-index.json for the cross-site search (assets/mg-search.js).
 
 What it indexes: every published page that carries the shared top bar (<!--mg:body ...--> marker) in this repo
-and the sibling site repos (db-cheatsheet, pg-commands, paisa-diary), split into one entry per h1-h4 section.
+and the sibling site repos (db-cheatsheet, pg-commands, pg-role-grantor, paisa-diary, office-days), split into one entry per h1-h4 section.
 
 Privacy: Sticky Pad notes, Paisa Diary entries, travel trips and anything else the apps keep in the browser are
 never indexed. Pages in APP_PAGES are read from their source HTML only (never run), so they can only contribute
@@ -11,7 +11,7 @@ run in headless Chrome with a brand-new empty profile, so no localStorage / save
 
 Usage:
   scripts/build-search-index.py                 # sibling repos next to this one, output ./search-index.json
-  scripts/build-search-index.py --repos DIR     # directory that holds all four repo checkouts
+  scripts/build-search-index.py --repos DIR     # directory that holds this repo and the sibling checkouts
   scripts/build-search-index.py --check         # exit 1 if the index would change (no write)
 Needs Python 3.8+ and Google Chrome (CHROME env var or google-chrome on PATH). Without Chrome, every page is
 parsed statically (JS-built content is then missing) and a warning is printed.
@@ -24,10 +24,11 @@ from urllib.parse import quote
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITES = [  # (group name, url prefix); first match wins
     ('DB Cheat Sheet', '/db-cheatsheet/'), ('pg-commands', '/pg-commands/'), ('PG role grantor', '/pg-role-grantor/'), ('Paisa Diary', '/paisa-diary/'),
+    ('Office Days', '/office-days/'),
     ('Blog', '/blog/'), ('Sticky Pad', '/sticky/'), ('Sticky Pad', '/sticky-gist/'), ('Travel', '/travel/'),
     ('Tools', '/tools/'), ('Projects', '/projects/'), ('Home', '/')]
-MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/pg-role-grantor/': 'pg-role-grantor', '/paisa-diary/': 'paisa-diary'}
-APP_PAGES = {'/sticky/', '/sticky-gist/', '/travel/', '/paisa-diary/'}       # private-data apps: source HTML only
+MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/pg-role-grantor/': 'pg-role-grantor', '/paisa-diary/': 'paisa-diary', '/office-days/': 'office-days'}
+APP_PAGES = {'/sticky/', '/sticky-gist/', '/travel/', '/paisa-diary/', '/office-days/'}  # private-data apps: source HTML only
 STATIC_PAGES = {'/tools/'}   # rendered values there (clocks, random UUIDs) would change the index every night
 SKIP_PATHS = re.compile(r'^/blog/tags/|^/db-cheatsheet/src/|^/sticky-gist/')  # tag lists; build input; gist copy duplicates /sticky/
 TITLE_ONLY = {'/blog/'}                                                       # post list: every post is indexed itself
@@ -36,7 +37,8 @@ SKIP_TAGS = {'script', 'style', 'noscript', 'template', 'svg', 'canvas', 'button
 SKIP_IDS = {'mg-bar', 'mg-foot', 'mg-foot-slot', 'mg-search', 'toast'}
 # containers the private apps fill with the user's own data (defence in depth: they are empty in source HTML)
 PRIVATE_IDS = {'list', 'days', 'breakdown', 'rules', 'upnext', 'recUpcoming', 'recActive', 'recWeek', 'recMonthly',
-               'todayTotal', 'weekTotal', 'monthTotalNow', 'bdTotal', 'trips', 'tl', 'wish'}
+               'todayTotal', 'weekTotal', 'monthTotalNow', 'bdTotal', 'trips', 'tl', 'wish',
+               'cal', 'year', 'count', 'countlbl', 'prog'}  # office-days calendar / totals
 SKIP_CLASS = re.compile(r'(^|\s)(sheet|toast|mg-s-ov|unote|pn|orig|back)(\s|$)')
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 BLOCK = {'p', 'div', 'li', 'tr', 'td', 'th', 'dt', 'dd', 'section', 'article', 'header', 'main', 'aside', 'pre', 'br',
