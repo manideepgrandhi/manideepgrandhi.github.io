@@ -84,7 +84,7 @@ function hl(text,words,len){text=String(text||"");if(!text)return"";var low=text
  return pre+cut.split(re).map(function(s,k){return k%2?"<mark>"+esc(s)+"</mark>":esc(s)}).join("")+post}
 
 /* ---------- site catalog (quick-open; kept here so it works even when the index hasn't loaded) ---------- */
-var CATALOG=[["Home","/"],["Projects","/projects/"],["Tools","/tools/"],["pg-commands","/pg-commands/"],["PG role grantor","/pg-role-grantor/"],["DB Cheat Sheet","/db-cheatsheet/"],["Paisa Diary","/paisa-diary/"],["Office Days","/office-days/"],["Sticky Pad","/sticky/"],["Sticky Gist","/sticky-gist/"],["Travel","/travel/"],["Blog","/blog/"],["RDS backup compliance","/rds-backup-compliance/"],["RDS patch compliance","/rds-patch-compliance/"],["RDS compliance report","/rds-compliance-report/"]];
+var CATALOG=[["Home","/"],["Projects","/projects/"],["Tools","/tools/"],["pg-commands","/pg-commands/"],["PG role grantor","/pg-role-grantor/"],["DB Cheat Sheet","/db-cheatsheet/"],["Paisa Diary","/paisa-diary/"],["Office Days","/office-days/"],["Git commands","/git-commands/"],["Sticky Pad","/sticky/"],["Sticky Gist","/sticky-gist/"],["Travel","/travel/"],["Blog","/blog/"],["RDS backup compliance","/rds-backup-compliance/"],["RDS patch compliance","/rds-patch-compliance/"],["RDS compliance report","/rds-compliance-report/"]];
 function siteHay(name,url){return (name+" "+url.replace(/[\/-]+/g," ")).toLowerCase().replace(/\s+/g," ").trim()}
 function siteScore(name,url,q){var ql=String(q).toLowerCase().trim();if(!ql)return 0;
  var nl=name.toLowerCase(),hay=siteHay(name,url),seg=url.replace(/^\/|\/$/g,"").toLowerCase();

@@ -2,7 +2,7 @@
 """Build /search-index.json for the cross-site search (assets/mg-search.js).
 
 What it indexes: every published page that carries the shared top bar (<!--mg:body ...--> marker) in this repo
-and the sibling site repos (db-cheatsheet, pg-commands, pg-role-grantor, paisa-diary, office-days), split into one entry per h1-h4 section.
+and the sibling site repos (db-cheatsheet, pg-commands, pg-role-grantor, paisa-diary, office-days, git-commands), split into one entry per h1-h4 section.
 
 Privacy: Sticky Pad notes, Paisa Diary entries, travel trips and anything else the apps keep in the browser are
 never indexed. Pages in APP_PAGES are read from their source HTML only (never run), so they can only contribute
@@ -24,10 +24,10 @@ from urllib.parse import quote
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITES = [  # (group name, url prefix); first match wins
     ('DB Cheat Sheet', '/db-cheatsheet/'), ('pg-commands', '/pg-commands/'), ('PG role grantor', '/pg-role-grantor/'), ('Paisa Diary', '/paisa-diary/'),
-    ('Office Days', '/office-days/'),
+    ('Office Days', '/office-days/'), ('Git commands', '/git-commands/'),
     ('Blog', '/blog/'), ('Sticky Pad', '/sticky/'), ('Sticky Pad', '/sticky-gist/'), ('Travel', '/travel/'),
     ('Tools', '/tools/'), ('Projects', '/projects/'), ('Home', '/')]
-MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/pg-role-grantor/': 'pg-role-grantor', '/paisa-diary/': 'paisa-diary', '/office-days/': 'office-days'}
+MOUNTS = {'/db-cheatsheet/': 'db-cheatsheet', '/pg-commands/': 'pg-commands', '/pg-role-grantor/': 'pg-role-grantor', '/paisa-diary/': 'paisa-diary', '/office-days/': 'office-days', '/git-commands/': 'git-commands'}
 APP_PAGES = {'/sticky/', '/sticky-gist/', '/travel/', '/paisa-diary/', '/office-days/'}  # private-data apps: source HTML only
 STATIC_PAGES = {'/tools/'}   # rendered values there (clocks, random UUIDs) would change the index every night
 SKIP_PATHS = re.compile(r'^/blog/tags/|^/db-cheatsheet/src/|^/sticky-gist/')  # tag lists; build input; gist copy duplicates /sticky/

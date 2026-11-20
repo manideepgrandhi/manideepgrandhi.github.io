@@ -89,6 +89,10 @@ Fine-grained tokens with the account permission **Gists: Read and write** should
 
 The live app is at [manideepgrandhi.github.io/pg-role-grantor](https://manideepgrandhi.github.io/pg-role-grantor/). It is a browser-only SQL generator for PostgreSQL and Aurora PostgreSQL 14–17 (roles, privileges, default ACLs, memberships, and FDW setup). Source: [manideepgrandhi/pg-role-grantor](https://github.com/manideepgrandhi/pg-role-grantor). It is also listed on [/projects/](https://manideepgrandhi.github.io/projects/).
 
+## Git commands
+
+The live page is at [manideepgrandhi.github.io/git-commands](https://manideepgrandhi.github.io/git-commands/). It is a single offline page with 73 git and `gh` commands in plain words, each with a copyable example and what you would see, plus a filter box and warnings on the risky commands. Source: [manideepgrandhi/git-commands](https://github.com/manideepgrandhi/git-commands). It is also listed on [/projects/](https://manideepgrandhi.github.io/projects/) and in the site search.
+
 ## Shared look: header bar, footer, dark mode
 
 One source of truth for the look shared by every site (home, projects, tools, travel, sticky, blog, pg-commands, db-cheatsheet, paisa-diary):
