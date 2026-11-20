@@ -1,7 +1,7 @@
 name: Rebuild search index
 
 # Rebuilds /search-index.json (the cross-site search) from this repo and the
-# db-cheatsheet, pg-commands, pg-role-grantor, paisa-diary and office-days repos.
+# db-cheatsheet, pg-commands, pg-role-grantor, paisa-diary, office-days and git-commands repos.
 # Commits only when it changed.
 on:
   schedule:
@@ -43,6 +43,10 @@ jobs:
         with:
           repository: manideepgrandhi/office-days
           path: office-days
+      - uses: actions/checkout@v4
+        with:
+          repository: manideepgrandhi/git-commands
+          path: git-commands
 
       - name: Build index
         run: |
